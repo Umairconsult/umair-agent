@@ -5,7 +5,7 @@ import re
 from pathlib import Path
 
 SECRET_KEYS = [
-    "AGENT_API_TOKEN", "AUDIT_API_TOKEN", "GEMINI_API_KEY", "EXPLORIUM_API_KEY",
+    "AGENT_API_TOKEN", "AUDIT_API_TOKEN", "EXPLORIUM_API_KEY", "WP_APP_PASSWORD", "WP_URL", "WP_USER",
     "SLACK_AUDIT_LOG_URL", "SLACK_LEADS_URL", "SLACK_AGENT_URL",
     "PORTAL_URL", "AUDIT_URL", "BUSINESS_POSTAL_ADDRESS",
 ]
@@ -63,7 +63,19 @@ class Settings:
     @property
     def audit_token(self): return self.get("AUDIT_API_TOKEN")
     @property
-    def gemini_key(self): return self.get("GEMINI_API_KEY")
+    def gemini_keys(self) -> list[str]:
+        """Every Gemini key you gave: GEMINI_API_KEY, GEMINI_API_KEY_2 ... _20, or GEMINI_API_KEYS=a,b,c."""
+        found = [self.get("GEMINI_API_KEY")] + [self.get(f"GEMINI_API_KEY_{i}") for i in range(2, 21)]
+        found += [k.strip() for k in self.get("GEMINI_API_KEYS").split(",")]
+        out: list[str] = []
+        for k in found:
+            if k and k not in out:
+                out.append(k)
+        return out
+    @property
+    def gemini_key(self):
+        keys = self.gemini_keys
+        return keys[0] if keys else ""
     @property
     def gemini_model(self): return self.get("GEMINI_MODEL", "auto")
     @property
@@ -122,9 +134,27 @@ class Settings:
         }
 
     def secret_values(self) -> list[str]:
-        vals = [self.get(k) for k in SECRET_KEYS]
-        # also hide the host names of private URLs
+        vals = [self.get(k) for k in SECRET_KEYS] + self.gemini_keys
         return [v for v in vals if v]
+
+    # ---- newer settings ----
+    @property
+    def max_backlog(self): return self.int("MAX_UNAUDITED_BACKLOG", 60)
+    @property
+    def overture_on(self): return self.get("USE_OVERTURE", "yes").lower() not in ("no", "false", "0", "off")
+    @property
+    def blog_per_week(self): return self.int("BLOG_POSTS_PER_WEEK", 2)
+    @property
+    def blog_voice(self):
+        return self.get("BLOG_VOICE", "conversational, practical and direct, like an experienced consultant explaining things to a busy business owner")
+    @property
+    def wp_url(self): return self.get("WP_URL").rstrip("/")
+    @property
+    def wp_user(self): return self.get("WP_USER")
+    @property
+    def wp_password(self): return self.get("WP_APP_PASSWORD")
+    @property
+    def wp_mode(self): return "publish" if self.get("WP_PUBLISH_MODE", "draft").lower() == "publish" else "draft"
 
 
 def load_settings(path: str | None = None) -> Settings:

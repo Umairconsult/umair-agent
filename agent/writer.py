@@ -15,81 +15,141 @@ PREFERRED = ["gemini-3.1-flash-lite", "gemini-3-flash-preview", "gemini-3.5-flas
 
 
 class Gemini:
-    def __init__(self, key: str, model: str = "auto"):
-        self.key = key
+    """Google Gemini with several API keys. If one key runs out or stops working the agent
+    switches to the next one automatically; calls are spread across keys to stay under limits."""
+    MIN_INTERVAL = 6.5   # seconds between calls on the SAME key (free tier per-minute limit)
+
+    def __init__(self, keys, model: str = "auto"):
+        if isinstance(keys, str):
+            keys = [keys]
+        self.keys = [k for k in keys if k]
         self.model = "" if model == "auto" else model
         self.s = requests.Session()
-        self.exhausted = False           # daily quota used up -> use templates for the rest of the run
-        self._last_call = 0.0
+        self.dead: dict[int, str] = {}        # key index -> why it stopped
+        self.cool: dict[int, float] = {}      # key index -> time it may be used again
+        self.last: dict[int, float] = {}      # key index -> last call time
         self.calls = 0
+        self.switches = 0
 
-    def _headers(self):
-        return {"x-goog-api-key": self.key, "Content-Type": "application/json"}
+    @property
+    def exhausted(self) -> bool:
+        return len(self.dead) >= len(self.keys)
 
-    def list_models(self) -> list[str]:
-        r = self.s.get(f"{API}/models", params={"pageSize": 200}, headers=self._headers(), timeout=30)
+    def live_count(self) -> int:
+        return len(self.keys) - len(self.dead)
+
+    def _hdr(self, i: int):
+        return {"x-goog-api-key": self.keys[i], "Content-Type": "application/json"}
+
+    def _kill(self, i: int, why: str):
+        if i not in self.dead:
+            self.dead[i] = why
+            self.switches += 1
+            left = self.live_count()
+            log(f"Gemini key #{i + 1} {why}." + (f" Switching to another key ({left} left)." if left else " No keys left - using plain templates."))
+
+    def list_models(self, i: int = 0) -> list[str]:
+        r = self.s.get(f"{API}/models", params={"pageSize": 200}, headers=self._hdr(i), timeout=30)
         r.raise_for_status()
+        return [m["name"].split("/", 1)[-1] for m in r.json().get("models", [])
+                if "generateContent" in (m.get("supportedGenerationMethods") or [])]
+
+    def check_keys(self) -> list[tuple[int, bool, str]]:
+        """For the self-test: does each key work? (uses no generation quota)"""
         out = []
-        for m in r.json().get("models", []):
-            if "generateContent" in (m.get("supportedGenerationMethods") or []):
-                out.append(m["name"].split("/", 1)[-1])
+        for i in range(len(self.keys)):
+            try:
+                n = len(self.list_models(i))
+                out.append((i, True, f"{n} models available"))
+            except requests.HTTPError as e:
+                out.append((i, False, f"rejected (HTTP {e.response.status_code})"))
+            except requests.RequestException as e:
+                out.append((i, False, type(e).__name__))
         return out
 
     def pick_model(self) -> str:
         if self.model:
             return self.model
-        avail = self.list_models()
-        for name in PREFERRED:
-            if name in avail:
-                self.model = name
-                return name
-        flash = sorted([m for m in avail if "flash" in m and "image" not in m and "tts" not in m and "live" not in m
-                        and "audio" not in m], reverse=True)
-        if flash:
-            self.model = flash[0]
-            return self.model
-        raise RuntimeError("no usable Gemini model found for this API key")
+        last_err = None
+        for i in range(len(self.keys)):
+            if i in self.dead:
+                continue
+            try:
+                avail = self.list_models(i)
+            except requests.RequestException as e:
+                last_err = e
+                continue
+            for name in PREFERRED:
+                if name in avail:
+                    self.model = name
+                    return name
+            flash = sorted([m for m in avail if "flash" in m and not any(x in m for x in ("image", "tts", "live", "audio"))], reverse=True)
+            if flash:
+                self.model = flash[0]
+                return self.model
+        raise RuntimeError("no usable Gemini model found" + (f" ({type(last_err).__name__})" if last_err else ""))
 
-    def generate_json(self, prompt: str) -> dict:
-        """Returns parsed JSON. Raises on failure."""
-        if self.exhausted:
-            raise RuntimeError("Gemini quota used up for now")
-        model = self.pick_model()
-        body = {"contents": [{"parts": [{"text": prompt}]}],
-                "generationConfig": {"temperature": 0.7, "maxOutputTokens": 2048,
-                                     "responseMimeType": "application/json"}}
-        for attempt in range(3):
-            wait = 6.5 - (time.time() - self._last_call)   # stay under the free per-minute limit
+    def _next_key(self) -> int:
+        """The live key that has rested the longest; waits if every key is cooling down."""
+        while True:
+            live = [i for i in range(len(self.keys)) if i not in self.dead]
+            if not live:
+                raise RuntimeError("all Gemini keys are out of quota or rejected")
+            now = time.time()
+            ready = [i for i in live if self.cool.get(i, 0) <= now]
+            if not ready:
+                time.sleep(max(1.0, min(self.cool[i] for i in live) - now))
+                continue
+            i = min(ready, key=lambda k: self.last.get(k, 0))
+            wait = self.last.get(i, 0) + self.MIN_INTERVAL - time.time()
             if wait > 0:
                 time.sleep(wait)
-            self._last_call = time.time()
-            r = self.s.post(f"{API}/models/{model}:generateContent", headers=self._headers(), json=body, timeout=60)
+            return i
+
+    def generate_json(self, prompt: str, max_tokens: int = 2048, temperature: float = 0.7) -> dict:
+        """Returns parsed JSON. Raises if every key fails."""
+        body = {"contents": [{"parts": [{"text": prompt}]}],
+                "generationConfig": {"temperature": temperature, "maxOutputTokens": max_tokens,
+                                     "responseMimeType": "application/json"}}
+        for _ in range(3 * max(1, len(self.keys)) + 4):
+            if self.exhausted:
+                break
+            model = self.pick_model()
+            i = self._next_key()
+            self.last[i] = time.time()
+            try:
+                r = self.s.post(f"{API}/models/{model}:generateContent", headers=self._hdr(i), json=body, timeout=90)
+            except requests.RequestException:
+                self.cool[i] = time.time() + 10
+                continue
             self.calls += 1
-            if r.status_code == 200:
-                data = r.json()
+            code = r.status_code
+            if code == 200:
                 try:
-                    text = data["candidates"][0]["content"]["parts"][0]["text"]
-                except (KeyError, IndexError):
+                    text = r.json()["candidates"][0]["content"]["parts"][0]["text"]
+                except (KeyError, IndexError, ValueError):
                     raise RuntimeError("Gemini returned an empty answer")
                 text = re.sub(r"^```(?:json)?|```$", "", text.strip(), flags=re.M).strip()
                 return json.loads(text)
-            if r.status_code == 404:
-                self.model = ""          # model retired -> pick another one
-                model = self.pick_model()
+            low = r.text.lower()
+            if code == 404:
+                self.model = ""                      # model retired: choose another
                 continue
-            if r.status_code == 429:
-                msg = r.text
-                if "PerDay" in msg or "per day" in msg.lower():
-                    self.exhausted = True
-                    raise RuntimeError("Gemini daily free quota used up")
-                m = re.search(r"retry in ([\d.]+)s", msg)
-                time.sleep(min(60, float(m.group(1)) + 1 if m else 20))
+            if code == 429:
+                if "perday" in low or "per day" in low or "daily" in low:
+                    self._kill(i, "used up its daily free quota")
+                else:
+                    m = re.search(r"retry in ([\d.]+)s", r.text)
+                    self.cool[i] = time.time() + min(90.0, float(m.group(1)) + 1 if m else 25.0)
                 continue
-            if r.status_code >= 500:
-                time.sleep(5 * (attempt + 1))
+            if code in (401, 403) or (code == 400 and ("api key" in low or "api_key" in low)):
+                self._kill(i, "was rejected (invalid, expired or blocked)")
                 continue
-            raise RuntimeError(f"Gemini error HTTP {r.status_code}")
-        raise RuntimeError("Gemini did not answer")
+            if code >= 500:
+                self.cool[i] = time.time() + 12
+                continue
+            raise RuntimeError(f"Gemini error HTTP {code}")
+        raise RuntimeError("Gemini did not answer (all keys busy or out of quota)")
 
 
 # ------------------------------------------------------------------ helpers

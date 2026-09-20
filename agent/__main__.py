@@ -14,6 +14,7 @@ from .scheduler import run_cycle
 from .slack import Slack
 from .web import Fetcher
 from .writer import Gemini
+from .wordpress import WordPress, WordPressError
 
 
 def build(cfg):
@@ -21,8 +22,22 @@ def build(cfg):
     portal = Portal(cfg.portal_url, cfg.agent_token)
     slack = Slack(cfg)
     audit = AuditClient(cfg.audit_url, cfg.audit_token) if cfg.audit_url and cfg.audit_token else None
-    gemini = Gemini(cfg.gemini_key, cfg.gemini_model) if cfg.gemini_key else None
+    gemini = Gemini(cfg.gemini_keys, cfg.gemini_model) if cfg.gemini_keys else None
     return portal, slack, audit, gemini, Fetcher()
+
+
+def build_extras(cfg):
+    """Optional helpers: Overture Maps (needs duckdb) and WordPress publishing."""
+    overture = None
+    if cfg.overture_on:
+        try:
+            import duckdb  # noqa: F401
+            from .overture import Overture
+            overture = Overture()
+        except ImportError:
+            log("Overture Maps is off: the 'duckdb' package is not installed.")
+    wp = WordPress(cfg.wp_url, cfg.wp_user, cfg.wp_password, cfg.wp_mode) if (cfg.wp_url and cfg.wp_user and cfg.wp_password) else None
+    return overture, wp
 
 
 def selftest(cfg) -> int:
@@ -65,12 +80,14 @@ def selftest(cfg) -> int:
     if not gemini:
         line(None, "No GEMINI_API_KEY - messages will use plain templates instead of AI")
     else:
+        for i, ok, note in gemini.check_keys():
+            line(True if ok else None, f"Gemini key #{i + 1} of {len(gemini.keys)}: {'works' if ok else 'PROBLEM - ' + note}" + (f" ({note})" if ok else ""))
         try:
             model = gemini.pick_model()
             out = gemini.generate_json('Reply with exactly this JSON: {"ok": true}')
-            line(bool(out), f"Gemini AI working (model {model})")
+            line(bool(out), f"Gemini AI writing works (model {model}; {gemini.live_count()} key(s) in use)")
         except Exception as e:  # noqa: BLE001
-            line(None, f"Gemini problem ({safe_exc(e, 120)}) - templates will be used until it works")
+            line(None, f"Gemini writing problem ({safe_exc(e, 120)}) - templates will be used until it works")
 
     if not (cfg.slack_agent):
         line(None, "No Slack webhook set - you will not get Slack updates")
@@ -84,6 +101,25 @@ def selftest(cfg) -> int:
         line(True, f"OpenStreetMap (free lead source) reachable - test search returned {len(found)} results")
     except Exception as e:  # noqa: BLE001
         line(None, f"OpenStreetMap busy right now ({safe_exc(e, 80)}) - the agent retries automatically")
+
+    overture, wp = build_extras(cfg)
+    if not cfg.overture_on:
+        line(None, "Overture Maps switched off (USE_OVERTURE=no)")
+    elif overture is None:
+        line(None, "Overture Maps not available (duckdb missing) - only OpenStreetMap will be used")
+    else:
+        try:
+            got = overture.search(51.5074, -0.1278, 1500, ["dentist"], "London", limit=5)
+            line(True, f"Overture Maps (bigger free lead source) works - release {overture.release}, test search returned {len(got)} results")
+        except Exception as e:  # noqa: BLE001
+            line(None, f"Overture Maps problem ({safe_exc(e, 140)}) - the agent falls back to OpenStreetMap")
+    if wp is None:
+        line(None, "WordPress not connected (optional) - approved blog posts must be pasted into your website by you")
+    else:
+        try:
+            line(True, f"WordPress connected as '{wp.ping()}' (new posts are sent as {wp.mode})")
+        except (WordPressError, requests.RequestException) as e:
+            line(False, f"WordPress: {safe_exc(e, 140)}")
 
     if cfg.explorium_key:
         try:
@@ -113,6 +149,7 @@ def once(cfg, minutes: float | None = None) -> int:
         print("Settings missing: " + ", ".join(miss))
         return 1
     portal, slack, audit, gemini, fetcher = build(cfg)
+    overture, wp = build_extras(cfg)
     try:
         portal.ping()
     except PortalError as e:
@@ -120,7 +157,7 @@ def once(cfg, minutes: float | None = None) -> int:
         slack.error("The agent cannot reach your portal, so this run stopped. It will try again at the next scheduled run.")
         return 1
     try:
-        summary = run_cycle(cfg, portal, slack, audit, gemini, fetcher, minutes or cfg.run_minutes)
+        summary = run_cycle(cfg, portal, slack, audit, gemini, fetcher, minutes or cfg.run_minutes, overture=overture, wp=wp)
     except PortalError as e:
         log(f"Run stopped: {safe_exc(e)}")
         slack.error(f"Run stopped: {safe_exc(e, 200)}")

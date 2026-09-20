@@ -68,8 +68,10 @@ def run_seo(cfg, portal: Portal, audit: AuditClient | None, gemini: Gemini | Non
     body = (f"Health score: {res.get('health_score')}/100 ({res.get('health_label')}). "
             f"Critical issues: {res.get('critical_count')}, high: {res.get('high_count')}. "
             f"Mobile speed: {res.get('mobile_perf')}. New suggestions added: {out['new_items']}.")
-    portal.add_note(f"SEO check {today}", body)
-    portal.log("seo", f"Checked your website: score {res.get('health_score')}/100, {out['new_items']} new suggestions")
+    from .agent_utils import domain_of
+    site = domain_of(cfg.own_website)
+    portal.add_note(f"SEO check {today} - {site}", body, subject=site, kind="seo")
+    portal.log("seo", f"Checked {site}: score {res.get('health_score')}/100, {out['new_items']} new suggestions")
     portal.state_set("seo:last_run", today)
     out["ok"] = True
     return out

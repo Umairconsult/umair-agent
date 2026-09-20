@@ -54,7 +54,14 @@ class Portal:
         except PortalError:
             pass
     def add_seo(self, **kw): return self.call("add_seo", **kw)
-    def add_note(self, title: str, body: str = ""): return self.call("add_note", title=title, body=body)
+    def add_note(self, title: str, body: str = "", subject: str = "", kind: str = "general"):
+        return self.call("add_note", title=title, body=body, subject=subject, kind=kind)
+    def add_content(self, **kw) -> dict: return self.call("add_content", **kw)
+    def content_list(self, **kw) -> list: return self.call("content_list", **kw)["items"]
+    def content_update(self, **kw): return self.call("content_update", **kw)
+    def seo_list(self, **kw) -> list: return self.call("seo_list", **kw)["items"]
+    def leads_to_followup(self, limit=10) -> list: return self.call("leads_to_followup", limit=limit)["leads"]
+    def save_followup(self, **kw): return self.call("save_followup", **kw)
     def state_set(self, key: str, value: str): return self.call("state_set", key=key, value=value)
     def state_list(self, prefix: str) -> dict:
         items = self.call("state_list", prefix=prefix, limit=20000)["items"]

@@ -1,4 +1,4 @@
-"""The agent's daily routine: find leads -> audit -> write messages -> SEO -> brief."""
+"""The agent's daily routine: find leads -> audit -> write messages -> follow-ups -> blog -> SEO -> brief."""
 from __future__ import annotations
 import random
 import time
@@ -9,13 +9,16 @@ from zoneinfo import ZoneInfo
 from . import osm
 from .agent_utils import domain_of
 from .audit import AuditClient, AuditError, lead_score, summarize_audit
+from .blog import run_blog
 from .cities import CITIES, COUNTRY_NAMES, COUNTRY_WEIGHT
+from .followups import run_followups
 from .logutil import log, safe_exc
-from .niches import NICHES, NO_FREE_SOURCE, usable_niches, word_match
+from .niches import osm_filters, ov_keywords, usable_niches, word_match
 from .portal import Portal, PortalError
 from .seo import run_seo
 from .slack import Slack
-from .web import Fetcher, enrich_from_website, normalize_phone, clean_email
+from .web import Fetcher, clean_email, enrich_from_website, normalize_phone
+from .wordpress import WordPress, publish_approved
 from .writer import Gemini, write_messages
 
 RESEARCH_DAYS = 60          # don't repeat the same city+niche search within this many days
@@ -42,25 +45,35 @@ def warmup_target(cfg, start: date, today: date) -> int:
 def channel_plan(cfg, target: int) -> dict:
     caps = cfg.channel_caps
     total = sum(caps.values()) or 1
-    plan = {k: min(v, round(target * v / total)) for k, v in caps.items()}
-    return plan
+    return {k: min(v, round(target * v / total)) for k, v in caps.items()}
 
 
-def pick_searches(cfg, done: dict, today: date, k: int, rng=random) -> list[tuple]:
-    names, pri = usable_niches(cfg.blocked_niches, cfg.priority_niches)
+def _recent(done: dict, key: str, today: date) -> bool:
+    if key not in done:
+        return False
+    try:
+        return (today - date.fromisoformat(done[key])).days < RESEARCH_DAYS
+    except ValueError:
+        return False
+
+
+def pick_searches(cfg, done: dict, today: date, k: int, overture_on: bool = False, rng=random) -> list[tuple]:
+    """Choose the next city+niche searches. Returns (cc, city, lat, lon, niche, sources) where
+    sources lists which data sources ('osm', 'ov') still need to be searched for that combination."""
+    names, pri = usable_niches(cfg.blocked_niches, cfg.priority_niches, overture_on)
     combos = []
     for cc in cfg.countries:
         for rank, (city, lat, lon) in enumerate(CITIES.get(cc, [])):
             for niche in names:
-                key = f"search:{cc}:{city}:{niche}"
-                if key in done:
-                    try:
-                        if (today - date.fromisoformat(done[key])).days < RESEARCH_DAYS:
-                            continue
-                    except ValueError:
-                        pass
+                due = []
+                if osm_filters(niche) and not _recent(done, f"search:{cc}:{city}:{niche}", today):
+                    due.append("osm")
+                if overture_on and ov_keywords(niche) and not _recent(done, f"ov:{cc}:{city}:{niche}", today):
+                    due.append("ov")
+                if not due:
+                    continue
                 w = COUNTRY_WEIGHT.get(cc, 1.0) * (3.0 if niche in pri else 1.0) * (1.6 if rank < 5 else 1.0)
-                combos.append((w, cc, city, lat, lon, niche, key))
+                combos.append((w, cc, city, lat, lon, niche, due))
     picks = []
     for _ in range(min(k, len(combos))):
         total = sum(c[0] for c in combos)
@@ -90,6 +103,7 @@ class Deadline:
 
     def left(self) -> float: return self.end - time.time()
     def over(self) -> bool: return self.left() <= 0
+
     def slice(self, fraction: float) -> "Deadline":
         d = Deadline(0)
         d.end = min(self.end, time.time() + max(0.0, self.left()) * fraction)
@@ -97,53 +111,71 @@ class Deadline:
 
 
 # ------------------------------------------------------------------ phases
-def phase_find_leads(cfg, portal: Portal, slack: Slack, fetcher: Fetcher, stats: dict, dl: Deadline, dnc: list) -> dict:
-    res = {"created": 0, "searches": 0, "skipped": 0, "by_country": {}, "errors": 0}
+def phase_find_leads(cfg, portal: Portal, slack: Slack, fetcher: Fetcher, stats: dict, dl: Deadline, dnc: list, overture=None) -> dict:
+    res = {"created": 0, "searches": 0, "skipped": 0, "by_country": {}, "errors": 0, "overture": 0, "osm": 0}
     room = cfg.max_new_leads - stats.get("leads_today", 0)
     if room <= 0:
         log(f"Lead limit for today reached ({cfg.max_new_leads}).")
         return res
+    if stats.get("unaudited", 0) > cfg.max_backlog:
+        log(f"{stats['unaudited']} leads are still waiting for an audit - auditing first, finding more later.")
+        return res
     today = date.fromisoformat(local_now(cfg).strftime("%Y-%m-%d"))
-    done = portal.state_list("search:")
+    done = {**portal.state_list("search:"), **portal.state_list("ov:")}
     dnc_domains = {i["value"] for i in dnc if i["kind"] == "domain"}
     dnc_emails = {i["value"] for i in dnc if i["kind"] == "email"}
     priority = cfg.priority_niches
     seen_domains: set[str] = set()
-    ok_session = 0
+    ov_failures = 0
     while room > 0 and not dl.over():
-        picks = pick_searches(cfg, done, today, 1)
+        overture_on = overture is not None and ov_failures < 3
+        picks = pick_searches(cfg, done, today, 1, overture_on)
         if not picks:
             log("Every city+niche combination was searched recently. Nothing new to search.")
             break
-        cc, city, lat, lon, niche, key = picks[0]
-        log(f"Searching {niche} near {city}, {cc}")
-        try:
-            elements = osm.search(lat, lon, 15000, NICHES[niche], city)
-        except osm.OverpassError as e:
-            log(f"OpenStreetMap problem: {safe_exc(e, 100)}")
-            res["errors"] += 1
-            if res["errors"] >= 3:
-                break
-            time.sleep(15)
-            continue
+        cc, city, lat, lon, niche, sources = picks[0]
+        log(f"Searching {niche} near {city}, {cc} ({' + '.join('Overture' if s == 'ov' else 'OpenStreetMap' for s in sources)})")
+        elements: list[dict] = []
+        finished: list[str] = []
+        if "ov" in sources and overture is not None:
+            try:
+                got = overture.search(lat, lon, 15000, ov_keywords(niche), city)
+                elements += got
+                finished.append(f"ov:{cc}:{city}:{niche}")
+                res["overture"] += len(got)
+            except Exception as e:  # noqa: BLE001 - Overture problems must never stop the run
+                ov_failures += 1
+                log(f"Overture problem: {safe_exc(e, 120)}")
+        if "osm" in sources:
+            try:
+                got = osm.search(lat, lon, 15000, osm_filters(niche), city)
+                for g in got:
+                    g["source"] = "osm"
+                elements += got
+                finished.append(f"search:{cc}:{city}:{niche}")
+                res["osm"] += len(got)
+            except osm.OverpassError as e:
+                log(f"OpenStreetMap problem: {safe_exc(e, 100)}")
+                res["errors"] += 1
+                if res["errors"] >= 3:
+                    break
+                time.sleep(10)
         res["searches"] += 1
         candidates = []
         for el in elements:
-            name = el["business_name"]
-            if word_match(name, cfg.blocked_niches):
-                res["skipped"] += 1
-                continue
+            ecc = (el.get("country") or cc).upper()
             dom = domain_of(el["website"])
-            if not dom or dom in seen_domains or dom in dnc_domains:
+            if ecc not in cfg.countries or word_match(el["business_name"], cfg.blocked_niches) \
+                    or not dom or dom in seen_domains or dom in dnc_domains:
                 res["skipped"] += 1
                 continue
             seen_domains.add(dom)
+            el["_cc"] = ecc
             candidates.append(el)
         candidates = candidates[:PER_SEARCH_MAX]
 
         def work(el):
-            info = enrich_from_website(fetcher, el["website"], cc)
-            return el, info
+            return el, enrich_from_website(fetcher, el["website"], el["_cc"])
 
         created_here = 0
         with ThreadPoolExecutor(max_workers=6) as pool:
@@ -159,18 +191,19 @@ def phase_find_leads(cfg, portal: Portal, slack: Slack, fetcher: Fetcher, stats:
                 if not info["reachable"]:
                     res["skipped"] += 1
                     continue
+                ecc = el["_cc"]
                 email = clean_email(el.get("email", "")) or info["email"]
                 if email and email in dnc_emails:
                     res["skipped"] += 1
                     continue
-                phone = normalize_phone(el.get("phone", ""), cc) or info["phone"]
                 lead = {
-                    "business_name": el["business_name"], "website": el["website"], "email": email, "phone": phone,
-                    "country": cc, "region": el["region"], "address": el["address"], "niche": niche,
-                    "facebook_url": el["facebook_url"] or info["facebook_url"],
-                    "instagram_url": el["instagram_url"] or info["instagram_url"],
-                    "linkedin_url": el["linkedin_url"] or info["linkedin_url"],
-                    "contact_page_url": info["contact_page_url"], "source": "osm",
+                    "business_name": el["business_name"], "website": el["website"], "email": email,
+                    "phone": normalize_phone(el.get("phone", ""), ecc) or info["phone"],
+                    "country": ecc, "region": el.get("region", city), "address": el.get("address", ""), "niche": niche,
+                    "facebook_url": el.get("facebook_url") or info["facebook_url"],
+                    "instagram_url": el.get("instagram_url") or info["instagram_url"],
+                    "linkedin_url": el.get("linkedin_url") or info["linkedin_url"],
+                    "contact_page_url": info["contact_page_url"], "source": el.get("source", "osm"),
                 }
                 if not (lead["email"] or lead["phone"] or lead["facebook_url"] or lead["linkedin_url"] or lead["contact_page_url"]):
                     res["skipped"] += 1        # no way to reach them
@@ -190,14 +223,15 @@ def phase_find_leads(cfg, portal: Portal, slack: Slack, fetcher: Fetcher, stats:
                     created_here += 1
                     room -= 1
                     res["created"] += 1
-                    res["by_country"][cc] = res["by_country"].get(cc, 0) + 1
-        try:
-            portal.state_set(key, today.isoformat())
-            done[key] = today.isoformat()
-        except PortalError:
-            pass
+                    res["by_country"][ecc] = res["by_country"].get(ecc, 0) + 1
+        for key in finished:
+            try:
+                portal.state_set(key, today.isoformat())
+                done[key] = today.isoformat()
+            except PortalError:
+                pass
         log(f"  -> {created_here} new leads saved from this search")
-        time.sleep(3)   # be gentle with the free OpenStreetMap servers
+        time.sleep(2)   # be gentle with the free servers
     if res["created"]:
         portal.log("lead_found", f"Found {res['created']} new leads (" + ", ".join(f"{COUNTRY_NAMES.get(c, c)}: {n}" for c, n in res["by_country"].items()) + ")")
     return res
@@ -220,7 +254,7 @@ def phase_audit(cfg, portal: Portal, audit: AuditClient, stats: dict, dl: Deadli
                 break
             lid = int(lead["id"])
             try:
-                r = audit.run(lead["website"])
+                r = audit.run(lead["website"], full=True)
             except AuditError as e:
                 log(f"Audit tool problem: {safe_exc(e, 100)}")
                 failed.add(lid); res["transient"] += 1; consecutive += 1
@@ -229,18 +263,19 @@ def phase_audit(cfg, portal: Portal, audit: AuditClient, stats: dict, dl: Deadli
                 if r.get("unreachable"):
                     portal.mark_bad_data(lid, "website unreachable")
                     res["bad"] += 1
+                    consecutive = 0
                 else:
-                    failed.add(lid); res["transient"] += 1
-                consecutive = 0 if r.get("unreachable") else consecutive + 1
+                    failed.add(lid); res["transient"] += 1; consecutive += 1
                 continue
             consecutive = 0
-            ls = lead_score(r, int(lead.get("score") or 0))
-            portal.save_audit(id=lid, audit_score=r.get("health_score"), audit_summary=summarize_audit(r), lead_score=ls)
+            ls = lead_score(r, min(50, int(lead.get("score") or 0)))
+            portal.save_audit(id=lid, audit_score=r.get("health_score"), audit_summary=summarize_audit(r),
+                              lead_score=ls, audit_blob=r.get("blob") or "TOOBIG")
             res["done"] += 1
             room -= 1
             time.sleep(cfg.audit_pause)
     if res["done"] or res["bad"]:
-        portal.log("audit", f"Audited {res['done']} websites ({res['bad']} unreachable and set aside)")
+        portal.log("audit", f"Audited {res['done']} websites with full reports ({res['bad']} unreachable and set aside)")
     return res
 
 
@@ -267,7 +302,7 @@ def phase_write(cfg, portal: Portal, gemini: Gemini | None, stats: dict, dl: Dea
     return res
 
 
-def phase_brief(cfg, portal: Portal, slack: Slack, target_today: int) -> bool:
+def phase_brief(cfg, portal: Portal, slack: Slack, target_today: int, gemini: Gemini | None = None) -> bool:
     now = local_now(cfg)
     today = now.strftime("%Y-%m-%d")
     if now.hour < cfg.brief_hour:
@@ -276,15 +311,18 @@ def phase_brief(cfg, portal: Portal, slack: Slack, target_today: int) -> bool:
         return False
     st = portal.stats()
     plan = channel_plan(cfg, target_today)
-    text = (f"*:robot_face: AI Agent daily brief - {today}*\n"
-            f"- New leads found today: *{st['leads_today']}* (total {st['leads_total']})\n"
-            f"- Websites audited today: *{st['audits_today']}*\n"
-            f"- Ready to send now: *{st['ready_to_send']}* (today's target {target_today})\n"
-            f"- Contacted today: *{st['contacted_today']}* | Replies: *{st['replied']}* | Follow-ups due: *{st['followups_due']}*\n"
-            f"*Suggested plan for today:* :email: {plan['email']} email, :speech_balloon: {plan['whatsapp']} WhatsApp, "
-            f"LinkedIn {plan['linkedin']}, Messenger {plan['messenger']}\n"
-            f"Open your portal: {cfg.portal_url}/admin_ai_agent.php")
-    if slack.agent(text):
+    drafts = len(portal.content_list(status="draft", limit=50))
+    lines = [f"*:robot_face: AI Agent daily brief - {today}*",
+             f"- New leads found today: *{st['leads_today']}* (total {st['leads_total']})",
+             f"- Websites audited today: *{st['audits_today']}* | still waiting for audit: *{st.get('unaudited', 0)}*",
+             f"- Ready to send now: *{st['ready_to_send']}* (today's target {target_today})",
+             f"- Contacted today: *{st['contacted_today']}* | Replies: *{st['replied']}* | Follow-ups due: *{st['followups_due']}*",
+             f"- Blog drafts waiting for your review: *{drafts}*",
+             f"*Suggested plan for today:* email {plan['email']}, WhatsApp {plan['whatsapp']}, LinkedIn {plan['linkedin']}, Messenger {plan['messenger']}"]
+    if gemini and len(gemini.keys) > 1:
+        lines.append(f"- AI keys working: {gemini.live_count()} of {len(gemini.keys)}")
+    lines.append(f"Open your portal: {cfg.portal_url}/admin_ai_agent.php")
+    if slack.agent("\n".join(lines)):
         portal.state_set("brief:last", today)
         return True
     return False
@@ -292,7 +330,7 @@ def phase_brief(cfg, portal: Portal, slack: Slack, target_today: int) -> bool:
 
 # ------------------------------------------------------------------ one full cycle
 def run_cycle(cfg, portal: Portal, slack: Slack, audit: AuditClient | None, gemini: Gemini | None,
-              fetcher: Fetcher, minutes: float) -> dict:
+              fetcher: Fetcher, minutes: float, overture=None, wp: WordPress | None = None) -> dict:
     summary: dict = {"errors": []}
     overall = Deadline(minutes)
     stats = portal.stats()
@@ -316,27 +354,38 @@ def run_cycle(cfg, portal: Portal, slack: Slack, audit: AuditClient | None, gemi
             portal.log("error", msg)
             return None
 
-    r1 = guarded("Lead finder", lambda: phase_find_leads(cfg, portal, slack, fetcher, stats, overall.slice(0.30), dnc))
+    r1 = guarded("Lead finder", lambda: phase_find_leads(cfg, portal, slack, fetcher, stats, overall.slice(0.25), dnc, overture))
     if r1:
         summary["leads"] = r1
         if r1["created"]:
             slack.leads(f":sparkles: *{r1['created']} new leads* found: " + ", ".join(f"{COUNTRY_NAMES.get(c, c)} {n}" for c, n in r1["by_country"].items()))
     stats = portal.stats()
     if audit:
-        r2 = guarded("Audits", lambda: phase_audit(cfg, portal, audit, stats, overall.slice(0.55)))
+        r2 = guarded("Audits", lambda: phase_audit(cfg, portal, audit, stats, overall.slice(0.65)))
         if r2: summary["audits"] = r2
     else:
         log("Audit tool not configured (AUDIT_URL / AUDIT_API_TOKEN) - skipping audits.")
     stats = portal.stats()
-    r3 = guarded("Message writer", lambda: phase_write(cfg, portal, gemini, stats, overall.slice(0.9), target_today))
+    r3 = guarded("Message writer", lambda: phase_write(cfg, portal, gemini, stats, overall.slice(0.7), target_today))
     if r3: summary["messages"] = r3
+    if not overall.over():
+        r5 = guarded("Follow-ups", lambda: run_followups(cfg, portal, gemini, overall.slice(0.5)))
+        if r5: summary["followups"] = r5
+    if not overall.over():
+        r6 = guarded("Blog writer", lambda: run_blog(cfg, portal, gemini, today_dt))
+        if r6: summary["blog"] = r6
+    if wp is not None:
+        r7 = guarded("Website publishing", lambda: publish_approved(cfg, portal, wp))
+        if r7: summary["website"] = r7
 
     last_seo = portal.state_list("seo:last_run").get("seo:last_run", "")
     if audit and (not last_seo or (today_dt - date.fromisoformat(last_seo)).days >= 7):
         r4 = guarded("SEO check", lambda: run_seo(cfg, portal, audit, gemini, today_dt.isoformat()))
         if r4: summary["seo"] = r4
-    guarded("Daily brief", lambda: phase_brief(cfg, portal, slack, target_today))
+    guarded("Daily brief", lambda: phase_brief(cfg, portal, slack, target_today, gemini))
 
+    if gemini and gemini.dead:
+        summary["gemini_keys_lost"] = len(gemini.dead)
     if summary["errors"]:
         slack.error("\n".join("- " + e for e in summary["errors"][:5]))
     return summary

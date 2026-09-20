@@ -1,0 +1,70 @@
+name: AI Agent
+
+on:
+  schedule:
+    - cron: "17 */3 * * *"      # runs by itself every 3 hours
+  workflow_dispatch:            # lets you press the "Run workflow" button
+    inputs:
+      mode:
+        description: "What to run (selftest = check everything works, once = do a real run now)"
+        type: choice
+        options:
+          - selftest
+          - once
+        default: selftest
+
+concurrency:
+  group: ai-agent
+  cancel-in-progress: false
+
+permissions:
+  contents: write   # only used for a tiny monthly "keep-alive" note
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        run: pip install -r requirements.txt
+
+      - name: Load your settings (kept secret)
+        env:
+          SETTINGS_ENV: ${{ secrets.SETTINGS_ENV }}
+        run: |
+          python - <<'PY'
+          import os, re, sys
+          s = os.environ.get("SETTINGS_ENV", "")
+          if not s.strip():
+              print("PROBLEM: the secret SETTINGS_ENV is empty or missing. Add it in Settings > Secrets and variables > Actions.")
+              sys.exit(1)
+          open("settings.env", "w").write(s)
+          # hide every value from the public logs, just in case
+          for line in s.splitlines():
+              line = line.strip()
+              if not line or line.startswith("#") or "=" not in line:
+                  continue
+              val = re.split(r"\s*<--", line.split("=", 1)[1], maxsplit=1)[0].strip()
+              if len(val) >= 6:
+                  print("::add-mask::" + val)
+          PY
+
+      - name: Run the agent
+        run: python -m agent ${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'once' }}
+
+      - name: Keep the schedule alive (GitHub pauses idle repos after 60 days)
+        if: github.event_name == 'schedule'
+        run: |
+          date -u +%Y-%m > .keepalive
+          git config user.name "agent-keepalive"
+          git config user.email "agent-keepalive@users.noreply.github.com"
+          git add .keepalive
+          git commit -m "monthly keepalive" || true
+          git push || true

@@ -54,6 +54,7 @@ class Portal:
         except PortalError:
             pass
     def add_seo(self, **kw): return self.call("add_seo", **kw)
+    def seo_update(self, **kw): return self.call("seo_update", **kw)
     def add_note(self, title: str, body: str = "", subject: str = "", kind: str = "general"):
         return self.call("add_note", title=title, body=body, subject=subject, kind=kind)
     def add_content(self, **kw) -> dict: return self.call("add_content", **kw)

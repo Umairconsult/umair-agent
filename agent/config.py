@@ -154,6 +154,10 @@ class Settings:
     @property
     def wp_password(self): return self.get("WP_APP_PASSWORD")
     @property
+    def seo_pages_per_run(self): return self.int("SEO_PAGES_PER_RUN", 3)
+    @property
+    def seo_auto_apply(self): return self.get("SEO_AUTO_APPLY", "no").lower() in ("yes", "true", "1", "on")
+    @property
     def wp_mode(self): return "publish" if self.get("WP_PUBLISH_MODE", "draft").lower() == "publish" else "draft"
 
 

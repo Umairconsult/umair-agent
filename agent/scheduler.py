@@ -15,7 +15,7 @@ from .followups import run_followups
 from .logutil import log, safe_exc
 from .niches import osm_filters, ov_keywords, usable_niches, word_match
 from .portal import Portal, PortalError
-from .seo import run_seo
+from .seo import apply_approved_seo, run_page_seo, run_seo
 from .slack import Slack
 from .web import Fetcher, clean_email, enrich_from_website, normalize_phone
 from .wordpress import WordPress, publish_approved
@@ -377,6 +377,11 @@ def run_cycle(cfg, portal: Portal, slack: Slack, audit: AuditClient | None, gemi
     if wp is not None:
         r7 = guarded("Website publishing", lambda: publish_approved(cfg, portal, wp))
         if r7: summary["website"] = r7
+        r8 = guarded("Applying approved SEO fixes", lambda: apply_approved_seo(cfg, portal, wp))
+        if r8: summary["seo_applied"] = r8
+        if audit and not overall.over():
+            r9 = guarded("Page-by-page SEO", lambda: run_page_seo(cfg, portal, audit, gemini, wp, today_dt.isoformat()))
+            if r9: summary["page_seo"] = r9
 
     last_seo = portal.state_list("seo:last_run").get("seo:last_run", "")
     if audit and (not last_seo or (today_dt - date.fromisoformat(last_seo)).days >= 7):

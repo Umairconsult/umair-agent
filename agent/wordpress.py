@@ -1,6 +1,10 @@
 """Optional: sends blog posts you APPROVED in the portal to your WordPress website.
 Uses a WordPress "Application Password" (safe, revocable, no main password needed)."""
 from __future__ import annotations
+import json
+import re
+from urllib.parse import urlparse
+
 import requests
 
 from .logutil import log, safe_exc
@@ -9,6 +13,14 @@ from .portal import Portal
 
 class WordPressError(Exception):
     pass
+
+
+def norm_link(u: str) -> str:
+    """https://www.Site.com/About/?x=1 -> site.com/about"""
+    p = urlparse(u if "://" in u else "https://" + u)
+    host = (p.netloc or "").lower()
+    host = host[4:] if host.startswith("www.") else host
+    return host + (p.path.rstrip("/") or "")
 
 
 class WordPress:
@@ -29,9 +41,66 @@ class WordPress:
         r.raise_for_status()
         return r.json().get("name", "")
 
-    def create_post(self, title: str, html: str, slug: str, excerpt: str) -> tuple[int, str]:
-        r = self.s.post(self.base + "/posts", auth=self.auth, timeout=60,
-                        json={"title": title, "content": html, "slug": slug, "excerpt": excerpt, "status": self.mode})
+    # ---- SEO fields (Rank Math), available after the small WPCode snippet is installed ----
+    _SEO_KEYS = ("rank_math_title", "rank_math_description", "rank_math_focus_keyword")
+    _seo_ok: bool | None = None
+    _index: dict | None = None
+
+    def seo_ready(self) -> bool:
+        if self._seo_ok is None:
+            try:
+                r = self.s.get(self.base + "/pages", auth=self.auth, timeout=30, params={"per_page": 1, "context": "edit", "_fields": "id,meta"})
+                meta = (r.json()[0].get("meta") if r.status_code == 200 and r.json() else None)
+                self._seo_ok = isinstance(meta, dict) and "rank_math_description" in meta
+            except (requests.RequestException, ValueError, IndexError, KeyError):
+                self._seo_ok = False
+        return self._seo_ok
+
+    def _list(self, route: str) -> list[dict]:
+        out: list[dict] = []
+        for page in range(1, 6):
+            r = self.s.get(f"{self.base}/{route}", auth=self.auth, timeout=40,
+                           params={"per_page": 100, "page": page, "status": "publish", "_fields": "id,link,slug,title"})
+            if r.status_code == 400:      # past the last page
+                break
+            if r.status_code != 200:
+                raise WordPressError(f"could not list {route} (HTTP {r.status_code})")
+            items = r.json()
+            out += items
+            if len(items) < 100:
+                break
+        return out
+
+    def index(self) -> dict:
+        """normalised link -> {'kind': 'page'|'post', 'id', 'title', 'link'}"""
+        if self._index is None:
+            idx = {}
+            for route, kind in (("pages", "page"), ("posts", "post")):
+                for it in self._list(route):
+                    title = re.sub(r"<[^>]+>", "", (it.get("title") or {}).get("rendered", "")).strip()
+                    idx[norm_link(it["link"])] = {"kind": kind, "id": int(it["id"]), "title": title, "link": it["link"]}
+            self._index = idx
+        return self._index
+
+    def set_seo(self, kind: str, obj_id: int, title: str, description: str, keyword: str = "") -> None:
+        route = "pages" if kind == "page" else "posts"
+        meta = {"rank_math_title": title, "rank_math_description": description}
+        if keyword:
+            meta["rank_math_focus_keyword"] = keyword
+        r = self.s.post(f"{self.base}/{route}/{obj_id}", auth=self.auth, timeout=60, json={"meta": meta})
+        if r.status_code in (401, 403):
+            raise WordPressError("this WordPress user is not allowed to edit that page")
+        if r.status_code >= 400:
+            raise WordPressError(f"WordPress refused the SEO update (HTTP {r.status_code})")
+        got = (r.json().get("meta") or {})
+        if got.get("rank_math_description") != description or got.get("rank_math_title") != title:
+            raise WordPressError("WordPress accepted the request but did not save the SEO fields (is the WPCode snippet active?)")
+
+    def create_post(self, title: str, html: str, slug: str, excerpt: str, seo: dict | None = None) -> tuple[int, str]:
+        body = {"title": title, "content": html, "slug": slug, "excerpt": excerpt, "status": self.mode}
+        if seo and self.seo_ready():
+            body["meta"] = {k: v for k, v in seo.items() if k in self._SEO_KEYS and v}
+        r = self.s.post(self.base + "/posts", auth=self.auth, timeout=60, json=body)
         if r.status_code in (401, 403):
             raise WordPressError("This WordPress user is not allowed to create posts (needs Editor or Administrator)")
         if r.status_code >= 400:
@@ -46,7 +115,12 @@ def publish_approved(cfg, portal: Portal, wp: WordPress) -> dict:
         if it.get("wp_post_id"):
             continue
         try:
-            pid, link = wp.create_post(it["title"], it.get("body_html") or "", it.get("slug") or "", it.get("excerpt") or "")
+            try:
+                kw = (json.loads(it.get("extras_json") or "{}").get("keywords") or [""])[0]
+            except (ValueError, AttributeError):
+                kw = ""
+            seo = {"rank_math_title": it["title"][:60], "rank_math_description": it.get("meta_description") or "", "rank_math_focus_keyword": kw}
+            pid, link = wp.create_post(it["title"], it.get("body_html") or "", it.get("slug") or "", it.get("excerpt") or "", seo)
         except (WordPressError, requests.RequestException) as e:
             portal.log("error", f"Could not send a blog post to WordPress: {safe_exc(e, 150)}")
             break

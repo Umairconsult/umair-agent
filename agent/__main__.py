@@ -17,6 +17,9 @@ from .writer import Gemini
 from .wordpress import WordPress, WordPressError
 
 
+EXPECTED_PORTAL_VERSION = "3.1"
+
+
 def build(cfg):
     set_secrets(cfg.secret_values())
     portal = Portal(cfg.portal_url, cfg.agent_token)
@@ -61,11 +64,13 @@ def selftest(cfg) -> int:
     portal, slack, audit, gemini, _ = build(cfg)
 
     try:
-        portal.ping()
+        ver = portal.ping().get("version")
         st = portal.stats()
         line(True, f"Portal connected ({st['leads_total']} leads saved so far)")
+        if ver != EXPECTED_PORTAL_VERSION:
+            line(None, f"Portal files are version {ver or 'OLD (no version)'} but this agent expects {EXPECTED_PORTAL_VERSION} - install hostinger_phase3_update.zip (open portal/agent_doctor.php to see which file is old)")
     except Exception as e:  # noqa: BLE001
-        line(False, f"Portal: {safe_exc(e, 150)}  -> is the Phase 2 update installed on Hostinger?")
+        line(False, f"Portal: {safe_exc(e, 200)}  -> open https://umairconsult.com/portal/agent_doctor.php to see which file is old or missing")
         return 1
 
     if not cfg.audit_url or not cfg.audit_token:

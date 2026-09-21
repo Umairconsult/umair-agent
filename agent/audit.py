@@ -44,6 +44,9 @@ class AuditClient:
     def ping(self) -> bool:
         return bool(self._post({"action": "ping"}).get("pong"))
 
+    def ping_info(self) -> dict:
+        return self._post({"action": "ping"})
+
     def run(self, website: str, full: bool = False) -> dict:
         """Returns the audit dict. data['ok'] False + data['unreachable'] True = dead website.
         full=True also returns 'blob': the complete audit (compressed) for reports, emails and PDFs."""

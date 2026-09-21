@@ -128,3 +128,71 @@ def publish_approved(cfg, portal: Portal, wp: WordPress) -> dict:
         portal.log("blog", f"Sent blog post to your website as a {'live post' if wp.mode == 'publish' else 'draft'}: {it['title']}")
         out["sent"] += 1
     return out
+
+
+
+class WordPressBridge:
+    """Talks to the small UmairConsult bridge snippet in WPCode (a secret key, no WordPress password needed)."""
+    _SHORT = {"rank_math_title": "title", "rank_math_description": "description", "rank_math_focus_keyword": "keyword"}
+
+    def __init__(self, url: str, key: str, mode: str = "publish"):
+        self.root = url.rstrip("/") + "/wp-json/umairconsult-agent/v1"
+        self.key = key
+        self.mode = mode
+        self.rank_math = False
+        self.s = requests.Session()
+        self.s.headers.update({"User-Agent": "UmairConsultAgent/1.0"})
+        self._ok: bool | None = None
+        self._index: dict | None = None
+
+    def _call(self, method: str, route: str, **kw) -> dict:
+        r = self.s.request(method, self.root + route, headers={"X-Agent-Key": self.key}, timeout=60, **kw)
+        if r.status_code == 403:
+            raise WordPressError("the bridge refused the key (WP_AGENT_KEY does not match the key inside the WordPress snippet)")
+        if r.status_code == 404:
+            raise WordPressError("bridge not found on your website - is the WPCode snippet saved and switched to Active?")
+        if r.status_code >= 400:
+            try:
+                msg = r.json().get("message", "")
+            except ValueError:
+                msg = ""
+            raise WordPressError(f"WordPress bridge error (HTTP {r.status_code}) {msg}".strip())
+        try:
+            return r.json()
+        except ValueError:
+            raise WordPressError("the bridge sent an unreadable answer")
+
+    def ping(self) -> str:
+        d = self._call("GET", "/ping")
+        self.rank_math = bool(d.get("rank_math"))
+        return str(d.get("site", ""))
+
+    def seo_ready(self) -> bool:
+        if self._ok is None:
+            try:
+                self.ping()
+                self._ok = True
+            except (WordPressError, requests.RequestException):
+                self._ok = False
+        return self._ok
+
+    def index(self) -> dict:
+        if self._index is None:
+            d = self._call("GET", "/pages")
+            self._index = {norm_link(i["link"]): {"kind": i["kind"], "id": int(i["id"]), "title": i.get("title", ""), "link": i["link"]}
+                           for i in d.get("items", [])}
+        return self._index
+
+    def set_seo(self, kind: str, obj_id: int, title: str, description: str, keyword: str = "") -> None:
+        d = self._call("POST", "/seo", json={"id": obj_id, "title": title, "description": description, "keyword": keyword})
+        got = d.get("seo") or {}
+        strip = lambda x: re.sub(r"<[^>]+>", "", x or "").strip()
+        if strip(got.get("title")) != strip(title) or strip(got.get("description")) != strip(description):
+            raise WordPressError("WordPress accepted the request but did not keep the SEO fields")
+
+    def create_post(self, title: str, html: str, slug: str, excerpt: str, seo: dict | None = None) -> tuple[int, str]:
+        body = {"title": title, "content": html, "slug": slug, "excerpt": excerpt, "status": self.mode}
+        if seo:
+            body["seo"] = {self._SHORT.get(k, k): v for k, v in seo.items() if v}
+        d = self._call("POST", "/post", json=body)
+        return int(d["id"]), str(d.get("link", ""))

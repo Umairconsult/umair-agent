@@ -5,7 +5,7 @@ import re
 from pathlib import Path
 
 SECRET_KEYS = [
-    "AGENT_API_TOKEN", "AUDIT_API_TOKEN", "EXPLORIUM_API_KEY", "WP_APP_PASSWORD", "WP_URL", "WP_USER",
+    "AGENT_API_TOKEN", "AUDIT_API_TOKEN", "EXPLORIUM_API_KEY", "WP_APP_PASSWORD", "WP_AGENT_KEY", "WP_URL", "WP_USER",
     "SLACK_AUDIT_LOG_URL", "SLACK_LEADS_URL", "SLACK_AGENT_URL",
     "PORTAL_URL", "AUDIT_URL", "BUSINESS_POSTAL_ADDRESS",
 ]
@@ -158,7 +158,9 @@ class Settings:
     @property
     def seo_auto_apply(self): return self.get("SEO_AUTO_APPLY", "no").lower() in ("yes", "true", "1", "on")
     @property
-    def wp_mode(self): return "publish" if self.get("WP_PUBLISH_MODE", "draft").lower() == "publish" else "draft"
+    def wp_agent_key(self): return self.get("WP_AGENT_KEY")
+    @property
+    def wp_mode(self): return "draft" if self.get("WP_PUBLISH_MODE", "publish").lower() == "draft" else "publish"
 
 
 def load_settings(path: str | None = None) -> Settings:

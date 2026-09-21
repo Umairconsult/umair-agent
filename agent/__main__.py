@@ -1,5 +1,6 @@
 """Run with:  python -m agent selftest | once | forever"""
 from __future__ import annotations
+import os
 import sys
 import time
 
@@ -8,16 +9,36 @@ import requests
 from . import osm
 from .audit import AuditClient, AuditError
 from .config import load_settings, missing_required
-from .logutil import log, safe_exc, set_secrets
+from .logutil import log, redact, safe_exc, set_secrets
 from .portal import Portal, PortalError
 from .scheduler import run_cycle
 from .slack import Slack
 from .web import Fetcher
 from .writer import Gemini
-from .wordpress import WordPress, WordPressError
+from .wordpress import WordPress, WordPressBridge, WordPressError
 
 
-EXPECTED_PORTAL_VERSION = "3.1"
+EXPECTED_PORTAL_VERSION = "3.2"
+
+
+def _esc(t: str) -> str:
+    return t.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+
+
+def gh(level: str, text: str, title: str = "AI Agent") -> None:
+    """Shows a message in the yellow/red box at the top of the GitHub run page (plain words, no digging in logs)."""
+    if os.environ.get("GITHUB_ACTIONS") == "true":
+        print(f"::{level} title={_esc(title)}::{_esc(redact(text))}", flush=True)
+
+
+def gh_summary(lines: list[str]) -> None:
+    path = os.environ.get("GITHUB_STEP_SUMMARY")
+    if path:
+        try:
+            with open(path, "a", encoding="utf-8") as f:
+                f.write("\n".join(redact(l) for l in lines) + "\n")
+        except OSError:
+            pass
 
 
 def build(cfg):
@@ -39,26 +60,41 @@ def build_extras(cfg):
             overture = Overture()
         except ImportError:
             log("Overture Maps is off: the 'duckdb' package is not installed.")
-    wp = WordPress(cfg.wp_url, cfg.wp_user, cfg.wp_password, cfg.wp_mode) if (cfg.wp_url and cfg.wp_user and cfg.wp_password) else None
+    wp = None
+    if cfg.wp_url and cfg.wp_agent_key:
+        wp = WordPressBridge(cfg.wp_url, cfg.wp_agent_key, cfg.wp_mode)
+    elif cfg.wp_url and cfg.wp_user and cfg.wp_password:
+        wp = WordPress(cfg.wp_url, cfg.wp_user, cfg.wp_password, cfg.wp_mode)
     return overture, wp
 
 
 def selftest(cfg) -> int:
     """A friendly checklist. Prints only OK / WARNING / PROBLEM - never any secrets."""
     bad = 0
+    results: list[tuple] = []
 
     def line(ok, text):
         nonlocal bad
         icon = {True: "OK      ", False: "PROBLEM ", None: "WARNING "}[ok]
         if ok is False:
             bad += 1
+            gh("error", text, "Problem to fix")
+        elif ok is None:
+            gh("warning", text, "Note")
+        results.append((ok, text))
         print(f"  [{icon}] {text}", flush=True)
+
+    def finish(code: int) -> int:
+        mark = {True: "✅", False: "❌", None: "⚠️"}
+        gh_summary(["### AI Agent self-test", ""] + [f"- {mark[o]} {t}" for o, t in results]
+                   + ["", "**Result:** " + ("everything important works." if code == 0 else "there are problems to fix (marked ❌ above).")])
+        return code
 
     print("AI Agent self-test\n", flush=True)
     miss = missing_required(cfg)
     if miss:
-        line(False, "Settings missing: " + ", ".join(miss) + "  (fill them in settings.env)")
-        return 1
+        line(False, "Settings missing: " + ", ".join(miss) + "  (fill them in settings.env, then update the GitHub secret SETTINGS_ENV)")
+        return finish(1)
     set_secrets(cfg.secret_values())
     line(True, "Settings file loaded")
     portal, slack, audit, gemini, _ = build(cfg)
@@ -71,14 +107,22 @@ def selftest(cfg) -> int:
             line(None, f"Portal files are version {ver or 'OLD (no version)'} but this agent expects {EXPECTED_PORTAL_VERSION} - install hostinger_phase3_update.zip (open portal/agent_doctor.php to see which file is old)")
     except Exception as e:  # noqa: BLE001
         line(False, f"Portal: {safe_exc(e, 200)}  -> open https://umairconsult.com/portal/agent_doctor.php to see which file is old or missing")
-        return 1
+        return finish(1)
 
+    try:
+        ctl = portal.state_list("ctl:")
+        paused = ctl.get("ctl:pause_finding") == "1"
+        line(None if paused else True, "Lead finding is PAUSED from the portal (resume it on the AI Agent page)" if paused else "Lead finding is running (you can pause it on the portal)")
+    except PortalError:
+        pass
     if not cfg.audit_url or not cfg.audit_token:
         line(False, "AUDIT_URL / AUDIT_API_TOKEN not set - audits cannot run")
     else:
         try:
-            audit.ping()
+            info = audit.ping_info()
             line(True, "Audit tool connected")
+            if info.get("version") != EXPECTED_PORTAL_VERSION:
+                line(False, f"Audit door is version {info.get('version') or 'OLD'} but {EXPECTED_PORTAL_VERSION} is needed to store full reports - replace audit/agent_audit.php on Hostinger with the one from the update zip")
         except Exception as e:  # noqa: BLE001
             line(False, f"Audit tool: {safe_exc(e, 150)}")
 
@@ -119,12 +163,14 @@ def selftest(cfg) -> int:
         except Exception as e:  # noqa: BLE001
             line(None, f"Overture Maps problem ({safe_exc(e, 140)}) - the agent falls back to OpenStreetMap")
     if wp is None:
-        line(None, "WordPress not connected (optional) - approved blog posts must be pasted into your website by you")
+        line(None, "WordPress not connected (optional) - approved blog posts and SEO fixes must be applied by you. Install the WPCode snippet and add WP_AGENT_KEY.")
     else:
         try:
-            line(True, f"WordPress connected as '{wp.ping()}' (new posts are sent as {wp.mode})")
+            name = wp.ping()
+            extra = " (Rank Math found)" if getattr(wp, "rank_math", False) else ""
+            line(True, f"WordPress connected{': ' + name if name else ''}{extra}. Approved posts are {'published live' if wp.mode == 'publish' else 'saved as drafts'}.")
         except (WordPressError, requests.RequestException) as e:
-            line(False, f"WordPress: {safe_exc(e, 140)}")
+            line(False, f"WordPress: {safe_exc(e, 200)}")
 
     if cfg.explorium_key:
         try:
@@ -145,7 +191,7 @@ def selftest(cfg) -> int:
         line(True, "Business address set for email footers")
 
     print("\nRESULT: " + ("everything important works." if bad == 0 else f"{bad} problem(s) to fix above."), flush=True)
-    return 0 if bad == 0 else 1
+    return finish(0 if bad == 0 else 1)
 
 
 def once(cfg, minutes: float | None = None) -> int:
@@ -159,15 +205,21 @@ def once(cfg, minutes: float | None = None) -> int:
         portal.ping()
     except PortalError as e:
         log(f"Portal not reachable: {safe_exc(e)}")
+        gh("error", f"The agent cannot reach your portal ({safe_exc(e, 150)}). Open umairconsult.com/portal/agent_doctor.php.", "Portal not reachable")
         slack.error("The agent cannot reach your portal, so this run stopped. It will try again at the next scheduled run.")
         return 1
     try:
         summary = run_cycle(cfg, portal, slack, audit, gemini, fetcher, minutes or cfg.run_minutes, overture=overture, wp=wp)
     except PortalError as e:
         log(f"Run stopped: {safe_exc(e)}")
+        gh("error", f"Run stopped: {safe_exc(e, 200)}", "Run stopped")
         slack.error(f"Run stopped: {safe_exc(e, 200)}")
         return 1
     log("Run finished: " + ", ".join(f"{k}={v}" for k, v in _counts(summary).items()))
+    for err in summary.get("errors", []):
+        gh("warning", err, "A step had a problem (the run continued)")
+    gh_summary(["### AI Agent run", ""] + [f"- **{k}**: {v}" for k, v in _counts(summary).items()]
+               + ([""] + [f"- ⚠️ {e}" for e in summary.get("errors", [])] if summary.get("errors") else []))
     return 0
 
 

@@ -12,6 +12,8 @@ if missing:
     print("PROBLEM: these files are missing from your GitHub repository:")
     for f in missing:
         print("   -", f)
+    if os.environ.get("GITHUB_ACTIONS") == "true":
+        print("::error title=Files missing on GitHub::Missing: " + ", ".join(missing) + ". Unzip umair-agent.zip and upload the agent folder again (Add file > Upload files).")
     print("Fix: unzip umair-agent.zip on your computer, then in GitHub click Add file > Upload files and drag in the agent folder "
           "(and requirements.txt) again. Missing files inside a folder mean the upload skipped them - upload that folder again.")
     sys.exit(1)

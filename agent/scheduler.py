@@ -113,6 +113,19 @@ class Deadline:
 # ------------------------------------------------------------------ phases
 def phase_find_leads(cfg, portal: Portal, slack: Slack, fetcher: Fetcher, stats: dict, dl: Deadline, dnc: list, overture=None) -> dict:
     res = {"created": 0, "searches": 0, "skipped": 0, "by_country": {}, "errors": 0, "overture": 0, "osm": 0}
+    ctl = portal.state_list("ctl:")
+    if ctl.get("ctl:pause_finding") == "1":
+        log("Lead finding is PAUSED from the portal - not looking for new leads.")
+        res["paused"] = 1
+        return res
+    try:
+        stop_at = int(ctl.get("ctl:auto_pause_at", "0") or 0)
+    except ValueError:
+        stop_at = 0
+    if stop_at > 0 and stats.get("to_contact", 0) >= stop_at:
+        log(f"Auto-pause: {stats['to_contact']} leads are waiting to be contacted (limit {stop_at}) - not looking for new leads.")
+        res["auto_paused"] = 1
+        return res
     room = cfg.max_new_leads - stats.get("leads_today", 0)
     if room <= 0:
         log(f"Lead limit for today reached ({cfg.max_new_leads}).")
@@ -268,6 +281,9 @@ def phase_audit(cfg, portal: Portal, audit: AuditClient, stats: dict, dl: Deadli
                     failed.add(lid); res["transient"] += 1; consecutive += 1
                 continue
             consecutive = 0
+            if "blob" not in r:      # an OLD audit door cannot return full reports - stop instead of doing useless work
+                raise RuntimeError("Your audit door (audit/agent_audit.php on Hostinger) is an OLD version and cannot return full reports. "
+                                   "Replace it with the file from the update zip (open portal/agent_doctor.php to check).")
             ls = lead_score(r, min(50, int(lead.get("score") or 0)))
             portal.save_audit(id=lid, audit_score=r.get("health_score"), audit_summary=summarize_audit(r),
                               lead_score=ls, audit_blob=r.get("blob") or "TOOBIG")
@@ -312,7 +328,11 @@ def phase_brief(cfg, portal: Portal, slack: Slack, target_today: int, gemini: Ge
     st = portal.stats()
     plan = channel_plan(cfg, target_today)
     drafts = len(portal.content_list(status="draft", limit=50))
-    lines = [f"*:robot_face: AI Agent daily brief - {today}*",
+    ctl = portal.state_list("ctl:")
+    lines = [f"*:robot_face: AI Agent daily brief - {today}*"]
+    if ctl.get("ctl:pause_finding") == "1":
+        lines.append(":pause_button: *Lead finding is PAUSED* (resume it on the portal's AI Agent page)")
+    lines += [f"- Leads waiting to be contacted: *{st.get('to_contact', 0)}*",
              f"- New leads found today: *{st['leads_today']}* (total {st['leads_total']})",
              f"- Websites audited today: *{st['audits_today']}* | still waiting for audit: *{st.get('unaudited', 0)}*",
              f"- Ready to send now: *{st['ready_to_send']}* (today's target {target_today})",

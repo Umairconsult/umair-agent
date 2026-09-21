@@ -6,12 +6,13 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime
 from zoneinfo import ZoneInfo
 
-from . import osm
+from . import associations, osm, registries
 from .agent_utils import domain_of
 from .audit import AuditClient, AuditError, lead_score, summarize_audit
 from .blog import run_blog
 from .cities import CITIES, COUNTRY_NAMES, COUNTRY_WEIGHT
 from .followups import run_followups
+from .hiring import hiring_boost
 from .logutil import log, safe_exc
 from .niches import osm_filters, ov_keywords, usable_niches, word_match
 from .portal import Portal, PortalError
@@ -57,9 +58,11 @@ def _recent(done: dict, key: str, today: date) -> bool:
         return False
 
 
-def pick_searches(cfg, done: dict, today: date, k: int, overture_on: bool = False, rng=random) -> list[tuple]:
+def pick_searches(cfg, done: dict, today: date, k: int, overture_on: bool = False, rng=random,
+                   registries_on: bool = False, associations_on: bool = False) -> list[tuple]:
     """Choose the next city+niche searches. Returns (cc, city, lat, lon, niche, sources) where
-    sources lists which data sources ('osm', 'ov') still need to be searched for that combination."""
+    sources lists which data sources ('osm', 'ov', 'reg', 'assoc') still need to be searched
+    for that combination."""
     names, pri = usable_niches(cfg.blocked_niches, cfg.priority_niches, overture_on)
     combos = []
     for cc in cfg.countries:
@@ -70,6 +73,13 @@ def pick_searches(cfg, done: dict, today: date, k: int, overture_on: bool = Fals
                     due.append("osm")
                 if overture_on and ov_keywords(niche) and not _recent(done, f"ov:{cc}:{city}:{niche}", today):
                     due.append("ov")
+                if registries_on and registries.available(cc) and not _recent(done, f"reg:{cc}:{city}:{niche}", today):
+                    due.append("reg")
+                # association directories are national, not per-city - only attach it to
+                # the first city of that country so it's not scheduled once per city
+                if (associations_on and rank == 0 and associations.ASSOCIATIONS.get(niche)
+                        and not _recent(done, f"assoc:{cc}:{niche}", today)):
+                    due.append("assoc")
                 if not due:
                     continue
                 w = COUNTRY_WEIGHT.get(cc, 1.0) * (3.0 if niche in pri else 1.0) * (1.6 if rank < 5 else 1.0)
@@ -112,7 +122,8 @@ class Deadline:
 
 # ------------------------------------------------------------------ phases
 def phase_find_leads(cfg, portal: Portal, slack: Slack, fetcher: Fetcher, stats: dict, dl: Deadline, dnc: list, overture=None) -> dict:
-    res = {"created": 0, "searches": 0, "skipped": 0, "by_country": {}, "errors": 0, "overture": 0, "osm": 0}
+    res = {"created": 0, "searches": 0, "skipped": 0, "by_country": {}, "errors": 0, "overture": 0, "osm": 0,
+           "registry": 0, "association": 0}
     ctl = portal.state_list("ctl:")
     if ctl.get("ctl:pause_finding") == "1":
         log("Lead finding is PAUSED from the portal - not looking for new leads.")
@@ -134,20 +145,23 @@ def phase_find_leads(cfg, portal: Portal, slack: Slack, fetcher: Fetcher, stats:
         log(f"{stats['unaudited']} leads are still waiting for an audit - auditing first, finding more later.")
         return res
     today = date.fromisoformat(local_now(cfg).strftime("%Y-%m-%d"))
-    done = {**portal.state_list("search:"), **portal.state_list("ov:")}
+    done = {**portal.state_list("search:"), **portal.state_list("ov:"), **portal.state_list("reg:"), **portal.state_list("assoc:")}
     dnc_domains = {i["value"] for i in dnc if i["kind"] == "domain"}
     dnc_emails = {i["value"] for i in dnc if i["kind"] == "email"}
     priority = cfg.priority_niches
     seen_domains: set[str] = set()
     ov_failures = 0
+    reg_on = cfg.use_registries and bool(cfg.companies_house_key)
+    assoc_on = cfg.use_associations
+    SRC_LABEL = {"ov": "Overture", "osm": "OpenStreetMap", "reg": "business registry", "assoc": "association directory"}
     while room > 0 and not dl.over():
         overture_on = overture is not None and ov_failures < 3
-        picks = pick_searches(cfg, done, today, 1, overture_on)
+        picks = pick_searches(cfg, done, today, 1, overture_on, registries_on=reg_on, associations_on=assoc_on)
         if not picks:
             log("Every city+niche combination was searched recently. Nothing new to search.")
             break
         cc, city, lat, lon, niche, sources = picks[0]
-        log(f"Searching {niche} near {city}, {cc} ({' + '.join('Overture' if s == 'ov' else 'OpenStreetMap' for s in sources)})")
+        log(f"Searching {niche} near {city}, {cc} ({' + '.join(SRC_LABEL.get(s, s) for s in sources)})")
         elements: list[dict] = []
         finished: list[str] = []
         if "ov" in sources and overture is not None:
@@ -173,6 +187,22 @@ def phase_find_leads(cfg, portal: Portal, slack: Slack, fetcher: Fetcher, stats:
                 if res["errors"] >= 3:
                     break
                 time.sleep(10)
+        if "reg" in sources:
+            try:
+                got = registries.search(cc, niche, city, cfg.companies_house_key)
+                elements += got
+                finished.append(f"reg:{cc}:{city}:{niche}")
+                res["registry"] += len(got)
+            except registries.RegistryError as e:  # noqa: BLE001 - never stops the run
+                log(f"Business registry problem: {safe_exc(e, 100)}")
+        if "assoc" in sources:
+            try:
+                got = associations.search(niche, cc)
+                elements += got
+                finished.append(f"assoc:{cc}:{niche}")
+                res["association"] += len(got)
+            except Exception as e:  # noqa: BLE001 - a bad directory page must never stop the run
+                log(f"Association directory problem: {safe_exc(e, 100)}")
         res["searches"] += 1
         candidates = []
         for el in elements:
@@ -250,8 +280,8 @@ def phase_find_leads(cfg, portal: Portal, slack: Slack, fetcher: Fetcher, stats:
     return res
 
 
-def phase_audit(cfg, portal: Portal, audit: AuditClient, stats: dict, dl: Deadline) -> dict:
-    res = {"done": 0, "bad": 0, "transient": 0}
+def phase_audit(cfg, portal: Portal, audit: AuditClient, stats: dict, dl: Deadline, fetcher: Fetcher | None = None) -> dict:
+    res = {"done": 0, "bad": 0, "transient": 0, "hiring": 0}
     room = cfg.max_audits - stats.get("audits_today", 0)
     if room <= 0:
         log(f"Audit limit for today reached ({cfg.max_audits}).")
@@ -284,14 +314,24 @@ def phase_audit(cfg, portal: Portal, audit: AuditClient, stats: dict, dl: Deadli
             if "blob" not in r:      # an OLD audit door cannot return full reports - stop instead of doing useless work
                 raise RuntimeError("Your audit door (audit/agent_audit.php on Hostinger) is an OLD version and cannot return full reports. "
                                    "Replace it with the file from the update zip (open portal/agent_doctor.php to check).")
-            ls = lead_score(r, min(50, int(lead.get("score") or 0)))
-            portal.save_audit(id=lid, audit_score=r.get("health_score"), audit_summary=summarize_audit(r),
+            boost, hire_note = (0, "")
+            if cfg.use_hiring_signals:
+                try:
+                    boost, hire_note = hiring_boost(lead["website"], fetcher)
+                except Exception:  # noqa: BLE001 - a hiring check must never break an audit
+                    boost, hire_note = 0, ""
+            ls = lead_score(r, min(50, int(lead.get("score") or 0)), boost)
+            summary_txt = summarize_audit(r) + (f" · {hire_note}" if hire_note else "")
+            portal.save_audit(id=lid, audit_score=r.get("health_score"), audit_summary=summary_txt,
                               lead_score=ls, audit_blob=r.get("blob") or "TOOBIG")
+            if hire_note:
+                res["hiring"] += 1
             res["done"] += 1
             room -= 1
             time.sleep(cfg.audit_pause)
     if res["done"] or res["bad"]:
-        portal.log("audit", f"Audited {res['done']} websites with full reports ({res['bad']} unreachable and set aside)")
+        extra = f", {res['hiring']} showing hiring signals" if res["hiring"] else ""
+        portal.log("audit", f"Audited {res['done']} websites with full reports ({res['bad']} unreachable and set aside{extra})")
     return res
 
 
@@ -381,7 +421,7 @@ def run_cycle(cfg, portal: Portal, slack: Slack, audit: AuditClient | None, gemi
             slack.leads(f":sparkles: *{r1['created']} new leads* found: " + ", ".join(f"{COUNTRY_NAMES.get(c, c)} {n}" for c, n in r1["by_country"].items()))
     stats = portal.stats()
     if audit:
-        r2 = guarded("Audits", lambda: phase_audit(cfg, portal, audit, stats, overall.slice(0.65)))
+        r2 = guarded("Audits", lambda: phase_audit(cfg, portal, audit, stats, overall.slice(0.65), fetcher))
         if r2: summary["audits"] = r2
     else:
         log("Audit tool not configured (AUDIT_URL / AUDIT_API_TOKEN) - skipping audits.")

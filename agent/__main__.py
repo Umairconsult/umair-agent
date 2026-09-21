@@ -172,6 +172,25 @@ def selftest(cfg) -> int:
         except (WordPressError, requests.RequestException) as e:
             line(False, f"WordPress: {safe_exc(e, 200)}")
 
+    if not cfg.use_registries:
+        line(None, "Business registries switched off (USE_REGISTRIES=no)")
+    elif not cfg.companies_house_key:
+        line(None, "No COMPANIES_HOUSE_API_KEY - UK Companies House registry lookups are off (free key at developer.company-information.service.gov.uk)")
+    else:
+        line(True, "Business registry (UK Companies House) key set")
+
+    if not cfg.use_associations:
+        line(None, "Industry-association directories switched off (USE_ASSOCIATIONS=no)")
+    else:
+        from .associations import ASSOCIATIONS
+        n = sum(len(v) for v in ASSOCIATIONS.values())
+        line(True if n else None, f"{n} approved association director{'y' if n == 1 else 'ies'} configured" if n
+             else "No association directories approved yet (edit agent/associations.py to add ones you've checked)")
+
+    line(True if cfg.use_hiring_signals else None,
+         "Hiring-signal boost is on (RemoteOK + careers-page check)" if cfg.use_hiring_signals
+         else "Hiring-signal boost switched off (USE_HIRING_SIGNALS=no)")
+
     if cfg.explorium_key:
         try:
             r = requests.get("https://api.explorium.ai/v2/credits", headers={"api_key": cfg.explorium_key}, timeout=20)

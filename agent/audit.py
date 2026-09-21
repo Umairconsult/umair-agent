@@ -77,6 +77,7 @@ def summarize_audit(res: dict) -> str:
     return (" · ".join(parts))[:900]
 
 
-def lead_score(res: dict, initial: int) -> int:
-    """0-100: how good a prospect this is (audit opportunity + how reachable they are)."""
-    return max(0, min(100, round(int(res.get("opportunity_score", 0)) * 0.5 + initial)))
+def lead_score(res: dict, initial: int, hiring_boost: int = 0) -> int:
+    """0-100: how good a prospect this is (audit opportunity + how reachable they are
+    + a small boost if they look like they're actively hiring - see hiring.py)."""
+    return max(0, min(100, round(int(res.get("opportunity_score", 0)) * 0.5 + initial + hiring_boost)))

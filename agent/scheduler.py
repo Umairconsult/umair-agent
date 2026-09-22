@@ -12,6 +12,7 @@ from .audit import AuditClient, AuditError, lead_score, summarize_audit
 from .blog import run_blog
 from .cities import CITIES, COUNTRY_NAMES, COUNTRY_WEIGHT
 from .followups import run_followups
+from .geo import run_geo_check
 from .hiring import hiring_boost
 from .logutil import log, safe_exc
 from .niches import osm_filters, ov_keywords, usable_niches, word_match
@@ -447,6 +448,12 @@ def run_cycle(cfg, portal: Portal, slack: Slack, audit: AuditClient | None, gemi
     if audit and (not last_seo or (today_dt - date.fromisoformat(last_seo)).days >= 7):
         r4 = guarded("SEO check", lambda: run_seo(cfg, portal, audit, gemini, today_dt.isoformat()))
         if r4: summary["seo"] = r4
+    last_geo = portal.state_list("geo:last_run").get("geo:last_run", "")
+    if not last_geo or (today_dt - date.fromisoformat(last_geo)).days >= 7:
+        r4b = guarded("GEO check", lambda: run_geo_check(cfg, portal, gemini, fetcher, today_dt.isoformat()))
+        if r4b:
+            summary["geo"] = r4b
+            portal.state_set("geo:last_run", today_dt.isoformat())
     guarded("Daily brief", lambda: phase_brief(cfg, portal, slack, target_today, gemini))
 
     if gemini and gemini.dead:

@@ -9,6 +9,7 @@ from datetime import date
 
 from .agent_utils import domain_of
 from .audit import AuditClient, AuditError
+from .directories import run_offpage_check
 from .logutil import log, safe_exc
 from .portal import Portal
 from .writer import Gemini
@@ -46,6 +47,12 @@ def run_seo(cfg, portal: Portal, audit: AuditClient | None, gemini: Gemini | Non
                            details=f"Priority: {issue.get('priority', '')} · Area: {issue.get('area', '')}\n\nSuggested fix: {issue.get('fix', '')}")
         out["issues"] += 1
         out["new_items"] += 1 if r.get("created") else 0
+
+    schema_out = run_schema_check(cfg, portal, res, today)
+    out["new_items"] += schema_out.get("suggested", 0)
+
+    offpage_out = run_offpage_check(cfg, portal, res, today)
+    out["new_items"] += offpage_out.get("issues", 0)
 
     month = today[:7]
     done_month = portal.state_list("seo:ideas_month").get("seo:ideas_month", "")
@@ -183,4 +190,60 @@ def apply_approved_seo(cfg, portal: Portal, wp) -> dict:
         portal.seo_update(id=int(it["id"]), status="done")
         portal.log("seo", f"Applied new SEO title and description to {pl.get('page_url', 'a page')} on your website")
         out["applied"] += 1
+    return out
+
+
+def _build_schema_jsonld(cfg) -> dict:
+    """LocalBusiness + Service JSON-LD for your own homepage, built only from data you've
+    actually set in settings.env - nothing here is invented. Fields you haven't filled in
+    (e.g. BUSINESS_PHONE) are simply left out rather than guessed."""
+    site = cfg.own_website.rstrip("/")
+    local_business = {
+        "@context": "https://schema.org", "@type": "ProfessionalService",
+        "name": cfg.your_name, "url": site, "description": cfg.pitch,
+    }
+    if cfg.postal_address:
+        local_business["address"] = {"@type": "PostalAddress", "streetAddress": cfg.postal_address}
+    if cfg.business_phone:
+        local_business["telephone"] = cfg.business_phone
+    if cfg.business_email:
+        local_business["email"] = cfg.business_email
+    service = {
+        "@context": "https://schema.org", "@type": "Service",
+        "serviceType": cfg.pitch, "provider": {"@type": "ProfessionalService", "name": cfg.your_name, "url": site},
+        "areaServed": "Global" if not cfg.postal_address else cfg.postal_address,
+    }
+    return {"local_business": local_business, "service": service}
+
+
+def run_schema_check(cfg, portal: Portal, res: dict, today: str) -> dict:
+    """Checks whether your own homepage already has LocalBusiness/Organization and Service
+    JSON-LD (using the schema types the audit tool already detects), and if not, generates
+    ready-to-paste JSON-LD as a manual to-do on the portal's SEO page - it never edits your
+    site directly, since schema isn't wired into the WordPress bridge."""
+    out = {"suggested": 0}
+    month = today[:7]
+    if portal.state_list("seo:schema_month").get("seo:schema_month", "") == month:
+        return out
+    types = set(res.get("schema_types") or [])
+    missing = []
+    if not ({"LocalBusiness", "Organization", "ProfessionalService"} & types):
+        missing.append("local_business")
+    if "Service" not in types:
+        missing.append("service")
+    if not missing:
+        portal.state_set("seo:schema_month", month)
+        return out
+    snippets = _build_schema_jsonld(cfg)
+    labels = {"local_business": "LocalBusiness", "service": "Service"}
+    for key in missing:
+        code = json.dumps(snippets[key], indent=2, ensure_ascii=False)
+        r = portal.add_seo(kind="schema", page_url=cfg.own_website, title=f"Add {labels[key]} schema to your homepage",
+                           details=f"No {labels[key]} schema was detected on your homepage. Paste this JSON-LD inside a "
+                                   f"<script type=\"application/ld+json\"> tag in your homepage's <head> "
+                                   f"(most SEO plugins, including Rank Math, have a 'Custom Schema' or 'Code Snippet' field for this):\n\n{code}")
+        out["suggested"] += 1 if r.get("created") else 0
+    portal.state_set("seo:schema_month", month)
+    if out["suggested"]:
+        portal.log("seo", f"Suggested {out['suggested']} schema.org JSON-LD snippet(s) for your homepage")
     return out

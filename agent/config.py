@@ -7,7 +7,7 @@ from pathlib import Path
 SECRET_KEYS = [
     "AGENT_API_TOKEN", "AUDIT_API_TOKEN", "EXPLORIUM_API_KEY", "WP_APP_PASSWORD", "WP_AGENT_KEY", "WP_URL", "WP_USER",
     "SLACK_AUDIT_LOG_URL", "SLACK_LEADS_URL", "SLACK_AGENT_URL",
-    "PORTAL_URL", "AUDIT_URL", "BUSINESS_POSTAL_ADDRESS", "COMPANIES_HOUSE_API_KEY",
+    "PORTAL_URL", "AUDIT_URL", "BUSINESS_POSTAL_ADDRESS", "COMPANIES_HOUSE_API_KEY", "BUSINESS_PHONE", "BUSINESS_EMAIL",
 ]
 
 
@@ -90,6 +90,10 @@ class Settings:
     def your_name(self): return self.get("YOUR_NAME", "Umair")
     @property
     def postal_address(self): return self.get("BUSINESS_POSTAL_ADDRESS")
+    @property
+    def business_phone(self): return self.get("BUSINESS_PHONE")
+    @property
+    def business_email(self): return self.get("BUSINESS_EMAIL")
     @property
     def pitch(self):
         return self.get("BUSINESS_PITCH",

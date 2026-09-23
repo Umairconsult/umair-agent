@@ -7,7 +7,11 @@ from urllib.parse import urlparse
 
 import requests
 
+from .agent_utils import domain_of
+from .blog import plain_text
+from .indexnow import submit as indexnow_submit
 from .logutil import log, safe_exc
+from .policy import check_draft
 from .portal import Portal
 
 
@@ -110,15 +114,32 @@ class WordPress:
 
 
 def publish_approved(cfg, portal: Portal, wp: WordPress) -> dict:
-    out = {"sent": 0}
+    out = {"sent": 0, "blocked": 0}
+    past_bodies: list[str] | None = None
     for it in portal.content_list(status="approved", include_body=True, limit=20):
         if it.get("wp_post_id"):
             continue
+        body_text = plain_text(it.get("body_html") or "")
         try:
+            kw = (json.loads(it.get("extras_json") or "{}").get("keywords") or [""])[0]
+        except (ValueError, AttributeError):
+            kw = ""
+        if past_bodies is None:   # fetched once per run, only if there's something to check against
             try:
-                kw = (json.loads(it.get("extras_json") or "{}").get("keywords") or [""])[0]
-            except (ValueError, AttributeError):
-                kw = ""
+                past = portal.content_list(status="published", include_body=True, limit=10)
+                past_bodies = [plain_text(p.get("body_html") or "") for p in past]
+            except Exception:  # noqa: BLE001 - the policy check must never block publishing on its own error
+                past_bodies = []
+        verdict = check_draft(it["title"], body_text, target_keyword=kw, past_bodies=past_bodies)
+        if verdict["blocked"]:
+            portal.content_update(id=int(it["id"]), status="pending_review")
+            portal.log("blog", f"Held back \"{it['title']}\" from publishing - needs changes before it can go live: "
+                              + "; ".join(verdict["reasons"]))
+            out["blocked"] += 1
+            continue
+        for w in verdict["warnings"]:
+            portal.log("blog", f"Note on \"{it['title']}\" (published anyway - your call): {w}")
+        try:
             seo = {"rank_math_title": it["title"][:60], "rank_math_description": it.get("meta_description") or "", "rank_math_focus_keyword": kw}
             pid, link = wp.create_post(it["title"], it.get("body_html") or "", it.get("slug") or "", it.get("excerpt") or "", seo)
         except (WordPressError, requests.RequestException) as e:
@@ -126,6 +147,10 @@ def publish_approved(cfg, portal: Portal, wp: WordPress) -> dict:
             break
         portal.content_update(id=int(it["id"]), status="published" if wp.mode == "publish" else "sent", wp_post_id=pid, published_url=link)
         portal.log("blog", f"Sent blog post to your website as a {'live post' if wp.mode == 'publish' else 'draft'}: {it['title']}")
+        if wp.mode == "publish" and cfg is not None and cfg.indexnow_key and link:
+            host = domain_of(cfg.own_website) or domain_of(link)
+            if host and indexnow_submit(host, cfg.indexnow_key, [link]):
+                portal.log("blog", f"Pinged IndexNow (Bing + participating engines) about: {link}")
         out["sent"] += 1
     return out
 

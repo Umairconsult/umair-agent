@@ -8,6 +8,7 @@ SECRET_KEYS = [
     "AGENT_API_TOKEN", "AUDIT_API_TOKEN", "EXPLORIUM_API_KEY", "WP_APP_PASSWORD", "WP_AGENT_KEY", "WP_URL", "WP_USER",
     "SLACK_AUDIT_LOG_URL", "SLACK_LEADS_URL", "SLACK_AGENT_URL",
     "PORTAL_URL", "AUDIT_URL", "BUSINESS_POSTAL_ADDRESS", "COMPANIES_HOUSE_API_KEY", "BUSINESS_PHONE", "BUSINESS_EMAIL",
+    "GSC_SERVICE_ACCOUNT_JSON", "GSC_SITE_URL", "INDEXNOW_KEY",
 ]
 
 
@@ -94,6 +95,12 @@ class Settings:
     def business_phone(self): return self.get("BUSINESS_PHONE")
     @property
     def business_email(self): return self.get("BUSINESS_EMAIL")
+    @property
+    def gsc_service_account_json(self): return self.get("GSC_SERVICE_ACCOUNT_JSON")
+    @property
+    def gsc_site_url(self): return self.get("GSC_SITE_URL")
+    @property
+    def indexnow_key(self): return self.get("INDEXNOW_KEY")
     @property
     def pitch(self):
         return self.get("BUSINESS_PITCH",

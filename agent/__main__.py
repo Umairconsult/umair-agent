@@ -191,6 +191,19 @@ def selftest(cfg) -> int:
          "Hiring-signal boost is on (RemoteOK + careers-page check)" if cfg.use_hiring_signals
          else "Hiring-signal boost switched off (USE_HIRING_SIGNALS=no)")
 
+    if not cfg.gsc_service_account_json or not cfg.gsc_site_url:
+        line(None, "Search Console not set up yet (GSC_SERVICE_ACCOUNT_JSON / GSC_SITE_URL) - optional")
+    else:
+        try:
+            from .search_console import SearchConsole, SearchConsoleError
+            sc = SearchConsole(cfg.gsc_service_account_json, cfg.gsc_site_url)
+            sc.ping()
+            line(True, f"Search Console connected for {cfg.gsc_site_url}")
+        except SearchConsoleError as e:
+            line(None, f"Search Console problem: {safe_exc(e, 200)}")
+        except Exception as e:  # noqa: BLE001
+            line(None, f"Search Console problem: {safe_exc(e, 200)}")
+
     if cfg.explorium_key:
         try:
             r = requests.get("https://api.explorium.ai/v2/credits", headers={"api_key": cfg.explorium_key}, timeout=20)
@@ -201,8 +214,8 @@ def selftest(cfg) -> int:
                 line(None, f"Explorium answered HTTP {r.status_code} - key may be wrong (not needed yet)")
         except Exception as e:  # noqa: BLE001
             line(None, f"Explorium not reachable ({safe_exc(e, 80)}) - not needed yet")
-    else:
-        line(None, "No EXPLORIUM_API_KEY (optional - not used yet)")
+    # else: nothing prints here on purpose - EXPLORIUM_API_KEY isn't wired into any feature
+    # yet, so warning about a key you haven't set for a feature that doesn't exist yet is just noise.
 
     if not cfg.postal_address:
         line(None, "BUSINESS_POSTAL_ADDRESS is empty - emails will have no address line (required by US law)")

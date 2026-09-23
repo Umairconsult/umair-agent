@@ -103,7 +103,9 @@ Return ONLY JSON: {{"title": "at most 60 characters, includes the main topic or 
 
 
 def run_page_seo(cfg, portal: Portal, audit, gemini, wp, today: str) -> dict:
-    """Checks a few of your own pages per run and proposes better SEO titles/descriptions (applied after you approve)."""
+    """Checks a fresh batch of your own pages every single run (your repo is public, so
+    GitHub Actions minutes are free/unlimited - no need to throttle this to once a day) and
+    proposes better SEO titles/descriptions (applied after you approve)."""
     out = {"checked": 0, "proposed": 0}
     if wp is None or audit is None:
         return out
@@ -193,6 +195,24 @@ def apply_approved_seo(cfg, portal: Portal, wp) -> dict:
     return out
 
 
+def _parse_postal_address(addr: str) -> dict:
+    """Best-effort split of a plain address string into schema.org PostalAddress fields.
+    Handles 'City, ST ZIP' (what BUSINESS_POSTAL_ADDRESS is set to today) and falls back to
+    putting the whole thing in streetAddress for a full 'street, city, state zip' string -
+    never invents a field that wasn't actually in the text."""
+    out = {"@type": "PostalAddress"}
+    parts = [p.strip() for p in addr.split(",") if p.strip()]
+    m = re.match(r"^([A-Za-z]{2})\s+(\d{5}(-\d{4})?)$", parts[-1]) if parts else None
+    if len(parts) >= 2 and m:
+        out["addressRegion"], out["postalCode"] = m.group(1), m.group(2)
+        out["addressLocality"] = parts[-2]
+        if len(parts) > 2:
+            out["streetAddress"] = ", ".join(parts[:-2])
+    else:
+        out["streetAddress"] = addr
+    return out
+
+
 def _build_schema_jsonld(cfg) -> dict:
     """LocalBusiness + Service JSON-LD for your own homepage, built only from data you've
     actually set in settings.env - nothing here is invented. Fields you haven't filled in
@@ -203,7 +223,7 @@ def _build_schema_jsonld(cfg) -> dict:
         "name": cfg.your_name, "url": site, "description": cfg.pitch,
     }
     if cfg.postal_address:
-        local_business["address"] = {"@type": "PostalAddress", "streetAddress": cfg.postal_address}
+        local_business["address"] = _parse_postal_address(cfg.postal_address)
     if cfg.business_phone:
         local_business["telephone"] = cfg.business_phone
     if cfg.business_email:

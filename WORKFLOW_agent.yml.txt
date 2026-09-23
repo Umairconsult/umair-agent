@@ -2,7 +2,7 @@ name: AI Agent
 
 on:
   schedule:
-    - cron: "17 */3 * * *"      # runs by itself every 3 hours
+    - cron: "17 3,15 * * *"      # runs by itself twice a day (~8:17am and ~8:17pm Karachi time)
   workflow_dispatch:            # lets you press the "Run workflow" button
     inputs:
       mode:

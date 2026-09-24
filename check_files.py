@@ -3,9 +3,11 @@ import os, sys
 
 REQUIRED = [
     "requirements.txt",
-    "agent/__init__.py", "agent/__main__.py", "agent/agent_utils.py", "agent/audit.py", "agent/blog.py", "agent/cities.py",
-    "agent/config.py", "agent/followups.py", "agent/logutil.py", "agent/niches.py", "agent/osm.py", "agent/overture.py",
-    "agent/portal.py", "agent/scheduler.py", "agent/seo.py", "agent/slack.py", "agent/web.py", "agent/wordpress.py", "agent/writer.py",
+    "agent/__init__.py", "agent/__main__.py", "agent/agent_utils.py", "agent/associations.py", "agent/audit.py", "agent/blog.py",
+    "agent/cities.py", "agent/config.py", "agent/directories.py", "agent/followups.py", "agent/geo.py", "agent/hiring.py",
+    "agent/indexnow.py", "agent/logutil.py", "agent/niches.py", "agent/osm.py", "agent/overture.py", "agent/policy.py",
+    "agent/portal.py", "agent/registries.py", "agent/scheduler.py", "agent/search_console.py", "agent/seo.py", "agent/slack.py",
+    "agent/web.py", "agent/wordpress.py", "agent/writer.py",
 ]
 missing = [f for f in REQUIRED if not os.path.isfile(f)]
 if missing:

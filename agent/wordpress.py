@@ -132,7 +132,7 @@ def publish_approved(cfg, portal: Portal, wp: WordPress) -> dict:
                 past_bodies = []
         verdict = check_draft(it["title"], body_text, target_keyword=kw, past_bodies=past_bodies)
         if verdict["blocked"]:
-            portal.content_update(id=int(it["id"]), status="pending_review")
+            portal.content_update(id=int(it["id"]), status="draft")
             portal.log("blog", f"Held back \"{it['title']}\" from publishing - needs changes before it can go live: "
                               + "; ".join(verdict["reasons"]))
             out["blocked"] += 1

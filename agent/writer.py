@@ -129,8 +129,20 @@ class Gemini:
                     text = r.json()["candidates"][0]["content"]["parts"][0]["text"]
                 except (KeyError, IndexError, ValueError):
                     raise RuntimeError("Gemini returned an empty answer")
-                text = re.sub(r"^```(?:json)?|```$", "", text.strip(), flags=re.M).strip()
-                return json.loads(text)
+                text = text.strip()
+                text = re.sub(r"^```(?:json)?\s*", "", text)   # only a fence wrapping the WHOLE
+                text = re.sub(r"\s*```$", "", text)             # response, never one inside it
+                try:
+                    return json.loads(text)
+                except json.JSONDecodeError as e:
+                    if e.msg != "Extra data":
+                        raise
+                    # Gemini sometimes returns one valid JSON object followed by stray extra
+                    # content (a repeated block, trailing commentary, etc.) even with
+                    # responseMimeType=json - take just the first complete JSON value and
+                    # ignore whatever comes after it, instead of failing the whole call.
+                    obj, _ = json.JSONDecoder().raw_decode(text)
+                    return obj
             low = r.text.lower()
             if code == 404:
                 self.model = ""                      # model retired: choose another

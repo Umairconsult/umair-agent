@@ -200,9 +200,9 @@ def selftest(cfg) -> int:
             sc.ping()
             line(True, f"Search Console connected for {cfg.gsc_site_url}")
         except SearchConsoleError as e:
-            line(None, f"Search Console problem: {safe_exc(e, 200)}")
+            line(None, f"Search Console problem: {safe_exc(e, 500)}")
         except Exception as e:  # noqa: BLE001
-            line(None, f"Search Console problem: {safe_exc(e, 200)}")
+            line(None, f"Search Console problem: {safe_exc(e, 500)}")
 
     if cfg.explorium_key:
         try:

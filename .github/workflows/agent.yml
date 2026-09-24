@@ -22,15 +22,15 @@ permissions:
 
 jobs:
   run:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04   # pinned so the Oct 19 2026 ubuntu-latest -> Ubuntu 26 switch can't surprise you
     timeout-minutes: 90
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Check that every file was uploaded
         run: python3 check_files.py
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: pip

@@ -2,3 +2,10 @@ settings.env
 *.env
 __pycache__/
 *.pyc
+.env*
+*.pem
+*.key
+*service-account*.json
+*service_account*.json
+client_secret*.json
+logs/

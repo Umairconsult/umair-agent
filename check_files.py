@@ -8,6 +8,8 @@ REQUIRED = [
     "agent/indexnow.py", "agent/logutil.py", "agent/niches.py", "agent/osm.py", "agent/overture.py", "agent/policy.py",
     "agent/portal.py", "agent/registries.py", "agent/scheduler.py", "agent/search_console.py", "agent/seo.py", "agent/slack.py",
     "agent/web.py", "agent/wordpress.py", "agent/writer.py",
+    "agent/social.py", "agent/media/__init__.py", "agent/media/drive.py", "agent/media/branding.py", "agent/media/providers.py",
+    "agent/media/quality.py",
 ]
 missing = [f for f in REQUIRED if not os.path.isfile(f)]
 if missing:
@@ -20,3 +22,8 @@ if missing:
           "(and requirements.txt) again. Missing files inside a folder mean the upload skipped them - upload that folder again.")
     sys.exit(1)
 print("All", len(REQUIRED), "agent files are present.")
+if not os.path.isfile("assets/logo.png"):
+    # not fatal (the lead agent does not need it) - only the social media images do
+    print("WARNING: assets/logo.png is missing - the social media images need your logo there (or set LOGO_PATH).")
+    if os.environ.get("GITHUB_ACTIONS") == "true":
+        print("::warning title=Logo missing::assets/logo.png was not found. Social media images need it.")

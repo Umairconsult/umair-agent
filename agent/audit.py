@@ -3,6 +3,8 @@ from __future__ import annotations
 import time
 import requests
 
+from .portal import BROWSER_UA, describe_block, parse_json_reply
+
 
 class AuditError(Exception):
     """Temporary problem (server busy, timeout). Worth trying again later."""
@@ -12,31 +14,31 @@ class AuditClient:
     def __init__(self, url: str, token: str, timeout: int = 150):
         self.url, self.token, self.timeout = url, token, timeout
         self.s = requests.Session()
+        # a normal browser-style User-Agent: bare "python-requests" is a classic hosting-firewall trigger
+        self.s.headers.update({"User-Agent": BROWSER_UA, "Accept": "application/json, */*;q=0.5"})
 
     def _post(self, payload: dict) -> dict:
         last = "unknown"
-        for attempt in range(2):
+        waits = (4, 15, 40)          # a firewall-style page (403 etc.) usually clears by itself: wait and retry
+        for attempt in range(len(waits) + 1):
+            if attempt:
+                time.sleep(waits[attempt - 1])
             try:
                 r = self.s.post(self.url, json=payload, headers={"X-Agent-Token": self.token}, timeout=self.timeout)
             except requests.RequestException as e:
                 last = type(e).__name__
-                time.sleep(4)
+                if isinstance(e, requests.Timeout) and attempt >= 1:
+                    break            # a slow audit is not worth many 150-second retries
                 continue
-            if r.status_code in (429, 502, 503, 504):
-                last = f"HTTP {r.status_code}"
-                time.sleep(8)
-                continue
-            try:
-                data = r.json()
-            except ValueError:
-                last = f"non-JSON reply (HTTP {r.status_code})"
-                time.sleep(4)
+            data = parse_json_reply(r.text)
+            if data is None:
+                who = describe_block(r)
+                last = f"non-JSON reply (HTTP {r.status_code}" + (f"; {who}" if who else "") + ")"
                 continue
             if r.status_code == 401:
                 raise AuditError("audit endpoint rejected the token (check AUDIT_API_TOKEN)")
-            if r.status_code >= 500:
-                last = data.get("error", f"HTTP {r.status_code}")
-                time.sleep(4)
+            if r.status_code == 429 or r.status_code >= 500:
+                last = data.get("error") or f"HTTP {r.status_code}"
                 continue
             return data
         raise AuditError(f"audit tool not answering ({last})")

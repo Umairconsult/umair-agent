@@ -12,6 +12,10 @@ from .logutil import log, safe_exc
 API = "https://generativelanguage.googleapis.com/v1beta"
 PREFERRED = ["gemini-3.1-flash-lite", "gemini-3-flash-preview", "gemini-3.5-flash", "gemini-2.5-flash-lite",
              "gemini-2.5-flash", "gemini-flash-latest", "gemini-flash-lite-latest"]
+# Image models, cheapest/newest first. (gemini-2.5-flash-image is being retired by Google in Oct 2026,
+# so it comes last; anything else with "image" in its name is tried after these.)
+PREFERRED_IMAGE = ["gemini-3.1-flash-image-preview", "gemini-3.1-flash-image", "gemini-3-pro-image",
+                   "gemini-3-pro-image-preview", "gemini-2.5-flash-image"]
 
 
 class Gemini:
@@ -19,13 +23,16 @@ class Gemini:
     switches to the next one automatically; calls are spread across keys to stay under limits."""
     MIN_INTERVAL = 6.5   # seconds between calls on the SAME key (free tier per-minute limit)
 
-    def __init__(self, keys, model: str = "auto"):
+    def __init__(self, keys, model: str = "auto", image_model: str = "auto"):
         if isinstance(keys, str):
             keys = [keys]
         self.keys = [k for k in keys if k]
         self.model = "" if model == "auto" else model
+        self.image_model = "" if image_model == "auto" else image_model
         self.s = requests.Session()
         self.dead: dict[int, str] = {}        # key index -> why it stopped
+        self.image_dead: dict[int, str] = {}  # key index -> why it can't make IMAGES (it may still write text fine)
+        self.bad_image_models: set[str] = set()
         self.cool: dict[int, float] = {}      # key index -> time it may be used again
         self.last: dict[int, float] = {}      # key index -> last call time
         self.calls = 0
@@ -89,10 +96,10 @@ class Gemini:
                 return self.model
         raise RuntimeError("no usable Gemini model found" + (f" ({type(last_err).__name__})" if last_err else ""))
 
-    def _next_key(self) -> int:
+    def _next_key(self, image: bool = False) -> int:
         """The live key that has rested the longest; waits if every key is cooling down."""
         while True:
-            live = [i for i in range(len(self.keys)) if i not in self.dead]
+            live = [i for i in range(len(self.keys)) if i not in self.dead and not (image and i in self.image_dead)]
             if not live:
                 raise RuntimeError("all Gemini keys are out of quota or rejected")
             now = time.time()
@@ -162,6 +169,101 @@ class Gemini:
                 continue
             raise RuntimeError(f"Gemini error HTTP {code}")
         raise RuntimeError("Gemini did not answer (all keys busy or out of quota)")
+
+    @property
+    def images_exhausted(self) -> bool:
+        return all(i in self.dead or i in self.image_dead for i in range(len(self.keys)))
+
+    def pick_image_model(self) -> str:
+        """Same idea as pick_model() but for an image-generation-capable model."""
+        if self.image_model:
+            return self.image_model
+        last_err = None
+        for i in range(len(self.keys)):
+            if i in self.dead or i in self.image_dead:
+                continue
+            try:
+                avail = [m for m in self.list_models(i) if m not in self.bad_image_models]
+            except requests.RequestException as e:
+                last_err = e
+                continue
+            for name in PREFERRED_IMAGE:
+                if name in avail:
+                    self.image_model = name
+                    return name
+            images = sorted([m for m in avail if "image" in m and "imagen" not in m
+                             and not any(x in m for x in ("tts", "live", "audio", "embedding"))], reverse=True)
+            if images:
+                self.image_model = images[0]
+                return self.image_model
+        raise RuntimeError("no Gemini image-generation model found for this key"
+                           + (f" ({type(last_err).__name__})" if last_err else ""))
+
+    def generate_image(self, prompt: str, aspect_ratio: str | None = None) -> bytes:
+        """Returns raw image bytes (PNG/JPEG) from Gemini. Raises if every key fails - same
+        retry/key-rotation/quota handling as generate_json(). A key that has no image quota is
+        set aside for images only; it stays available for writing text."""
+        import base64
+        use_aspect = bool(aspect_ratio)
+        for _ in range(3 * max(1, len(self.keys)) + 6):
+            if self.images_exhausted:
+                break
+            model = self.pick_image_model()
+            i = self._next_key(image=True)
+            gen_cfg: dict = {"responseModalities": ["IMAGE"]}
+            if use_aspect:
+                gen_cfg["imageConfig"] = {"aspectRatio": aspect_ratio}
+            body = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": gen_cfg}
+            self.last[i] = time.time()
+            try:
+                r = self.s.post(f"{API}/models/{model}:generateContent", headers=self._hdr(i), json=body, timeout=150)
+            except requests.RequestException:
+                self.cool[i] = time.time() + 10
+                continue
+            self.calls += 1
+            code = r.status_code
+            if code == 200:
+                try:
+                    cand = r.json()["candidates"][0]
+                    parts = (cand.get("content") or {}).get("parts") or []
+                except (KeyError, IndexError, ValueError):
+                    raise RuntimeError("Gemini returned an empty answer")
+                for part in parts:
+                    inline = part.get("inlineData") or part.get("inline_data")
+                    if inline and inline.get("data"):
+                        return base64.b64decode(inline["data"])
+                why = str(cand.get("finishReason", "")).lower()
+                if why and why not in ("stop", "finish_reason_unspecified"):
+                    raise RuntimeError(f"Gemini did not draw this image (reason: {why}) - a different idea will be tried next run")
+                raise RuntimeError("Gemini's reply had no image in it")
+            low = r.text.lower()
+            if code == 400 and use_aspect and any(w in low for w in ("imageconfig", "image_config", "aspect")):
+                use_aspect = False            # this model doesn't take an aspect ratio: retry without (we crop/resize ourselves)
+                continue
+            if code == 404:
+                self.bad_image_models.add(model)      # model retired: choose another
+                self.image_model = ""
+                continue
+            if code == 429:
+                if "limit: 0" in low or "perday" in low or "per day" in low or "daily" in low or "billing" in low:
+                    self.image_dead[i] = "has no image quota (image models usually need billing switched on for that key)"
+                    log(f"Gemini key #{i + 1} cannot make images right now: {self.image_dead[i]}.")
+                else:
+                    m = re.search(r"retry in ([\d.]+)s", r.text)
+                    self.cool[i] = time.time() + min(90.0, float(m.group(1)) + 1 if m else 25.0)
+                continue
+            if code in (401, 403) or (code == 400 and ("api key" in low or "api_key" in low)):
+                if "billing" in low or "not available" in low or ("permission" in low and "model" in low):
+                    self.image_dead[i] = "is not allowed to use image models (billing / access needed)"
+                    log(f"Gemini key #{i + 1} cannot make images: {self.image_dead[i]}.")
+                else:
+                    self._kill(i, "was rejected (invalid, expired or blocked)")
+                continue
+            if code >= 500:
+                self.cool[i] = time.time() + 12
+                continue
+            raise RuntimeError(f"Gemini image error HTTP {code}")
+        raise RuntimeError("Gemini did not return an image (all keys busy, out of image quota, or image models need billing)")
 
 
 # ------------------------------------------------------------------ helpers

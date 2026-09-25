@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 
 from .logutil import log, safe_exc
-from .portal import Portal
+from .portal import Portal, PortalError
 from .writer import Gemini, _clean, compliance_footer, domain_of
 
 
@@ -30,7 +30,8 @@ def template(lead: dict, cfg) -> dict:
 
 def run_followups(cfg, portal: Portal, gemini: Gemini | None, deadline) -> dict:
     out = {"written": 0, "ai": 0}
-    while not deadline.over():
+    stop = False
+    while not deadline.over() and not stop:
         leads = portal.leads_to_followup(limit=10)
         if not leads:
             break
@@ -49,7 +50,13 @@ def run_followups(cfg, portal: Portal, gemini: Gemini | None, deadline) -> dict:
             msgs = msgs or template(lead, cfg)
             msgs["email_body"] = msgs["email_body"].rstrip() + "\n" + compliance_footer(cfg)
             msgs["whatsapp_message"] = msgs["whatsapp_message"].rstrip() + " (Reply STOP and I won't message again.)"
-            portal.save_followup(id=int(lead["id"]), **msgs)
+            try:
+                portal.save_followup(id=int(lead["id"]), **msgs)
+            except PortalError as e:
+                # portal/firewall hiccup: stop this phase cleanly (the same leads are offered again next run)
+                log(f"Could not save a follow-up on the portal: {safe_exc(e, 120)}")
+                stop = True
+                break
             out["written"] += 1
             out["ai"] += 1 if ai else 0
     if out["written"]:

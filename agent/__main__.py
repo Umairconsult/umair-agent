@@ -1,9 +1,8 @@
-"""Run with:  python -m agent selftest | once | forever"""
+"""Run with:  python -m agent selftest | once | forever | social"""
 from __future__ import annotations
 import os
 import sys
 import time
-
 import requests
 
 from . import osm
@@ -11,7 +10,7 @@ from .audit import AuditClient, AuditError
 from .config import load_settings, missing_required
 from .logutil import log, redact, safe_exc, set_secrets
 from .portal import Portal, PortalError
-from .scheduler import run_cycle
+from .scheduler import local_now, run_cycle
 from .slack import Slack
 from .web import Fetcher
 from .writer import Gemini
@@ -41,12 +40,22 @@ def gh_summary(lines: list[str]) -> None:
             pass
 
 
+FIREWALL_HELP = ("If this says 403 / firewall: your hosting (Hostinger) is blocking GitHub's servers. Open hPanel > Security "
+                 "(Imunify360 / IP Manager / WAF) and allow the path /portal/api/agent_api.php, or ask Hostinger support to "
+                 "whitelist it for GitHub Actions. The agent already retries automatically.")
+
+
+def portal_down_text(e: Exception) -> str:
+    txt = safe_exc(e, 300)
+    return txt + (" " + FIREWALL_HELP if any(w in txt for w in ("403", "firewall", "non-JSON")) else "")
+
+
 def build(cfg):
     set_secrets(cfg.secret_values())
     portal = Portal(cfg.portal_url, cfg.agent_token)
     slack = Slack(cfg)
     audit = AuditClient(cfg.audit_url, cfg.audit_token) if cfg.audit_url and cfg.audit_token else None
-    gemini = Gemini(cfg.gemini_keys, cfg.gemini_model) if cfg.gemini_keys else None
+    gemini = Gemini(cfg.gemini_keys, cfg.gemini_model, cfg.gemini_image_model) if cfg.gemini_keys else None
     return portal, slack, audit, gemini, Fetcher()
 
 
@@ -106,7 +115,7 @@ def selftest(cfg) -> int:
         if ver != EXPECTED_PORTAL_VERSION:
             line(None, f"Portal files are version {ver or 'OLD (no version)'} but this agent expects {EXPECTED_PORTAL_VERSION} - install hostinger_phase3_update.zip (open portal/agent_doctor.php to see which file is old)")
     except Exception as e:  # noqa: BLE001
-        line(False, f"Portal: {safe_exc(e, 200)}  -> open https://umairconsult.com/portal/agent_doctor.php to see which file is old or missing")
+        line(False, f"Portal: {portal_down_text(e)}  -> open https://umairconsult.com/portal/agent_doctor.php to see which file is old or missing")
         return finish(1)
 
     try:
@@ -217,6 +226,27 @@ def selftest(cfg) -> int:
     # else: nothing prints here on purpose - EXPLORIUM_API_KEY isn't wired into any feature
     # yet, so warning about a key you haven't set for a feature that doesn't exist yet is just noise.
 
+    from .media.drive import DriveError, build_drive, drive_configured
+    if not drive_configured(cfg):
+        line(None, "Google Drive not set up yet (GOOGLE_DRIVE_FOLDER_ID + either GOOGLE_SERVICE_ACCOUNT_JSON or the three "
+                   "GOOGLE_OAUTH_* settings) - the social media content pipeline cannot run without it")
+    else:
+        try:
+            d = build_drive(cfg)
+            name = d.ping()
+            line(True, f"Google Drive connected as {'your Google account' if d.mode == 'oauth' else 'a service account'} (folder: {name or cfg.google_drive_folder_id})")
+            if d.mode == "service_account":
+                line(None, "Drive login is a service account: uploads only work if the folder is inside a Google Workspace "
+                           "Shared Drive (a normal My Drive folder fails with 'storage quota'). If the social run reports that, "
+                           "use the GOOGLE_OAUTH_* login instead (see get_drive_token.py)")
+        except DriveError as e:
+            line(False, f"Google Drive: {safe_exc(e, 400)}")
+    if drive_configured(cfg):
+        from pathlib import Path
+        logo = Path(cfg.logo_path)
+        line(True if logo.is_file() else False,
+             f"Logo file found ({cfg.logo_path})" if logo.is_file() else f"Logo file NOT found at '{cfg.logo_path}' - social images need it")
+
     if not cfg.postal_address:
         line(None, "BUSINESS_POSTAL_ADDRESS is empty - emails will have no address line (required by US law)")
     else:
@@ -234,24 +264,90 @@ def once(cfg, minutes: float | None = None) -> int:
     portal, slack, audit, gemini, fetcher = build(cfg)
     overture, wp = build_extras(cfg)
     try:
-        portal.ping()
+        portal.wait_until_reachable()        # waits out a short firewall hiccup instead of failing the run at once
     except PortalError as e:
         log(f"Portal not reachable: {safe_exc(e)}")
-        gh("error", f"The agent cannot reach your portal ({safe_exc(e, 150)}). Open umairconsult.com/portal/agent_doctor.php.", "Portal not reachable")
-        slack.error("The agent cannot reach your portal, so this run stopped. It will try again at the next scheduled run.")
+        gh("error", f"The agent cannot reach your portal ({portal_down_text(e)}). Open umairconsult.com/portal/agent_doctor.php.", "Portal not reachable")
+        slack.error("The agent cannot reach your portal, so this run stopped. It will try again at the next scheduled run. "
+                    + portal_down_text(e)[:400])
         return 1
     try:
         summary = run_cycle(cfg, portal, slack, audit, gemini, fetcher, minutes or cfg.run_minutes, overture=overture, wp=wp)
     except PortalError as e:
         log(f"Run stopped: {safe_exc(e)}")
-        gh("error", f"Run stopped: {safe_exc(e, 200)}", "Run stopped")
-        slack.error(f"Run stopped: {safe_exc(e, 200)}")
+        gh("error", f"Run stopped: {portal_down_text(e)}", "Run stopped")
+        slack.error(f"Run stopped: {portal_down_text(e)[:500]}")
         return 1
+    if portal.firewall_hits:
+        gh("warning", f"The portal's firewall answered {portal.firewall_hits} time(s) with a block page; the agent waited and retried. "
+                      "If this keeps happening, allow /portal/api/agent_api.php in Hostinger's firewall settings.", "Portal firewall")
     log("Run finished: " + ", ".join(f"{k}={v}" for k, v in _counts(summary).items()))
     for err in summary.get("errors", []):
         gh("warning", err, "A step had a problem (the run continued)")
     gh_summary(["### AI Agent run", ""] + [f"- **{k}**: {v}" for k, v in _counts(summary).items()]
                + ([""] + [f"- ⚠️ {e}" for e in summary.get("errors", [])] if summary.get("errors") else []))
+    return 0
+
+
+def social(cfg) -> int:
+    """Runs today's social-media content pipeline: generates one branded image per platform,
+    uploads it to Google Drive, records it in the portal for review, and sends a Slack
+    notification. Never posts anything to social media - see agent/social.py."""
+    miss = missing_required(cfg)
+    if miss:
+        print("Settings missing: " + ", ".join(miss))
+        return 1
+    portal, slack, _audit, gemini, _fetcher = build(cfg)
+    try:
+        portal.wait_until_reachable()
+    except PortalError as e:
+        log(f"Portal not reachable: {safe_exc(e)}")
+        gh("error", f"The agent cannot reach your portal ({portal_down_text(e)}).", "Portal not reachable")
+        slack.error("The social media run could not reach your portal, so it stopped. It will try again next time. "
+                    + portal_down_text(e)[:400])
+        return 1
+
+    from .social import run_social
+    today = local_now(cfg).date()
+    try:
+        result = run_social(cfg, portal, gemini, today)
+    except Exception as e:  # noqa: BLE001 - a crash must still be reported, not swallowed
+        log(f"Social run crashed: {safe_exc(e)}")
+        gh("error", f"Social media run crashed: {safe_exc(e, 200)}", "Social pipeline")
+        slack.error(f"Today's social media content run crashed unexpectedly: {safe_exc(e, 200)}")
+        return 1
+
+    done, target = result["done"], result["target"]
+    already = result.get("already_done_today", 0)
+    lines = [f":art: *Social media content - {today.isoformat()}*"]
+    if done:
+        lines.append(f"New this run: *{done}* (today's total so far: *{done + already}* of *{target}*)")
+    elif target and already >= target:
+        lines.append(f"Already complete for today - all *{target}* were made in an earlier run.")
+    else:
+        lines.append(f"Nothing new this run. Today's total so far: *{already}* of *{target}*")
+    for p in result["posts"]:
+        cap = " ".join(p["caption"].split())
+        cap = cap[:220] + ("..." if len(cap) > 220 else "")
+        lines.append(f"*{p['label']}* - {p.get('platform_label', p['platform'])} (variant {p['variant']}): <{p['link']}|open image in Drive>")
+        lines.append(f">{cap}" + (f"\n>*CTA:* {p['cta']}" if p["cta"] else ""))
+    if result["posts"]:
+        lines.append(f"Review them on your portal: {cfg.portal_url}/admin_ai_agent.php (nothing is posted automatically).")
+    if result["failures"]:
+        lines.append(":warning: *Problems today:*")
+        for f in result["failures"]:
+            lines.append(f"- {f}")
+    slack.social("\n".join(lines))
+
+    log(f"Social run finished: {done} new, {already} already done today, target {target}"
+        + (f", {len(result['failures'])} problem(s)" if result["failures"] else ""))
+    gh_summary(["### Social media content run", "",
+               f"- **new this run**: {done}", f"- **already done today**: {already}", f"- **target**: {target}"]
+               + ([""] + [f"- ⚠️ {f}" for f in result["failures"]] if result["failures"] else []))
+    for f in result["failures"]:
+        gh("warning", f, "Social content problem (the run continued)")
+    if not done and not already and result["failures"]:
+        return 1        # nothing was made at all: show the run as failed so you notice (details are in Slack)
     return 0
 
 
@@ -289,7 +385,13 @@ def main() -> int:
             except Exception as e:  # noqa: BLE001
                 log(f"Unexpected error: {safe_exc(e)}")
             time.sleep(300)
-    print("Usage: python -m agent selftest | once | forever")
+    if cmd == "social":
+        try:
+            return social(cfg)
+        except Exception as e:  # noqa: BLE001
+            print("Social run crashed: " + safe_exc(e))
+            return 1
+    print("Usage: python -m agent selftest | once | forever | social")
     return 2
 
 

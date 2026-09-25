@@ -116,7 +116,7 @@ class WordPress:
 def publish_approved(cfg, portal: Portal, wp: WordPress) -> dict:
     out = {"sent": 0, "blocked": 0}
     past_bodies: list[str] | None = None
-    for it in portal.content_list(status="approved", include_body=True, limit=20):
+    for it in portal.content_list(kind="blog", status="approved", include_body=True, limit=20):
         if it.get("wp_post_id"):
             continue
         body_text = plain_text(it.get("body_html") or "")
@@ -126,7 +126,7 @@ def publish_approved(cfg, portal: Portal, wp: WordPress) -> dict:
             kw = ""
         if past_bodies is None:   # fetched once per run, only if there's something to check against
             try:
-                past = portal.content_list(status="published", include_body=True, limit=10)
+                past = portal.content_list(kind="blog", status="published", include_body=True, limit=10)
                 past_bodies = [plain_text(p.get("body_html") or "") for p in past]
             except Exception:  # noqa: BLE001 - the policy check must never block publishing on its own error
                 past_bodies = []

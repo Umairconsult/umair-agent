@@ -9,6 +9,8 @@ SECRET_KEYS = [
     "SLACK_AUDIT_LOG_URL", "SLACK_LEADS_URL", "SLACK_AGENT_URL",
     "PORTAL_URL", "AUDIT_URL", "BUSINESS_POSTAL_ADDRESS", "COMPANIES_HOUSE_API_KEY", "BUSINESS_PHONE", "BUSINESS_EMAIL",
     "GSC_SERVICE_ACCOUNT_JSON", "GSC_SITE_URL", "INDEXNOW_KEY",
+    "GOOGLE_SERVICE_ACCOUNT_JSON", "GOOGLE_DRIVE_FOLDER_ID",
+    "GOOGLE_OAUTH_CLIENT_ID", "GOOGLE_OAUTH_CLIENT_SECRET", "GOOGLE_OAUTH_REFRESH_TOKEN",
 ]
 
 
@@ -114,7 +116,7 @@ class Settings:
     @property
     def brief_hour(self): return self.int("BRIEF_HOUR", 9)
     @property
-    def run_minutes(self): return self.int("RUN_MINUTES", 40)
+    def run_minutes(self): return max(5, min(150, self.int("RUN_MINUTES", 40)))   # capped so a run always ends before the workflow time limit
     @property
     def daily_target(self): return self.int("DAILY_OUTREACH_TARGET", 125)
     @property
@@ -182,6 +184,37 @@ class Settings:
     def use_associations(self): return self.get("USE_ASSOCIATIONS", "yes").lower() not in ("no", "false", "0", "off")
     @property
     def use_hiring_signals(self): return self.get("USE_HIRING_SIGNALS", "yes").lower() not in ("no", "false", "0", "off")
+
+    # ---- social media content pipeline ----
+    @property
+    def google_service_account_json(self): return self.get("GOOGLE_SERVICE_ACCOUNT_JSON")
+    @property
+    def google_drive_folder_id(self): return self.get("GOOGLE_DRIVE_FOLDER_ID")
+    @property
+    def google_oauth_client_id(self): return self.get("GOOGLE_OAUTH_CLIENT_ID")
+    @property
+    def google_oauth_client_secret(self): return self.get("GOOGLE_OAUTH_CLIENT_SECRET")
+    @property
+    def google_oauth_refresh_token(self): return self.get("GOOGLE_OAUTH_REFRESH_TOKEN")
+    @property
+    def image_provider(self): return self.get("IMAGE_PROVIDER", "gemini").lower()
+    @property
+    def video_provider(self): return self.get("VIDEO_PROVIDER", "veo").lower()
+    @property
+    def gemini_image_model(self): return self.get("GEMINI_IMAGE_MODEL", "auto")
+    @property
+    def social_platforms(self) -> list[str]:
+        return [p.lower() for p in self.list("SOCIAL_PLATFORMS", "instagram,linkedin,facebook")]
+    @property
+    def logo_path(self): return self.get("LOGO_PATH", "assets/logo.png")
+    @property
+    def logo_position(self): return self.get("LOGO_POSITION", "bottom_right")
+    @property
+    def logo_margin(self): return self.int("LOGO_MARGIN", 40)
+    @property
+    def logo_width(self): return self.int("LOGO_WIDTH", 180)
+    @property
+    def logo_opacity(self): return self.float("LOGO_OPACITY", 0.90)
 
 
 def load_settings(path: str | None = None) -> Settings:

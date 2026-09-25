@@ -22,3 +22,4 @@ class Slack:
     def agent(self, text: str) -> bool: return _post(self.cfg.slack_agent, text)
     def leads(self, text: str) -> bool: return _post(self.cfg.slack_leads, text)
     def error(self, text: str) -> bool: return _post(self.cfg.slack_agent, f":warning: *AI Agent problem*\n{text}")
+    def social(self, text: str) -> bool: return _post(self.cfg.slack_agent, text)

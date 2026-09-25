@@ -305,7 +305,12 @@ def phase_audit(cfg, portal: Portal, audit: AuditClient, stats: dict, dl: Deadli
                 continue
             if not r.get("ok"):
                 if r.get("unreachable"):
-                    portal.mark_bad_data(lid, "website unreachable")
+                    try:
+                        portal.mark_bad_data(lid, "website unreachable")
+                    except PortalError as e:
+                        log(f"Could not save an audit result on the portal: {safe_exc(e, 100)}")
+                        failed.add(lid); res["transient"] += 1; consecutive += 1
+                        continue
                     res["bad"] += 1
                     consecutive = 0
                 else:
@@ -323,8 +328,14 @@ def phase_audit(cfg, portal: Portal, audit: AuditClient, stats: dict, dl: Deadli
                     boost, hire_note = 0, ""
             ls = lead_score(r, min(50, int(lead.get("score") or 0)), boost)
             summary_txt = summarize_audit(r) + (f" · {hire_note}" if hire_note else "")
-            portal.save_audit(id=lid, audit_score=r.get("health_score"), audit_summary=summary_txt,
-                              lead_score=ls, audit_blob=r.get("blob") or "TOOBIG")
+            try:
+                portal.save_audit(id=lid, audit_score=r.get("health_score"), audit_summary=summary_txt,
+                                  lead_score=ls, audit_blob=r.get("blob") or "TOOBIG")
+            except PortalError as e:
+                # the portal hiccuped (e.g. a firewall page): keep going with the next lead instead of losing the whole phase
+                log(f"Could not save an audit result on the portal: {safe_exc(e, 100)}")
+                failed.add(lid); res["transient"] += 1; consecutive += 1
+                continue
             if hire_note:
                 res["hiring"] += 1
             res["done"] += 1
@@ -337,25 +348,38 @@ def phase_audit(cfg, portal: Portal, audit: AuditClient, stats: dict, dl: Deadli
 
 
 def phase_write(cfg, portal: Portal, gemini: Gemini | None, stats: dict, dl: Deadline, target_today: int) -> dict:
-    res = {"written": 0, "ai": 0}
+    res = {"written": 0, "ai": 0, "save_failed": 0}
     need = target_today - (stats.get("ready_to_send", 0) + stats.get("contacted_today", 0))
     if need <= 0:
         log(f"Enough ready-to-send leads for today ({target_today}).")
         return res
-    while need > 0 and not dl.over():
-        batch = portal.leads_to_write(limit=min(10, need))
+    skipped: set[int] = set()       # leads whose messages could not be saved this run (tried again next run)
+    consecutive_fail = 0
+    while need > 0 and not dl.over() and consecutive_fail < 3:
+        batch = [l for l in portal.leads_to_write(limit=min(10, need) + len(skipped)) if int(l["id"]) not in skipped]
         if not batch:
             break
-        for lead in batch:
-            if dl.over() or need <= 0:
+        for lead in batch[:min(10, need)]:
+            if dl.over() or need <= 0 or consecutive_fail >= 3:
                 break
             msgs, used_ai = write_messages(lead, cfg, gemini)
-            portal.save_messages(id=int(lead["id"]), **msgs)
+            try:
+                portal.save_messages(id=int(lead["id"]), **msgs)
+            except PortalError as e:
+                # a temporary portal/firewall problem must not throw away the whole phase or loop forever
+                log(f"Could not save a message on the portal: {safe_exc(e, 120)}")
+                skipped.add(int(lead["id"]))
+                res["save_failed"] += 1
+                consecutive_fail += 1
+                continue
+            consecutive_fail = 0
             res["written"] += 1
             res["ai"] += 1 if used_ai else 0
             need -= 1
     if res["written"]:
         portal.log("messages", f"Prepared {res['written']} ready-to-send messages ({res['ai']} written by AI, {res['written'] - res['ai']} from templates)")
+    if res["save_failed"]:
+        portal.log("error", f"{res['save_failed']} message(s) could not be saved because the portal did not answer properly; they will be retried on the next run")
     return res
 
 
@@ -368,7 +392,7 @@ def phase_brief(cfg, portal: Portal, slack: Slack, target_today: int, gemini: Ge
         return False
     st = portal.stats()
     plan = channel_plan(cfg, target_today)
-    drafts = len(portal.content_list(status="draft", limit=50))
+    drafts = len(portal.content_list(kind="blog", status="draft", limit=50))
     ctl = portal.state_list("ctl:")
     lines = [f"*:robot_face: AI Agent daily brief - {today}*"]
     if ctl.get("ctl:pause_finding") == "1":
@@ -380,6 +404,12 @@ def phase_brief(cfg, portal: Portal, slack: Slack, target_today: int, gemini: Ge
              f"- Contacted today: *{st['contacted_today']}* | Replies: *{st['replied']}* | Follow-ups due: *{st['followups_due']}*",
              f"- Blog drafts waiting for your review: *{drafts}*",
              f"*Suggested plan for today:* email {plan['email']}, WhatsApp {plan['whatsapp']}, LinkedIn {plan['linkedin']}, Messenger {plan['messenger']}"]
+    try:
+        social_waiting = len(portal.content_list(kind="social", status="draft", limit=50))
+        if social_waiting:
+            lines.append(f"- Social media posts waiting for your review: *{social_waiting}*")
+    except PortalError:
+        pass
     if gemini and len(gemini.keys) > 1:
         lines.append(f"- AI keys working: {gemini.live_count()} of {len(gemini.keys)}")
     lines.append(f"Open your portal: {cfg.portal_url}/admin_ai_agent.php")

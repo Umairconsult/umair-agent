@@ -1,0 +1,57 @@
+name: AI Agent - Social Media
+
+on:
+  schedule:
+    - cron: "0 8 * * *"      # run 1 - 08:00 UTC
+    - cron: "0 16 * * *"     # run 2 - 16:00 UTC, a safety-net pass in case run 1 didn't finish everything
+  workflow_dispatch:          # lets you press the "Run workflow" button to test on demand
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ai-agent-social      # its own group, separate from the main "ai-agent" job, so
+  cancel-in-progress: false   # neither one waits on or interrupts the other
+
+jobs:
+  run:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Check that every file was uploaded
+        run: python3 check_files.py
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        run: pip install -r requirements.txt
+
+      - name: Load your settings (kept secret)
+        env:
+          SETTINGS_ENV: ${{ secrets.SETTINGS_ENV }}
+        run: |
+          python - <<'PY'
+          import os, re, sys
+          s = os.environ.get("SETTINGS_ENV", "")
+          if not s.strip():
+              print("PROBLEM: the secret SETTINGS_ENV is empty or missing. Add it in Settings > Secrets and variables > Actions.")
+              sys.exit(1)
+          open("settings.env", "w").write(s)
+          # hide every value from the public logs, just in case
+          for line in s.splitlines():
+              line = line.strip()
+              if not line or line.startswith("#") or "=" not in line:
+                  continue
+              val = re.split(r"\s*<--", line.split("=", 1)[1], maxsplit=1)[0].strip()
+              if len(val) >= 6:
+                  print("::add-mask::" + val)
+          PY
+
+      - name: Generate today's social media content
+        run: python -m agent social

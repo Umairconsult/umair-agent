@@ -7,7 +7,8 @@ from pathlib import Path
 SECRET_KEYS = [
     "AGENT_API_TOKEN", "AUDIT_API_TOKEN", "EXPLORIUM_API_KEY", "WP_APP_PASSWORD", "WP_AGENT_KEY", "WP_URL", "WP_USER",
     "SLACK_AUDIT_LOG_URL", "SLACK_LEADS_URL", "SLACK_AGENT_URL",
-    "PORTAL_URL", "AUDIT_URL", "BUSINESS_POSTAL_ADDRESS", "COMPANIES_HOUSE_API_KEY", "BUSINESS_PHONE", "BUSINESS_EMAIL",
+    "PORTAL_URL", "AUDIT_URL", "PORTAL_RELAY_URL", "PORTAL_RELAY_TOKEN",
+    "BUSINESS_POSTAL_ADDRESS", "COMPANIES_HOUSE_API_KEY", "BUSINESS_PHONE", "BUSINESS_EMAIL",
     "GSC_SERVICE_ACCOUNT_JSON", "GSC_SITE_URL", "INDEXNOW_KEY",
     "GOOGLE_SERVICE_ACCOUNT_JSON", "GOOGLE_DRIVE_FOLDER_ID",
     "GOOGLE_OAUTH_CLIENT_ID", "GOOGLE_OAUTH_CLIENT_SECRET", "GOOGLE_OAUTH_REFRESH_TOKEN",
@@ -61,6 +62,17 @@ class Settings:
     def portal_url(self): return self.get("PORTAL_URL").rstrip("/")
     @property
     def agent_token(self): return self.get("AGENT_API_TOKEN")
+    @property
+    def relay_url(self):
+        """Optional. If set, the agent sends portal calls to this Cloudflare Worker instead of
+        talking to PORTAL_URL directly. Leave empty (the default) to go straight to Hostinger,
+        exactly as before - this setting changes nothing unless you fill it in."""
+        return self.get("PORTAL_RELAY_URL").rstrip("/")
+    @property
+    def relay_token(self):
+        """Optional. The Worker's own access token (not the portal's AGENT_API_TOKEN). Only
+        needed if PORTAL_RELAY_URL is set."""
+        return self.get("PORTAL_RELAY_TOKEN")
     @property
     def audit_url(self): return self.get("AUDIT_URL")
     @property

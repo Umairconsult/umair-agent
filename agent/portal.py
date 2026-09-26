@@ -93,13 +93,20 @@ def describe_block(r) -> str:
 
 
 class Portal:
-    def __init__(self, base_url: str, token: str, timeout: int = 40):
-        self.url = base_url.rstrip("/") + "/api/agent_api.php"
+    def __init__(self, base_url: str, token: str, timeout: int = 40, relay_url: str = "", relay_token: str = ""):
+        # Normal mode: talk to Hostinger directly. Relay mode (relay_url set): send the exact same
+        # request to a Cloudflare Worker instead, which forwards it on to Hostinger and hands back
+        # the exact same reply. Nothing below this - retries, JSON parsing, firewall/429 detection -
+        # needs to know or care which mode it's in.
+        root = relay_url.rstrip("/") if relay_url else base_url.rstrip("/")
+        self.url = root + "/api/agent_api.php"
         self.token = token
         self.timeout = timeout
         self.s = requests.Session()
         self.s.headers.update({"User-Agent": BROWSER_UA, "Accept": "application/json, */*;q=0.5",
                                "Accept-Language": "en-US,en;q=0.9"})
+        if relay_url and relay_token:
+            self.s.headers["Authorization"] = f"Bearer {relay_token}"
         self._last_call = 0.0
         self._cooldown_until = 0.0
         self._cooldown_reason = ""

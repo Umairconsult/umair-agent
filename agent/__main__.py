@@ -68,7 +68,7 @@ def portal_down_text(e: Exception) -> str:
 
 def build(cfg):
     set_secrets(cfg.secret_values())
-    portal = Portal(cfg.portal_url, cfg.agent_token)
+    portal = Portal(cfg.portal_url, cfg.agent_token, relay_url=cfg.relay_url, relay_token=cfg.relay_token)
     slack = Slack(cfg)
     audit = AuditClient(cfg.audit_url, cfg.audit_token) if cfg.audit_url and cfg.audit_token else None
     gemini = Gemini(cfg.gemini_keys, cfg.gemini_model, cfg.gemini_image_model) if cfg.gemini_keys else None

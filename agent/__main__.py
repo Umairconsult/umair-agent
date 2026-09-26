@@ -44,10 +44,26 @@ FIREWALL_HELP = ("If this says 403 / firewall: your hosting (Hostinger) is block
                  "(Imunify360 / IP Manager / WAF) and allow the path /portal/api/agent_api.php, or ask Hostinger support to "
                  "whitelist it for GitHub Actions. The agent already retries automatically.")
 
+# A 429 (with e.g. server=hcdn) is a DIFFERENT problem from a 403 firewall page, and the 403 advice above does not
+# fix it: Hostinger applies this rate limit at the network edge to whole IP ranges (AWS, Microsoft/Azure, Meta) -
+# GitHub-hosted runners live in Azure's range - not per-site, so there is no hPanel WAF/Imunify360 rule to add for
+# /portal/api/agent_api.php here. See: https://www.hostinger.com/support/429-errors-on-automated-integrations-and-link-previews/
+RATE_LIMIT_HELP = ("If this says 429: this is Hostinger's own network-level rate limit on automated traffic from cloud IP "
+                    "ranges (including GitHub Actions' Azure IPs) - it is not your site's firewall/WAF, so adding an "
+                    "Imunify360/WAF allow-rule for the path will not fix it, and it isn't tied to your hosting plan or "
+                    "domain. It typically clears on its own within a few hours, so the agent backs off and lets the next "
+                    "scheduled run (twice a day) try again. If it keeps happening every run, ask Hostinger support about "
+                    "their 'server-level rate limits for automated traffic' and whether your domain/IP can be excluded, "
+                    "or run the agent from a non-cloud IP (e.g. a small VPS or self-hosted runner) instead of GitHub-hosted runners.")
+
 
 def portal_down_text(e: Exception) -> str:
     txt = safe_exc(e, 300)
-    return txt + (" " + FIREWALL_HELP if any(w in txt for w in ("403", "firewall", "non-JSON")) else "")
+    if "HTTP 429" in txt:
+        return txt + " " + RATE_LIMIT_HELP
+    if any(w in txt for w in ("403", "firewall", "non-JSON")):
+        return txt + " " + FIREWALL_HELP
+    return txt
 
 
 def build(cfg):
@@ -279,8 +295,9 @@ def once(cfg, minutes: float | None = None) -> int:
         slack.error(f"Run stopped: {portal_down_text(e)[:500]}")
         return 1
     if portal.firewall_hits:
-        gh("warning", f"The portal's firewall answered {portal.firewall_hits} time(s) with a block page; the agent waited and retried. "
-                      "If this keeps happening, allow /portal/api/agent_api.php in Hostinger's firewall settings.", "Portal firewall")
+        gh("warning", f"The portal answered {portal.firewall_hits} time(s) with a block/rate-limit page; the agent waited and retried. "
+                      "If the run log shows HTTP 429, that's Hostinger's own automated-traffic rate limit (see RATE_LIMIT_HELP in "
+                      "agent/__main__.py) and it isn't fixed by a firewall allow-rule; a 403 usually is.", "Portal firewall")
     log("Run finished: " + ", ".join(f"{k}={v}" for k, v in _counts(summary).items()))
     for err in summary.get("errors", []):
         gh("warning", err, "A step had a problem (the run continued)")

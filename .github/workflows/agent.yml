@@ -2,15 +2,18 @@ name: AI Agent
 
 on:
   schedule:
-    - cron: "17 */3 * * *"      # runs by itself every 3 hours
-  workflow_dispatch:            # lets you press the "Run workflow" button
+    - cron: "17 */3 * * *"    # lead-gen / outreach run, every 3 hours
+    - cron: "0 8 * * *"       # social media content - run 1
+    - cron: "0 16 * * *"      # social media content - run 2 (safety net in case run 1 didn't finish)
+  workflow_dispatch:          # lets you press the "Run workflow" button
     inputs:
       mode:
-        description: "What to run (selftest = check everything works, once = do a real run now)"
+        description: "What to run (selftest = check everything works, once = a real lead-gen/outreach run, social = today's social content)"
         type: choice
         options:
           - selftest
           - once
+          - social
         default: selftest
 
 concurrency:
@@ -22,13 +25,13 @@ permissions:
 
 jobs:
   run:
-    runs-on: ubuntu-24.04   # pinned so the Oct 19 2026 ubuntu-latest -> Ubuntu 26 switch can't surprise you
-    timeout-minutes: 180   # room for RUN_MINUTES (max 150) plus the blog / SEO steps at the end
+    runs-on: self-hosted   # your own PC, instead of GitHub's shared cloud computers
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v6
 
       - name: Check that every file was uploaded
-        run: python3 check_files.py
+        run: python check_files.py
 
       - uses: actions/setup-python@v6
         with:
@@ -39,6 +42,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Load your settings (kept secret)
+        shell: bash
         env:
           SETTINGS_ENV: ${{ secrets.SETTINGS_ENV }}
         run: |
@@ -59,11 +63,24 @@ jobs:
                   print("::add-mask::" + val)
           PY
 
+      - name: Decide what to run
+        id: pick
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "mode=${{ inputs.mode }}" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event.schedule }}" = "0 8 * * *" ] || [ "${{ github.event.schedule }}" = "0 16 * * *" ]; then
+            echo "mode=social" >> "$GITHUB_OUTPUT"
+          else
+            echo "mode=once" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Run the agent
-        run: python -m agent ${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'once' }}
+        run: python -m agent ${{ steps.pick.outputs.mode }}
 
       - name: Keep the schedule alive (GitHub pauses idle repos after 60 days)
         if: github.event_name == 'schedule'
+        shell: bash
         run: |
           date -u +%Y-%m > .keepalive
           git config user.name "agent-keepalive"

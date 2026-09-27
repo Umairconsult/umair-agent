@@ -347,20 +347,20 @@ def phase_audit(cfg, portal: Portal, audit: AuditClient, stats: dict, dl: Deadli
     return res
 
 
-def phase_write(cfg, portal: Portal, gemini: Gemini | None, stats: dict, dl: Deadline, target_today: int) -> dict:
+def phase_write(cfg, portal: Portal, gemini: Gemini | None, dl: Deadline) -> dict:
+    """Writes messages for every audited lead that doesn't have one yet, so any lead that's been
+    found - today or in the past - becomes 'ready to send' as soon as possible. This is
+    deliberately NOT throttled by today's outreach pace (target_today): that number only controls
+    how many messages phase_brief recommends you actually send today, never how many get written."""
     res = {"written": 0, "ai": 0, "save_failed": 0}
-    need = target_today - (stats.get("ready_to_send", 0) + stats.get("contacted_today", 0))
-    if need <= 0:
-        log(f"Enough ready-to-send leads for today ({target_today}).")
-        return res
     skipped: set[int] = set()       # leads whose messages could not be saved this run (tried again next run)
     consecutive_fail = 0
-    while need > 0 and not dl.over() and consecutive_fail < 3:
-        batch = [l for l in portal.leads_to_write(limit=min(10, need) + len(skipped)) if int(l["id"]) not in skipped]
+    while not dl.over() and consecutive_fail < 3:
+        batch = [l for l in portal.leads_to_write(limit=50) if int(l["id"]) not in skipped]
         if not batch:
             break
-        for lead in batch[:min(10, need)]:
-            if dl.over() or need <= 0 or consecutive_fail >= 3:
+        for lead in batch:
+            if dl.over() or consecutive_fail >= 3:
                 break
             msgs, used_ai = write_messages(lead, cfg, gemini)
             try:
@@ -375,7 +375,6 @@ def phase_write(cfg, portal: Portal, gemini: Gemini | None, stats: dict, dl: Dea
             consecutive_fail = 0
             res["written"] += 1
             res["ai"] += 1 if used_ai else 0
-            need -= 1
     if res["written"]:
         portal.log("messages", f"Prepared {res['written']} ready-to-send messages ({res['ai']} written by AI, {res['written'] - res['ai']} from templates)")
     if res["save_failed"]:
@@ -457,7 +456,7 @@ def run_cycle(cfg, portal: Portal, slack: Slack, audit: AuditClient | None, gemi
     else:
         log("Audit tool not configured (AUDIT_URL / AUDIT_API_TOKEN) - skipping audits.")
     stats = portal.stats()
-    r3 = guarded("Message writer", lambda: phase_write(cfg, portal, gemini, stats, overall.slice(0.7), target_today))
+    r3 = guarded("Message writer", lambda: phase_write(cfg, portal, gemini, overall.slice(0.7)))
     if r3: summary["messages"] = r3
     if not overall.over():
         r5 = guarded("Follow-ups", lambda: run_followups(cfg, portal, gemini, overall.slice(0.5)))

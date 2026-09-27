@@ -138,9 +138,9 @@ def phase_find_leads(cfg, portal: Portal, slack: Slack, fetcher: Fetcher, stats:
         log(f"Auto-pause: {stats['to_contact']} leads are waiting to be contacted (limit {stop_at}) - not looking for new leads.")
         res["auto_paused"] = 1
         return res
-    room = cfg.max_new_leads - stats.get("leads_today", 0)
+    room = min(cfg.max_new_leads - stats.get("leads_today", 0), cfg.max_leads_per_run)
     if room <= 0:
-        log(f"Lead limit for today reached ({cfg.max_new_leads}).")
+        log(f"Lead limit reached (per-run cap {cfg.max_leads_per_run}, daily cap {cfg.max_new_leads}).")
         return res
     if stats.get("unaudited", 0) > cfg.max_backlog:
         log(f"{stats['unaudited']} leads are still waiting for an audit - auditing first, finding more later.")

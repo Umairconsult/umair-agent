@@ -10,8 +10,6 @@ SECRET_KEYS = [
     "PORTAL_URL", "AUDIT_URL", "PORTAL_RELAY_URL", "PORTAL_RELAY_TOKEN",
     "BUSINESS_POSTAL_ADDRESS", "COMPANIES_HOUSE_API_KEY", "BUSINESS_PHONE", "BUSINESS_EMAIL",
     "GSC_SERVICE_ACCOUNT_JSON", "GSC_SITE_URL", "INDEXNOW_KEY",
-    "GOOGLE_SERVICE_ACCOUNT_JSON", "GOOGLE_DRIVE_FOLDER_ID",
-    "GOOGLE_OAUTH_CLIENT_ID", "GOOGLE_OAUTH_CLIENT_SECRET", "GOOGLE_OAUTH_REFRESH_TOKEN",
 ]
 
 
@@ -138,6 +136,11 @@ class Settings:
     @property
     def max_new_leads(self): return self.int("MAX_NEW_LEADS_PER_DAY", 200)
     @property
+    def max_leads_per_run(self):
+        """Caps how many new leads a single manual run (`python -m agent once`) can find,
+        independent of the MAX_NEW_LEADS_PER_DAY safety net above."""
+        return self.int("MAX_NEW_LEADS_PER_RUN", 100)
+    @property
     def max_audits(self): return self.int("MAX_AUDITS_PER_DAY", 300)
     @property
     def audit_pause(self): return self.float("SECONDS_BETWEEN_AUDITS", 5)
@@ -197,36 +200,10 @@ class Settings:
     @property
     def use_hiring_signals(self): return self.get("USE_HIRING_SIGNALS", "yes").lower() not in ("no", "false", "0", "off")
 
-    # ---- social media content pipeline ----
-    @property
-    def google_service_account_json(self): return self.get("GOOGLE_SERVICE_ACCOUNT_JSON")
-    @property
-    def google_drive_folder_id(self): return self.get("GOOGLE_DRIVE_FOLDER_ID")
-    @property
-    def google_oauth_client_id(self): return self.get("GOOGLE_OAUTH_CLIENT_ID")
-    @property
-    def google_oauth_client_secret(self): return self.get("GOOGLE_OAUTH_CLIENT_SECRET")
-    @property
-    def google_oauth_refresh_token(self): return self.get("GOOGLE_OAUTH_REFRESH_TOKEN")
-    @property
-    def image_provider(self): return self.get("IMAGE_PROVIDER", "gemini").lower()
-    @property
-    def video_provider(self): return self.get("VIDEO_PROVIDER", "veo").lower()
-    @property
-    def gemini_image_model(self): return self.get("GEMINI_IMAGE_MODEL", "auto")
+    # ---- social media content pipeline (text only: captions + CTAs, no images) ----
     @property
     def social_platforms(self) -> list[str]:
         return [p.lower() for p in self.list("SOCIAL_PLATFORMS", "instagram,linkedin,facebook")]
-    @property
-    def logo_path(self): return self.get("LOGO_PATH", "assets/logo.png")
-    @property
-    def logo_position(self): return self.get("LOGO_POSITION", "bottom_right")
-    @property
-    def logo_margin(self): return self.int("LOGO_MARGIN", 40)
-    @property
-    def logo_width(self): return self.int("LOGO_WIDTH", 180)
-    @property
-    def logo_opacity(self): return self.float("LOGO_OPACITY", 0.90)
 
 
 def load_settings(path: str | None = None) -> Settings:

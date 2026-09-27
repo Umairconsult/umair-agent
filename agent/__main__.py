@@ -71,7 +71,7 @@ def build(cfg):
     portal = Portal(cfg.portal_url, cfg.agent_token, relay_url=cfg.relay_url, relay_token=cfg.relay_token)
     slack = Slack(cfg)
     audit = AuditClient(cfg.audit_url, cfg.audit_token) if cfg.audit_url and cfg.audit_token else None
-    gemini = Gemini(cfg.gemini_keys, cfg.gemini_model, cfg.gemini_image_model) if cfg.gemini_keys else None
+    gemini = Gemini(cfg.gemini_keys, cfg.gemini_model) if cfg.gemini_keys else None
     return portal, slack, audit, gemini, Fetcher()
 
 
@@ -242,27 +242,6 @@ def selftest(cfg) -> int:
     # else: nothing prints here on purpose - EXPLORIUM_API_KEY isn't wired into any feature
     # yet, so warning about a key you haven't set for a feature that doesn't exist yet is just noise.
 
-    from .media.drive import DriveError, build_drive, drive_configured
-    if not drive_configured(cfg):
-        line(None, "Google Drive not set up yet (GOOGLE_DRIVE_FOLDER_ID + either GOOGLE_SERVICE_ACCOUNT_JSON or the three "
-                   "GOOGLE_OAUTH_* settings) - the social media content pipeline cannot run without it")
-    else:
-        try:
-            d = build_drive(cfg)
-            name = d.ping()
-            line(True, f"Google Drive connected as {'your Google account' if d.mode == 'oauth' else 'a service account'} (folder: {name or cfg.google_drive_folder_id})")
-            if d.mode == "service_account":
-                line(None, "Drive login is a service account: uploads only work if the folder is inside a Google Workspace "
-                           "Shared Drive (a normal My Drive folder fails with 'storage quota'). If the social run reports that, "
-                           "use the GOOGLE_OAUTH_* login instead (see get_drive_token.py)")
-        except DriveError as e:
-            line(False, f"Google Drive: {safe_exc(e, 400)}")
-    if drive_configured(cfg):
-        from pathlib import Path
-        logo = Path(cfg.logo_path)
-        line(True if logo.is_file() else False,
-             f"Logo file found ({cfg.logo_path})" if logo.is_file() else f"Logo file NOT found at '{cfg.logo_path}' - social images need it")
-
     if not cfg.postal_address:
         line(None, "BUSINESS_POSTAL_ADDRESS is empty - emails will have no address line (required by US law)")
     else:
@@ -307,8 +286,8 @@ def once(cfg, minutes: float | None = None) -> int:
 
 
 def social(cfg) -> int:
-    """Runs today's social-media content pipeline: generates one branded image per platform,
-    uploads it to Google Drive, records it in the portal for review, and sends a Slack
+    """Runs today's social-media content pipeline: writes one caption + call-to-action per
+    platform (text only, no images), records it in the portal for review, and sends a Slack
     notification. Never posts anything to social media - see agent/social.py."""
     miss = missing_required(cfg)
     if miss:
@@ -346,10 +325,10 @@ def social(cfg) -> int:
     for p in result["posts"]:
         cap = " ".join(p["caption"].split())
         cap = cap[:220] + ("..." if len(cap) > 220 else "")
-        lines.append(f"*{p['label']}* - {p.get('platform_label', p['platform'])} (variant {p['variant']}): <{p['link']}|open image in Drive>")
+        lines.append(f"*{p['label']}* - {p.get('platform_label', p['platform'])}:")
         lines.append(f">{cap}" + (f"\n>*CTA:* {p['cta']}" if p["cta"] else ""))
     if result["posts"]:
-        lines.append(f"Review them on your portal: {cfg.portal_url}/admin_ai_agent.php (nothing is posted automatically).")
+        lines.append(f"Review them on your portal: {cfg.portal_url}/admin_ai_agent.php (nothing is posted automatically - add your own image and post it yourself).")
     if result["failures"]:
         lines.append(":warning: *Problems today:*")
         for f in result["failures"]:

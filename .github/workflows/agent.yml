@@ -42,49 +42,31 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Load your settings (kept secret)
-        shell: bash
         env:
           SETTINGS_ENV: ${{ secrets.SETTINGS_ENV }}
-        run: |
-          python - <<'PY'
-          import os, re, sys
-          s = os.environ.get("SETTINGS_ENV", "")
-          if not s.strip():
-              print("PROBLEM: the secret SETTINGS_ENV is empty or missing. Add it in Settings > Secrets and variables > Actions.")
-              sys.exit(1)
-          open("settings.env", "w").write(s)
-          # hide every value from the public logs, just in case
-          for line in s.splitlines():
-              line = line.strip()
-              if not line or line.startswith("#") or "=" not in line:
-                  continue
-              val = re.split(r"\s*<--", line.split("=", 1)[1], maxsplit=1)[0].strip()
-              if len(val) >= 6:
-                  print("::add-mask::" + val)
-          PY
+        run: python load_settings.py
 
       - name: Decide what to run
         id: pick
-        shell: bash
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "mode=${{ inputs.mode }}" >> "$GITHUB_OUTPUT"
-          elif [ "${{ github.event.schedule }}" = "0 8 * * *" ] || [ "${{ github.event.schedule }}" = "0 16 * * *" ]; then
-            echo "mode=social" >> "$GITHUB_OUTPUT"
-          else
-            echo "mode=once" >> "$GITHUB_OUTPUT"
-          fi
+          $mode = "once"
+          if ("${{ github.event_name }}" -eq "workflow_dispatch") {
+            $mode = "${{ inputs.mode }}"
+          } elseif ("${{ github.event.schedule }}" -eq "0 8 * * *" -or "${{ github.event.schedule }}" -eq "0 16 * * *") {
+            $mode = "social"
+          }
+          "mode=$mode" >> $env:GITHUB_OUTPUT
 
       - name: Run the agent
         run: python -m agent ${{ steps.pick.outputs.mode }}
 
       - name: Keep the schedule alive (GitHub pauses idle repos after 60 days)
         if: github.event_name == 'schedule'
-        shell: bash
         run: |
-          date -u +%Y-%m > .keepalive
+          Get-Date -AsUTC -Format "yyyy-MM" | Out-File -FilePath .keepalive -Encoding utf8 -NoNewline
           git config user.name "agent-keepalive"
           git config user.email "agent-keepalive@users.noreply.github.com"
           git add .keepalive
-          git commit -m "monthly keepalive" || true
-          git push || true
+          git commit -m "monthly keepalive"
+          git push
+          exit 0   # nothing new to commit some months - that's fine, don't fail the run over it

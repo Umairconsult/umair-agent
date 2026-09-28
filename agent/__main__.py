@@ -1,4 +1,4 @@
-"""Run with:  python -m agent selftest | once | forever | social"""
+"""Run with:  python -m agent selftest | once | forever | social | all"""
 from __future__ import annotations
 import os
 import sys
@@ -285,7 +285,7 @@ def once(cfg, minutes: float | None = None) -> int:
     return 0
 
 
-def social(cfg) -> int:
+def social(cfg, quiet_if_idle: bool = False) -> int:
     """Runs today's social-media content pipeline: writes one caption + call-to-action per
     platform (text only, no images), records it in the portal for review, and sends a Slack
     notification. Never posts anything to social media - see agent/social.py."""
@@ -333,7 +333,9 @@ def social(cfg) -> int:
         lines.append(":warning: *Problems today:*")
         for f in result["failures"]:
             lines.append(f"- {f}")
-    slack.social("\n".join(lines))
+    # In the combined run this fires every few hours; don't spam Slack when there is nothing new to report.
+    if not (quiet_if_idle and not done and not result["failures"]):
+        slack.social("\n".join(lines))
 
     log(f"Social run finished: {done} new, {already} already done today, target {target}"
         + (f", {len(result['failures'])} problem(s)" if result["failures"] else ""))
@@ -356,6 +358,24 @@ def _counts(summary: dict) -> dict:
                     out[f"{phase}.{k}"] = v
     out["errors"] = len(summary.get("errors", []))
     return out
+
+
+def run_all(cfg) -> int:
+    """One run that does BOTH jobs back to back: lead-gen/outreach first, then today's social content.
+    Social is safe to repeat - it skips any platform that already has today's post - so it is
+    simply checked on every run, and only writes what is still missing."""
+    rc = 0
+    try:
+        rc |= once(cfg)
+    except Exception as e:  # noqa: BLE001 - lead-gen crashing must not stop social from running
+        print("Run crashed: " + safe_exc(e))
+        rc |= 1
+    try:
+        rc |= social(cfg, quiet_if_idle=True)
+    except Exception as e:  # noqa: BLE001
+        print("Social run crashed: " + safe_exc(e))
+        rc |= 1
+    return 1 if rc else 0
 
 
 def main() -> int:
@@ -387,7 +407,9 @@ def main() -> int:
         except Exception as e:  # noqa: BLE001
             print("Social run crashed: " + safe_exc(e))
             return 1
-    print("Usage: python -m agent selftest | once | forever | social")
+    if cmd == "all":
+        return run_all(cfg)
+    print("Usage: python -m agent selftest | once | forever | social | all")
     return 2
 
 

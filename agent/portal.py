@@ -36,8 +36,10 @@ import requests
 
 from .logutil import log
 
-BROWSER_UA = ("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
-              "Chrome/124.0.0.0 Safari/537.36 UmairConsultAgent/3.2")
+# Hostinger's edge answers HTTP 429 to any request that CLAIMS to be Chrome/Firefox but isn't a real browser
+# (tested: curl/8.4.0 and "UmairConsultAgent/3.2" get through, every "Mozilla/5.0 ... Chrome/..." string is refused).
+# So the agent introduces itself honestly. The name BROWSER_UA is kept because audit.py imports it.
+BROWSER_UA = "UmairConsultAgent/3.2"
 MIN_GAP = 0.25                       # seconds between two portal calls (be gentle with the firewall)
 FIREWALL_WAITS = (6, 20, 45, 90)     # seconds to wait before each retry of a firewall-style answer (403/406/... block pages)
 # HTTP 429 from a "server=hcdn"/"server=..." reply is usually NOT your site's WAF - Hostinger applies this at the

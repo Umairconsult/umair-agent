@@ -126,7 +126,11 @@ class Settings:
     @property
     def brief_hour(self): return self.int("BRIEF_HOUR", 9)
     @property
-    def run_minutes(self): return max(5, min(150, self.int("RUN_MINUTES", 40)))   # capped so a run always ends before the workflow time limit
+    def run_minutes(self): return max(5, min(300, self.int("RUN_MINUTES", 40)))   # capped so a run always ends before the workflow time limit (720 min)
+    @property
+    def catch_up_minutes(self):
+        """After the normal cycle, keep auditing + writing until nothing is left waiting (0 = switch this off)."""
+        return max(0, min(300, self.int("CATCH_UP_MINUTES", 240)))
     @property
     def daily_target(self): return self.int("DAILY_OUTREACH_TARGET", 125)
     @property

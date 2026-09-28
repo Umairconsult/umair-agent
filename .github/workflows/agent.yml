@@ -2,23 +2,22 @@ name: AI Agent
 
 on:
   schedule:
-    - cron: "17 */3 * * *"    # lead-gen / outreach run, every 3 hours
-    - cron: "0 8 * * *"       # social media content - run 1
-    - cron: "0 16 * * *"      # social media content - run 2 (safety net in case run 1 didn't finish)
+    - cron: "17 */3 * * *"    # ONE schedule: every 3 hours the agent does lead-gen/outreach AND today's social content together
   workflow_dispatch:          # lets you press the "Run workflow" button
     inputs:
       mode:
-        description: "What to run (selftest = check everything works, once = a real lead-gen/outreach run, social = today's social content)"
+        description: "What to run (selftest = check everything works, all = lead-gen + social together, once = lead-gen only, social = social only)"
         type: choice
         options:
           - selftest
+          - all
           - once
           - social
         default: selftest
 
 concurrency:
   group: ai-agent
-  cancel-in-progress: false
+  cancel-in-progress: false   # if the laptop was off and runs piled up, only the newest waiting one is kept - no double runs
 
 permissions:
   contents: write   # only used for a tiny monthly "keep-alive" note
@@ -49,11 +48,9 @@ jobs:
       - name: Decide what to run
         id: pick
         run: |
-          $mode = "once"
+          $mode = "all"
           if ("${{ github.event_name }}" -eq "workflow_dispatch") {
             $mode = "${{ inputs.mode }}"
-          } elseif ("${{ github.event.schedule }}" -eq "0 8 * * *" -or "${{ github.event.schedule }}" -eq "0 16 * * *") {
-            $mode = "social"
           }
           "mode=$mode" >> $env:GITHUB_OUTPUT
 

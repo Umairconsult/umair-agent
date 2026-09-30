@@ -110,11 +110,12 @@ Write like a real person with hands-on experience, not like an AI:
 
 Length: 900 to 1200 words.
 Format: HTML using only h2, h3, p, ul, ol, li, strong, em, a. No h1. 4 to 6 h2 sections that are each useful on their own. Finish with <h2>Frequently asked questions</h2> and 3 questions as h3, each followed by a p answer.
-Where natural, link to https://umairconsult.com/ using descriptive anchor text (at most 2 links).
+Where natural, include at most 2 links to relevant pages on umairconsult.com with descriptive anchor text. Link to the most relevant page for the context: https://umairconsult.com/contact/ when inviting the reader to book a consultation, https://umairconsult.com/services/ when mentioning services, or a related article on the site. Never link the bare homepage https://umairconsult.com/ unless it is genuinely the most relevant destination.
 
 Return ONLY a JSON object with these keys:
 "title" (max 65 characters, specific, not clickbait), "slug" (lowercase-hyphens), "meta_description" (130 to 155 characters),
 "excerpt" (1 to 2 sentence teaser), "body_html", "keywords" (3 to 5 search phrases),
+"category" (exactly one of: Google Ads, Digital Advertising, Search Engine Optimization, Marketing Automation, Growth Marketing, Business Strategy, Conversion Rate Optimization, Data Analytics - pick the single best fit for the topic),
 "image_suggestions" (2 to 3 short descriptions of REAL photos or screenshots the owner could add, each with suggested alt text),
 "review_notes" (2 to 4 short notes on where the owner should add a REAL example, number or screenshot to make the post truly theirs)."""
 
@@ -178,7 +179,7 @@ def run_blog(cfg, portal: Portal, gemini: Gemini | None, today: date) -> dict:
     if bad:
         notes.append("Some phrases here can sound AI-written; consider rewording: " + ", ".join(bad[:8]))
     extras = {"keywords": data.get("keywords") or [], "image_suggestions": data.get("image_suggestions") or [],
-              "review_notes": notes, "topic": topic}
+              "review_notes": notes, "topic": topic, "category": str(data.get("category") or "").strip()}
     import json
     slug = re.sub(r"[^a-z0-9]+", "-", str(data.get("slug") or title).lower()).strip("-")[:120]
     portal.add_content(kind="blog", title=title, slug=slug, meta_description=humanize(str(data.get("meta_description", "")))[:400],

@@ -147,6 +147,14 @@ def publish_approved(cfg, portal: Portal, wp: WordPress) -> dict:
             extras = {}
         kw = (extras.get("keywords") or [""])[0]
         cat = category_id(extras.get("category") or "")
+        if not cat:
+            # Never publish without a valid real category: WordPress would
+            # silently fall back to Uncategorized, which is not allowed.
+            portal.content_update(id=int(it["id"]), status="draft")
+            portal.log("blog", f"Blocked \"{it['title']}\" from publishing - no valid category set on the draft "
+                               f"(got {extras.get('category')!r}; must be one of the 8 real categories, never Uncategorized)")
+            out["blocked"] += 1
+            continue
         author = getattr(cfg, "wp_post_author_id", None) if cfg is not None else None
         if past_bodies is None:   # fetched once per run, only if there's something to check against
             try:
@@ -166,7 +174,7 @@ def publish_approved(cfg, portal: Portal, wp: WordPress) -> dict:
         try:
             seo = {"rank_math_title": it["title"][:60], "rank_math_description": it.get("meta_description") or "", "rank_math_focus_keyword": kw}
             pid, link = wp.create_post(it["title"], it.get("body_html") or "", it.get("slug") or "", it.get("excerpt") or "", seo,
-                                         author=author, categories=[cat] if cat else None)
+                                         author=author, categories=[cat])
         except (WordPressError, requests.RequestException) as e:
             portal.log("error", f"Could not send a blog post to WordPress: {safe_exc(e, 150)}")
             break

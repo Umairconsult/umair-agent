@@ -14,6 +14,22 @@ from .logutil import log, safe_exc
 from .policy import check_draft
 from .portal import Portal
 
+# WordPress category IDs on umairconsult.com (kept in code so drafts never land in Uncategorized)
+CATEGORY_IDS = {
+    "google ads": 146,
+    "digital advertising": 53,
+    "search engine optimization": 55,
+    "marketing automation": 58,
+    "growth marketing": 56,
+    "business strategy": 59,
+    "conversion rate optimization": 57,
+    "data analytics": 54,
+}
+
+def category_id(name: str) -> int | None:
+    """Map a category name from the blog draft to its WordPress category ID."""
+    return CATEGORY_IDS.get((name or "").strip().lower())
+
 
 class WordPressError(Exception):
     pass
@@ -100,8 +116,13 @@ class WordPress:
         if got.get("rank_math_description") != description or got.get("rank_math_title") != title:
             raise WordPressError("WordPress accepted the request but did not save the SEO fields (is the WPCode snippet active?)")
 
-    def create_post(self, title: str, html: str, slug: str, excerpt: str, seo: dict | None = None) -> tuple[int, str]:
+    def create_post(self, title: str, html: str, slug: str, excerpt: str, seo: dict | None = None,
+                      author: int | None = None, categories: list[int] | None = None) -> tuple[int, str]:
         body = {"title": title, "content": html, "slug": slug, "excerpt": excerpt, "status": self.mode}
+        if author:
+            body["author"] = author
+        if categories:
+            body["categories"] = categories
         if seo and self.seo_ready():
             body["meta"] = {k: v for k, v in seo.items() if k in self._SEO_KEYS and v}
         r = self.s.post(self.base + "/posts", auth=self.auth, timeout=60, json=body)
@@ -121,9 +142,12 @@ def publish_approved(cfg, portal: Portal, wp: WordPress) -> dict:
             continue
         body_text = plain_text(it.get("body_html") or "")
         try:
-            kw = (json.loads(it.get("extras_json") or "{}").get("keywords") or [""])[0]
+            extras = json.loads(it.get("extras_json") or "{}")
         except (ValueError, AttributeError):
-            kw = ""
+            extras = {}
+        kw = (extras.get("keywords") or [""])[0]
+        cat = category_id(extras.get("category") or "")
+        author = getattr(cfg, "wp_post_author_id", None) if cfg is not None else None
         if past_bodies is None:   # fetched once per run, only if there's something to check against
             try:
                 past = portal.content_list(kind="blog", status="published", include_body=True, limit=10)
@@ -141,7 +165,8 @@ def publish_approved(cfg, portal: Portal, wp: WordPress) -> dict:
             portal.log("blog", f"Note on \"{it['title']}\" (published anyway - your call): {w}")
         try:
             seo = {"rank_math_title": it["title"][:60], "rank_math_description": it.get("meta_description") or "", "rank_math_focus_keyword": kw}
-            pid, link = wp.create_post(it["title"], it.get("body_html") or "", it.get("slug") or "", it.get("excerpt") or "", seo)
+            pid, link = wp.create_post(it["title"], it.get("body_html") or "", it.get("slug") or "", it.get("excerpt") or "", seo,
+                                         author=author, categories=[cat] if cat else None)
         except (WordPressError, requests.RequestException) as e:
             portal.log("error", f"Could not send a blog post to WordPress: {safe_exc(e, 150)}")
             break
@@ -215,8 +240,13 @@ class WordPressBridge:
         if strip(got.get("title")) != strip(title) or strip(got.get("description")) != strip(description):
             raise WordPressError("WordPress accepted the request but did not keep the SEO fields")
 
-    def create_post(self, title: str, html: str, slug: str, excerpt: str, seo: dict | None = None) -> tuple[int, str]:
+    def create_post(self, title: str, html: str, slug: str, excerpt: str, seo: dict | None = None,
+                      author: int | None = None, categories: list[int] | None = None) -> tuple[int, str]:
         body = {"title": title, "content": html, "slug": slug, "excerpt": excerpt, "status": self.mode}
+        if author:
+            body["author"] = author
+        if categories:
+            body["categories"] = categories
         if seo:
             body["seo"] = {self._SHORT.get(k, k): v for k, v in seo.items() if v}
         d = self._call("POST", "/post", json=body)

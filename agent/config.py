@@ -193,6 +193,10 @@ class Settings:
     def wp_agent_key(self): return self.get("WP_AGENT_KEY")
     @property
     def wp_mode(self): return "draft" if self.get("WP_PUBLISH_MODE", "publish").lower() == "draft" else "publish"
+    @property
+    def wp_post_author_id(self):
+        """WordPress user ID blog posts are attributed to (2 = Muhammad Umair). Override with WP_POST_AUTHOR_ID."""
+        return self.int("WP_POST_AUTHOR_ID", 2)
 
     # ---- extra lead sources / signals ----
     @property

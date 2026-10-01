@@ -1,0 +1,26 @@
+# Lightweight heartbeat: proves the self-hosted PC is alive so the main
+# agent workflow can route work to it. Runs every 30 minutes and does
+# nothing but echo - a few seconds on the PC, zero cost when it is off.
+#
+# Why a separate workflow: it has its own concurrency group with
+# cancel-in-progress, so a queued probe can never pile up or block the
+# main agent workflow while the PC is offline.
+name: PC Probe
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: pc-probe
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  probe:
+    runs-on: self-hosted
+    timeout-minutes: 5
+    steps:
+      - run: echo "pc-online-probe"

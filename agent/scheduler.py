@@ -8,7 +8,7 @@ from zoneinfo import ZoneInfo
 
 from . import associations, osm, registries
 from .agent_utils import domain_of
-from .audit import AuditClient, AuditError, lead_score, summarize_audit
+from .audit import AuditClient, lead_score, summarize_audit
 from .blog import run_blog
 from .cities import CITIES, COUNTRY_NAMES, COUNTRY_WEIGHT
 from .followups import run_followups
@@ -298,8 +298,11 @@ def phase_audit(cfg, portal: Portal, audit: AuditClient, stats: dict, dl: Deadli
                 break
             lid = int(lead["id"])
             try:
-                r = audit.run(lead["website"], full=True)
-            except AuditError as e:
+                # Audits run through the portal API (portal/api/agent_api.php action
+                # audit_run), which uses the server's own audit token - the agent's
+                # AUDIT_API_TOKEN is no longer needed and no longer checked here.
+                r = portal.audit_run(lead["website"])
+            except PortalError as e:
                 log(f"Audit tool problem: {safe_exc(e, 100)}")
                 failed.add(lid); res["transient"] += 1; consecutive += 1
                 continue
@@ -450,11 +453,8 @@ def run_cycle(cfg, portal: Portal, slack: Slack, audit: AuditClient | None, gemi
         if r1["created"]:
             slack.leads(f":sparkles: *{r1['created']} new leads* found: " + ", ".join(f"{COUNTRY_NAMES.get(c, c)} {n}" for c, n in r1["by_country"].items()))
     stats = portal.stats()
-    if audit:
-        r2 = guarded("Audits", lambda: phase_audit(cfg, portal, audit, stats, overall.slice(0.65), fetcher))
-        if r2: summary["audits"] = r2
-    else:
-        log("Audit tool not configured (AUDIT_URL / AUDIT_API_TOKEN) - skipping audits.")
+    r2 = guarded("Audits", lambda: phase_audit(cfg, portal, audit, stats, overall.slice(0.65), fetcher))
+    if r2: summary["audits"] = r2
     stats = portal.stats()
     r3 = guarded("Message writer", lambda: phase_write(cfg, portal, gemini, overall.slice(0.7)))
     if r3: summary["messages"] = r3

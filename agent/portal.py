@@ -123,6 +123,15 @@ class Portal:
         self._last_call = time.time()
 
     def call(self, action: str, **payload) -> dict:
+        return self._call(action, payload)
+
+    def call_raw(self, action: str, **payload) -> dict:
+        """Like call(), but returns the decoded reply even when ok:false.
+        For actions like audit_run, where a per-item failure (dead website,
+        audit crashed) is a normal result rather than a portal problem."""
+        return self._call(action, payload, allow_not_ok=True)
+
+    def _call(self, action: str, payload: dict, allow_not_ok: bool = False, timeout: int | None = None) -> dict:
         if time.time() < self._cooldown_until:
             raise PortalError(self._cooldown_reason)
         last = "unknown"
@@ -138,7 +147,7 @@ class Portal:
             if use_b64:
                 body = {"b64": base64.b64encode(json.dumps(body, ensure_ascii=False).encode("utf-8")).decode("ascii")}
             try:
-                r = self.s.post(self.url, json=body, headers={"X-Agent-Token": self.token}, timeout=self.timeout)
+                r = self.s.post(self.url, json=body, headers={"X-Agent-Token": self.token}, timeout=timeout or self.timeout)
             except requests.RequestException as e:
                 last = type(e).__name__
                 other_tries += 1
@@ -162,7 +171,7 @@ class Portal:
                         break
                     time.sleep(3 * other_tries)
                     continue
-                if not data.get("ok"):
+                if not data.get("ok") and not allow_not_ok:
                     raise PortalError(f"{action}: {data.get('error', 'failed')} (HTTP {r.status_code})")
                 return data
 
@@ -228,6 +237,12 @@ class Portal:
     def upsert_lead(self, **lead) -> dict: return self.call("upsert_lead", **lead)
     def leads_to_audit(self, limit=10) -> list: return self.call("leads_to_audit", limit=limit)["leads"]
     def save_audit(self, **kw): return self.call("save_audit", **kw)
+    def audit_run(self, url: str) -> dict:
+        """Runs a website audit through the portal API. The portal uses its own
+        server-side audit token, so the agent's AUDIT_API_TOKEN is not needed.
+        Returns the audit dict: ok:true (+health_score, blob, ...) on success,
+        ok:false (+unreachable:true for a dead website) when it cannot be done."""
+        return self._call("audit_run", {"url": url}, allow_not_ok=True, timeout=180)
     def mark_bad_data(self, id: int, reason: str): return self.call("mark_bad_data", id=id, reason=reason)
     def leads_to_write(self, limit=10) -> list: return self.call("leads_to_write", limit=limit)["leads"]
     def save_messages(self, **kw): return self.call("save_messages", **kw)

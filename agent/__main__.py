@@ -140,16 +140,9 @@ def selftest(cfg) -> int:
         line(None if paused else True, "Lead finding is PAUSED from the portal (resume it on the AI Agent page)" if paused else "Lead finding is running (you can pause it on the portal)")
     except PortalError:
         pass
-    if not cfg.audit_url or not cfg.audit_token:
-        line(False, "AUDIT_URL / AUDIT_API_TOKEN not set - audits cannot run")
-    else:
-        try:
-            info = audit.ping_info()
-            line(True, "Audit tool connected")
-            if info.get("version") != EXPECTED_PORTAL_VERSION:
-                line(False, f"Audit door is version {info.get('version') or 'OLD'} but {EXPECTED_PORTAL_VERSION} is needed to store full reports - replace audit/agent_audit.php on Hostinger with the one from the update zip")
-        except Exception as e:  # noqa: BLE001
-            line(False, f"Audit tool: {safe_exc(e, 150)}")
+    # Audits run through the portal API (action audit_run), which uses the server's
+    # own audit token - the agent's AUDIT_API_TOKEN is no longer needed or checked.
+    line(True, "Audits run through the portal API (no separate audit token needed)")
 
     if not gemini:
         line(None, "No GEMINI_API_KEY - messages will use plain templates instead of AI")

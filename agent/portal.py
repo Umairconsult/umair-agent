@@ -245,6 +245,8 @@ class Portal:
         return self._call("audit_run", {"url": url}, allow_not_ok=True, timeout=180)
     def mark_bad_data(self, id: int, reason: str): return self.call("mark_bad_data", id=id, reason=reason)
     def leads_to_write(self, limit=10) -> list: return self.call("leads_to_write", limit=limit)["leads"]
+    def leads_to_email(self, limit=25) -> list: return self.call("leads_to_email", limit=limit)["leads"]
+    def outreach_log(self, **kw) -> dict: return self.call("outreach_log", **kw)
     def save_messages(self, **kw): return self.call("save_messages", **kw)
     def get_dnc(self) -> list: return self.call("get_dnc")["items"]
     def log(self, kind: str, message: str, meta=None):

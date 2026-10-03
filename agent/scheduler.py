@@ -402,6 +402,9 @@ def phase_send(cfg, portal: Portal, dl: Deadline, dnc: list) -> dict:
             res["skipped"] += 1
             continue
         email = clean_email(lead.get("email", ""))
+        if email.lower().endswith(".edu"):
+            res["skipped"] += 1        # .edu addresses are not ICP — never emailed
+            continue
         # ---- HARD RULE: completed successful audit required ----
         if lead.get("audit_score") is None or not (lead.get("audit_summary") or "").strip():
             res["skipped"] += 1

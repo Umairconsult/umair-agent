@@ -184,6 +184,7 @@ def extract_contacts(html_text: str, base_url: str, country: str = "") -> dict:
     social = {"facebook": "", "instagram": "", "linkedin": ""}
     contact_page = ""
     impressum = ""
+    about_page = ""
     for href, label in pg.links:
         h = href.strip()
         low = h.lower()
@@ -206,6 +207,8 @@ def extract_contacts(html_text: str, base_url: str, country: str = "") -> dict:
             contact_page = absu.split("#")[0]
         if same_site and not impressum and re.search(r"impressum|mentions-legales|aviso-legal", blob):
             impressum = absu.split("#")[0]
+        if same_site and not about_page and "about" in blob and absu.split("#")[0] != contact_page:
+            about_page = absu.split("#")[0]
     for cf in pg.cf:
         emails.append(decode_cfemail(cf))
     emails += EMAIL_RE.findall(htmlmod.unescape(" ".join(pg.text)))
@@ -216,7 +219,8 @@ def extract_contacts(html_text: str, base_url: str, country: str = "") -> dict:
         if phone:
             break
     return {"email": email, "phone": phone, **{f"{k}_url": v for k, v in social.items()},
-            "contact_page_url": contact_page, "impressum_url": impressum}
+            "contact_page_url": contact_page, "impressum_url": impressum,
+            "about_page_url": about_page}
 
 
 # ------------------------------------------------------------------ fetching
@@ -293,7 +297,7 @@ class Fetcher:
 
 
 def enrich_from_website(fetcher: Fetcher, website: str, country: str) -> dict:
-    """Visit homepage (+ contact/impressum page if needed). Max 3 fetches."""
+    """Visit homepage (+ contact/about/impressum page if needed). Max 4 fetches."""
     res = {"reachable": False, "email": "", "phone": "", "facebook_url": "", "instagram_url": "",
            "linkedin_url": "", "contact_page_url": ""}
     first = fetcher.get(website)
@@ -308,9 +312,11 @@ def enrich_from_website(fetcher: Fetcher, website: str, country: str) -> dict:
     if not res["email"] or not res["phone"]:
         if info.get("contact_page_url"):
             extra.append(info["contact_page_url"])
+        if not res["email"] and info.get("about_page_url"):
+            extra.append(info["about_page_url"])
         if info.get("impressum_url") and country.upper() in ("DE", "AT", "CH"):
             extra.append(info["impressum_url"])
-    for page_url in extra[:2]:
+    for page_url in extra[:3]:
         got = fetcher.get(page_url)
         if not got:
             continue

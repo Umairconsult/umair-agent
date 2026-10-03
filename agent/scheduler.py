@@ -249,8 +249,8 @@ def phase_find_leads(cfg, portal: Portal, slack: Slack, fetcher: Fetcher, stats:
                     "linkedin_url": el.get("linkedin_url") or info["linkedin_url"],
                     "contact_page_url": info["contact_page_url"], "source": el.get("source", "osm"),
                 }
-                if not (lead["email"] or lead["phone"] or lead["facebook_url"] or lead["linkedin_url"] or lead["contact_page_url"]):
-                    res["skipped"] += 1        # no way to reach them
+                if not lead["email"]:
+                    res["skipped"] += 1        # no email address found — cannot be emailed
                     continue
                 restricted = bool(word_match(niche + " " + el["business_name"], cfg.restricted_niches))
                 is_pri = any(p in niche or niche in p for p in priority) if priority else False

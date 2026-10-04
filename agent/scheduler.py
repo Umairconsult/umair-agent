@@ -9,6 +9,7 @@ from zoneinfo import ZoneInfo
 from . import associations, osm, registries
 from .agent_utils import domain_of
 from .audit import AuditClient, lead_score, summarize_audit
+from .ads_check import check_google_ads
 from .blog import run_blog
 from .cities import CITIES, COUNTRY_NAMES, COUNTRY_WEIGHT
 from .followups import run_followups
@@ -351,6 +352,69 @@ def phase_audit(cfg, portal: Portal, audit: AuditClient, stats: dict, dl: Deadli
     return res
 
 
+
+ADS_CHECK_PER_RUN = 20      # max domains checked per run (Google rate-limits ~60-80/IP)
+ADS_CHECK_GAP_SECS = 4      # be gentle with the Transparency Center
+
+
+def phase_ads_check(cfg, portal: Portal, dl: Deadline) -> dict:
+    """Check Google Ads Transparency for audited leads' ad activity.
+
+    Runs after phase_audit, before phase_send. For each audited lead without
+    a recent ad check, queries the Transparency Center and saves:
+    google_ads_count, advertiser name, and check timestamp.
+    The email builder uses this to personalize outreach.
+    Stops early if Google rate-limits (to resume next run).
+    """
+    res = {"checked": 0, "with_ads": 0, "no_ads": 0, "failed": 0, "rate_limited": False}
+    try:
+        cands = portal.leads_to_ads_check(limit=ADS_CHECK_PER_RUN)
+    except PortalError as e:
+        log(f"Could not fetch leads for ads check: {safe_exc(e, 100)}")
+        return res
+    for lead in cands:
+        if dl.over():
+            break
+        lid = int(lead.get("id") or 0)
+        domain = (lead.get("domain") or "").strip()
+        if not lid or not domain:
+            res["failed"] += 1
+            continue
+        try:
+            r = check_google_ads(domain)
+        except Exception as e:  # noqa: BLE001 - one bad check must not stop the phase
+            log(f"Ads check failed for {domain}: {safe_exc(e, 80)}")
+            res["failed"] += 1
+            continue
+        if r.get("error") == "rate_limited":
+            log("Google Ads Transparency rate-limited us — pausing ads checks until next run")
+            res["rate_limited"] = True
+            break
+        try:
+            portal.save_ads(
+                id=lid,
+                google_ads_count=r["ad_count"] if r["has_ads"] else 0,
+                google_ads_advertiser=r.get("advertiser_name") or "",
+                google_ads_error=r.get("error") or "",
+            )
+        except PortalError as e:
+            log(f"Could not save ads result for {domain}: {safe_exc(e, 80)}")
+            res["failed"] += 1
+            continue
+        res["checked"] += 1
+        if r["has_ads"]:
+            res["with_ads"] += 1
+        else:
+            res["no_ads"] += 1
+        time.sleep(ADS_CHECK_GAP_SECS)
+    if res["checked"]:
+        portal.log("ads_check",
+                   f"Checked Google Ads Transparency for {res['checked']} domains: "
+                   f"{res['with_ads']} running ads, {res['no_ads']} none found"
+                   + (" (rate-limited, will resume)" if res["rate_limited"] else ""))
+    return res
+
+
 DAILY_SEND_CAP = 150          # max outreach emails per day across all runs
 PER_RUN_SEND_MAX = 25       # per-run ceiling so sends pace through the day
 SEND_GAP_SECS = 5           # be gentle with Gmail SMTP
@@ -569,6 +633,9 @@ def run_cycle(cfg, portal: Portal, slack: Slack, audit: AuditClient | None, gemi
     stats = portal.stats()
     r2 = guarded("Audits", lambda: phase_audit(cfg, portal, audit, stats, overall.slice(0.65), fetcher))
     if r2: summary["audits"] = r2
+    stats = portal.stats()
+    r2a = guarded("Ads check", lambda: phase_ads_check(cfg, portal, overall))
+    if r2a: summary["ads_check"] = r2a
     stats = portal.stats()
     r2b = guarded("Email sending", lambda: phase_send(cfg, portal, overall, dnc))
     if r2b: summary["emails"] = r2b

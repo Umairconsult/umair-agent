@@ -221,6 +221,41 @@ def build_findings_block(domain, score, label, positives, issues):
 """
 
 
+def build_ads_block(domain, google_ads_count):
+    """Build the 'Your Ad Activity' email section from Transparency Center data.
+
+    google_ads_count: int or None (None = not checked yet; section is skipped).
+    """
+    if google_ads_count is None:
+        return ""
+    domain_esc = html.escape(domain)
+    if google_ads_count > 0:
+        count_txt = f"{google_ads_count}+" if google_ads_count >= 40 else str(google_ads_count)
+        headline = f"You're running {count_txt} Google ads right now."
+        body = (f"I looked up <strong style=\"color:#c0d0e0;font-weight:500;\">{domain_esc}</strong> "
+                f"on Google's Ads Transparency Center \u2014 you have <strong style=\"color:#c99733;font-weight:600;\">"
+                f"{count_txt} active ads</strong> pointing at your site. The question isn't whether you're spending, "
+                f"it's whether every dollar is pulling its weight. Most businesses I audit are leaking 20-30% of ad "
+                f"spend to pages that don't convert \u2014 the fixes above are where I'd start.")
+    else:
+        headline = "You're not running any Google ads right now."
+        body = (f"I looked up <strong style=\"color:#c0d0e0;font-weight:500;\">{domain_esc}</strong> "
+                f"on Google's Ads Transparency Center \u2014 <strong style=\"color:#c99733;font-weight:600;\">no active ads</strong> "
+                f"found. Your competitors are buying the clicks you're not. The good news: starting from a clean slate "
+                f"means we build it right the first time \u2014 no bad habits to undo, no wasted spend to unwind.")
+    return f"""  <!-- == YOUR AD ACTIVITY == -->
+  <tr>
+    <td style="background-color:#131720;padding:42px 48px;border-left:1px solid #252d3d;border-right:1px solid #252d3d;" class="padded">
+      <div style="font-family:'IBM Plex Sans',Helvetica,Arial,sans-serif;font-size:10px;font-weight:600;color:#c99733;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:12px;">Your Ad Activity</div>
+      <h2 style="font-family:'Playfair Display',Georgia,serif;font-size:23px;font-weight:700;color:#d4dde8;margin:0 0 14px;letter-spacing:-0.3px;">{headline}</h2>
+      <p style="font-family:'IBM Plex Sans',Helvetica,Arial,sans-serif;font-size:14.5px;line-height:1.9;color:#6a7f96;margin:0;">{body}</p>
+      <p style="font-family:'IBM Plex Sans',Helvetica,Arial,sans-serif;font-size:12.5px;line-height:1.8;color:#5a7088;margin:18px 0 0;">
+        That's exactly what my Revenue Engine does \u2014 turns ad spend into predictable, scalable revenue. Worth a conversation?
+      </p>
+    </td>
+  </tr>"""
+
+
 def build_email(lead):
     """Build (subject, html) for a portal lead dict.
 
@@ -273,7 +308,8 @@ def build_email(lead):
     why_start = tpl.find("<!-- \u2550\u2550 WHY I'M REACHING OUT \u2550\u2550 -->")
     svc_start = tpl.find("<!-- \u2550\u2550 SERVICES \u2550\u2550 -->")
     if why_start != -1 and svc_start != -1 and svc_start > why_start:
-        tpl = tpl[:why_start] + build_findings_block(domain_esc, score, label, positives, issues) + "\n" + tpl[svc_start:]
+        ads_html = build_ads_block(domain, lead.get("google_ads_count"))
+        tpl = tpl[:why_start] + build_findings_block(domain_esc, score, label, positives, issues) + "\n" + ads_html + "\n" + tpl[svc_start:]
 
     tpl = tpl.replace("Performance marketing built for creative businesses.",
                       f"Performance marketing built for {biz}.")

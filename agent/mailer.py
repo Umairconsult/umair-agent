@@ -232,16 +232,14 @@ def build_ads_block(domain, google_ads_count):
     if google_ads_count > 0:
         count_txt = f"{google_ads_count}+" if google_ads_count >= 40 else str(google_ads_count)
         headline = f"You're running {count_txt} Google ads right now."
-        body = (f"I looked up <strong style=\"color:#c0d0e0;font-weight:500;\">{domain_esc}</strong> "
-                f"on Google's Ads Transparency Center \u2014 you have <strong style=\"color:#c99733;font-weight:600;\">"
-                f"{count_txt} active ads</strong> pointing at your site. The question isn't whether you're spending, "
+        body = (f"I took a look at your ads \u2014 you have <strong style=\"color:#c99733;font-weight:600;\">"
+                f"{count_txt} active ads</strong> running right now. The question isn't whether you're spending, "
                 f"it's whether every dollar is pulling its weight. Most businesses I audit are leaking 20-30% of ad "
                 f"spend to pages that don't convert \u2014 the fixes above are where I'd start.")
     else:
         headline = "You're not running any Google ads right now."
-        body = (f"I looked up <strong style=\"color:#c0d0e0;font-weight:500;\">{domain_esc}</strong> "
-                f"on Google's Ads Transparency Center \u2014 <strong style=\"color:#c99733;font-weight:600;\">no active ads</strong> "
-                f"found. Your competitors are buying the clicks you're not. The good news: starting from a clean slate "
+        body = (f"I took a look at your ads \u2014 <strong style=\"color:#c99733;font-weight:600;\">nothing running</strong> "
+                f"right now. Your competitors are buying the clicks you're not. The good news: starting from a clean slate "
                 f"means we build it right the first time \u2014 no bad habits to undo, no wasted spend to unwind.")
     return f"""  <!-- == YOUR AD ACTIVITY == -->
   <tr>

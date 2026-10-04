@@ -22,10 +22,15 @@ FREE_MAIL = {
     "yandex.ru", "zoho.com", "btinternet.com", "sky.com", "talktalk.net", "virginmedia.com", "orange.fr",
     "wanadoo.fr", "free.fr", "t-online.de", "libero.it", "sbcglobal.net", "comcast.net", "verizon.net", "att.net",
 }
-JUNK_DOMAINS = {"example.com", "domain.com", "email.com", "yoursite.com", "yourdomain.com", "test.com",
+JUNK_DOMAINS = {"example.com", "example.org", "example.net", "domain.com", "email.com", "yoursite.com",
+                "yourdomain.com", "test.com", "test.org", "invalid.com", "fake.com", "dummy.com",
                 "sentry.io", "wixpress.com", "sentry-next.wixpress.com", "sentry.wixpress.com", "2x.png"}
 JUNK_LOCAL = {"noreply", "no-reply", "donotreply", "do-not-reply", "mailer-daemon", "postmaster", "abuse",
-              "webmaster", "privacy", "dpo", "unsubscribe", "root", "hostmaster"}
+              "webmaster", "privacy", "dpo", "unsubscribe", "root", "hostmaster",
+              # Fake/placeholder addresses (user requirement 2026-10-04: no fake emails)
+              "filler", "test", "testing", "dummy", "sample", "fake", "example",
+              "null", "none", "xxx", "123", "abc", "temp", "temporary", "placeholder",
+              "user", "users", "mail", "email", "contact-us", "info-test"}
 FILE_TLDS = {"png", "jpg", "jpeg", "gif", "webp", "svg", "css", "js", "ico", "pdf", "woff", "woff2"}
 ROLE_ORDER = ["info", "contact", "hello", "office", "enquiries", "enquiry", "sales", "reception",
               "booking", "bookings", "appointments", "mail", "admin", "team", "service", "kontakt"]

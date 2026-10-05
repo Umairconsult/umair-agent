@@ -35,6 +35,7 @@ import time
 import requests
 
 from .logutil import log
+from .portal_queue import queue_write, WRITE_ACTIONS
 
 # Hostinger's edge answers HTTP 429 to any request that CLAIMS to be Chrome/Firefox but isn't a real browser
 # (tested: curl/8.4.0 and "UmairConsultAgent/3.2" get through, every "Mozilla/5.0 ... Chrome/..." string is refused).
@@ -123,13 +124,25 @@ class Portal:
         self._last_call = time.time()
 
     def call(self, action: str, **payload) -> dict:
-        return self._call(action, payload)
+        try:
+            return self._call(action, payload)
+        except PortalError:
+            # Path B: portal unreachable — queue the write for later delivery
+            # (agent flushes at next run start; Muse cron flushes via its own connection).
+            if action in WRITE_ACTIONS and queue_write(action, payload):
+                return {"ok": True, "queued": True}
+            raise
 
     def call_raw(self, action: str, **payload) -> dict:
         """Like call(), but returns the decoded reply even when ok:false.
         For actions like audit_run, where a per-item failure (dead website,
         audit crashed) is a normal result rather than a portal problem."""
-        return self._call(action, payload, allow_not_ok=True)
+        try:
+            return self._call(action, payload, allow_not_ok=True)
+        except PortalError:
+            if action in WRITE_ACTIONS and queue_write(action, payload):
+                return {"ok": True, "queued": True}
+            raise
 
     def _call(self, action: str, payload: dict, allow_not_ok: bool = False, timeout: int | None = None) -> dict:
         if time.time() < self._cooldown_until:

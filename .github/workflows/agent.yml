@@ -2,7 +2,7 @@ name: AI Agent
 
 on:
   schedule:
-    - cron: "17 */3 * * *"    # ONE schedule: every 3 hours the agent does lead-gen/outreach AND today's social content together
+    - cron: "17 */2 * * *"    # ONE schedule: every 2 hours the agent does lead-gen/outreach AND today's social content together
   workflow_dispatch:          # lets you press the "Run workflow" button
     inputs:
       mode:

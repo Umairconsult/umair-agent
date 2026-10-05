@@ -10,6 +10,7 @@ from . import associations, osm, registries
 from .agent_utils import domain_of
 from .audit import AuditClient, lead_score, summarize_audit
 from .ads_check import check_google_ads
+from .portal_queue import read_queue, remove_queued, queue_size
 from .blog import run_blog
 from .cities import CITIES, COUNTRY_NAMES, COUNTRY_WEIGHT
 from .followups import run_followups
@@ -600,6 +601,36 @@ def phase_brief(cfg, portal: Portal, slack: Slack, target_today: int, gemini: Ge
 
 
 # ------------------------------------------------------------------ one full cycle
+
+def flush_portal_queue(portal: Portal) -> dict:
+    """Path B: deliver queued portal writes from previous failed runs.
+
+    Runs at the start of each cycle. Returns {flushed, failed}.
+    """
+    res = {"flushed": 0, "failed": 0}
+    items = read_queue()
+    if not items:
+        return res
+    log(f"Flushing {len(items)} queued portal writes from previous runs...")
+    done = []
+    for item in items:
+        try:
+            # Bypass the queue wrapper — call _call directly so failures raise.
+            r = portal._call(item["action"], item["payload"])
+            if r.get("ok"):
+                done.append(item)
+                res["flushed"] += 1
+            else:
+                res["failed"] += 1
+        except Exception as e:  # noqa: BLE001 - keep trying the rest
+            log(f"Queue flush failed for {item['action']}: {safe_exc(e, 80)}")
+            res["failed"] += 1
+            break  # portal still down — stop, try again next run
+    if done:
+        remove_queued(done)
+    return res
+
+
 def run_cycle(cfg, portal: Portal, slack: Slack, audit: AuditClient | None, gemini: Gemini | None,
               fetcher: Fetcher, minutes: float, overture=None, wp: WordPress | None = None) -> dict:
     summary: dict = {"errors": []}
@@ -614,6 +645,11 @@ def run_cycle(cfg, portal: Portal, slack: Slack, audit: AuditClient | None, gemi
     target_today = warmup_target(cfg, date.fromisoformat(start_s), today_dt)
     log(f"Today's outreach target: {target_today} (warm-up day {(today_dt - date.fromisoformat(start_s)).days + 1})")
     dnc = portal.get_dnc()
+
+    # Path B: flush any queued writes from previous runs where the portal was unreachable.
+    r0 = guarded("Queue flush", lambda: flush_portal_queue(portal))
+    if r0 and (r0["flushed"] or r0["failed"]):
+        summary["queue_flush"] = r0
 
     def guarded(name, fn):
         try:

@@ -1,5 +1,6 @@
 """Visits a business website (politely) and pulls out public contact details."""
 from __future__ import annotations
+import json
 import html as htmlmod
 import ipaddress
 import re
@@ -218,12 +219,24 @@ def extract_contacts(html_text: str, base_url: str, country: str = "") -> dict:
         emails.append(decode_cfemail(cf))
     emails += EMAIL_RE.findall(htmlmod.unescape(" ".join(pg.text)))
     email = pick_best_email(emails, site_domain)
+    # USER RULE (2026-10-06): keep ALL found emails so we can send to each one.
+    # Dedupe, clean, and limit to 5 per business to avoid spam-flagging.
+    seen = set()
+    all_clean = []
+    for e in emails:
+        ce = clean_email(e)
+        if ce and ce not in seen and not ce.lower().endswith(".edu"):
+            seen.add(ce)
+            all_clean.append(ce)
+        if len(all_clean) >= 5:
+            break
     phone = ""
     for p in phones:
         phone = normalize_phone(p, country)
         if phone:
             break
-    return {"email": email, "phone": phone, **{f"{k}_url": v for k, v in social.items()},
+    return {"email": email, "all_emails": json.dumps(all_clean), "phone": phone,
+            **{f"{k}_url": v for k, v in social.items()},
             "contact_page_url": contact_page, "impressum_url": impressum,
             "about_page_url": about_page}
 

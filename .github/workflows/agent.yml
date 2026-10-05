@@ -155,6 +155,20 @@ jobs:
       - name: Run the agent
         run: python -m agent ${{ steps.pick.outputs.mode }}
 
+      # Path B: commit queued portal writes so Muse can deliver them via its own connection
+      - name: Commit portal queue (Path B)
+        if: always()
+        run: |
+          if [ -f portal_queue/pending.jsonl ] && [ -s portal_queue/pending.jsonl ]; then
+            git config user.name "umair-agent"
+            git config user.email "agent@umairconsult.com"
+            git add portal_queue/pending.jsonl
+            if ! git diff --cached --quiet; then
+              git commit -m "Path B: queue portal writes for Muse delivery"
+              git push || echo "Push failed (non-fatal)"
+            fi
+          fi
+
       - name: Keep the schedule alive (GitHub pauses idle repos after 60 days)
         if: github.event_name == 'schedule'
         run: |

@@ -646,11 +646,6 @@ def run_cycle(cfg, portal: Portal, slack: Slack, audit: AuditClient | None, gemi
     log(f"Today's outreach target: {target_today} (warm-up day {(today_dt - date.fromisoformat(start_s)).days + 1})")
     dnc = portal.get_dnc()
 
-    # Path B: flush any queued writes from previous runs where the portal was unreachable.
-    r0 = guarded("Queue flush", lambda: flush_portal_queue(portal))
-    if r0 and (r0["flushed"] or r0["failed"]):
-        summary["queue_flush"] = r0
-
     def guarded(name, fn):
         try:
             return fn()
@@ -660,6 +655,11 @@ def run_cycle(cfg, portal: Portal, slack: Slack, audit: AuditClient | None, gemi
             summary["errors"].append(msg)
             portal.log("error", msg)
             return None
+
+    # Path B: flush any queued writes from previous runs where the portal was unreachable.
+    r0 = guarded("Queue flush", lambda: flush_portal_queue(portal))
+    if r0 and (r0["flushed"] or r0["failed"]):
+        summary["queue_flush"] = r0
 
     r1 = guarded("Lead finder", lambda: phase_find_leads(cfg, portal, slack, fetcher, stats, overall.slice(0.25), dnc, overture))
     if r1:

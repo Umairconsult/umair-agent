@@ -486,37 +486,127 @@ def phase_send(cfg, portal: Portal, dl: Deadline, dnc: list) -> dict:
         if word_match((lead.get("niche") or "") + " " + (lead.get("business_name") or ""), cfg.restricted_niches):
             res["skipped"] += 1
             continue
-        seen_emails.add(email)
-        lead = dict(lead, email=email)
+        # USER RULE (2026-10-06): send to ALL emails found for this business.
+        import json as _json
         try:
-            subject, html_body = mailer.build_email(lead)
-        except ValueError as e:
-            log(f"Lead {lid}: not emailed ({e})")
-            res["skipped"] += 1
-            continue
-        except Exception as e:  # noqa: BLE001
-            log(f"Lead {lid}: email build failed ({safe_exc(e, 100)})")
-            res["skipped"] += 1
-            continue
-        try:
-            mailer.send_email(email, subject, html_body, password)
-        except Exception as e:  # noqa: BLE001
-            log(f"Lead {lid}: send failed ({safe_exc(e, 120)})")
-            res["failed"] += 1
+            _extra = _json.loads(lead.get("all_emails") or "[]")
+        except Exception:
+            _extra = []
+        _send_list = [email] + [e for e in _extra if e and e != email and e not in seen_emails and e not in dnc_emails and not e.lower().endswith(".edu")]
+        for _send_to in _send_list:
+            if res["sent"] >= budget or dl.over():
+                break
+            seen_emails.add(_send_to)
+            _lead = dict(lead, email=_send_to)
             try:
-                portal.outreach_log(lead_id=lid, channel="email", result="failed",
+                subject, html_body = mailer.build_email(_lead)
+            except ValueError as e:
+                log(f"Lead {lid} ({_send_to}): not emailed ({e})")
+                res["skipped"] += 1
+                continue
+            except Exception as e:  # noqa: BLE001
+                log(f"Lead {lid} ({_send_to}): email build failed ({safe_exc(e, 100)})")
+                res["skipped"] += 1
+                continue
+            try:
+                mailer.send_email(_send_to, subject, html_body, password)
+            except Exception as e:  # noqa: BLE001
+                log(f"Lead {lid} ({_send_to}): send failed ({safe_exc(e, 120)})")
+                res["failed"] += 1
+                try:
+                    portal.outreach_log(lead_id=lid, channel="email", result="failed",
+                                        sent_by="agent", subject=subject,
+                                        summary=f"SMTP send failed to {_send_to}: {safe_exc(e, 120)}")
+                except PortalError:
+                    pass
+                continue
+            try:
+                portal.outreach_log(lead_id=lid, channel="email", result="sent",
                                     sent_by="agent", subject=subject,
-                                    summary=f"SMTP send failed: {safe_exc(e, 120)}")
+                                    summary=f"Audit {lead.get('audit_score')}/100 outreach sent to {_send_to}",
+                                    email_html=html_body)
+            except PortalError as e:
+                log(f"Lead {lid}: email sent but logging failed ({safe_exc(e, 100)})")
+            res["sent"] += 1
+            sent_today += 1
+            try:
+                portal.state_set(state_key, str(sent_today))
             except PortalError:
                 pass
+            time.sleep(SEND_GAP_SECS)
+    if res["sent"] or res["failed"]:
+        portal.log("email_sent", f"Sent {res['sent']} outreach emails ({res['failed']} failed, {res['skipped']} skipped)")
+    return res
+
+
+def phase_send_followups(cfg, portal: Portal, dl: Deadline, dnc: list) -> dict:
+    """Send follow-up emails to leads who haven't replied.
+
+    USER RULE (2026-10-06): Only send to addresses that have NOT bounced.
+    A lead is skipped if bad_channels contains 'email'.
+    """
+    res = {"sent": 0, "failed": 0, "skipped": 0}
+    password = cfg.get("GMAIL_APP_PASSWORD")
+    if not password:
+        log("Follow-up sending skipped: GMAIL_APP_PASSWORD not set")
+        return res
+    today = local_now(cfg).strftime("%Y-%m-%d")
+    state_key = f"email_sent:{today}"
+    try:
+        sent_today = int((portal.state_list("email_sent:").get(state_key) or "0"))
+    except (ValueError, TypeError, PortalError):
+        sent_today = 0
+    remaining = DAILY_SEND_CAP - sent_today
+    if remaining <= 0:
+        return res
+    budget = min(remaining, PER_RUN_SEND_MAX)
+    dnc_emails = {i["value"] for i in dnc if i["kind"] == "email"}
+    try:
+        cands = portal.leads_to_followup(limit=50)
+    except PortalError as e:
+        log(f"Could not fetch follow-up leads: {safe_exc(e, 100)}")
+        return res
+    seen_emails: set[str] = set()
+    for lead in cands:
+        if res["sent"] >= budget or dl.over():
+            break
+        lid = int(lead.get("id") or 0)
+        if not lid:
+            res["skipped"] += 1
+            continue
+        if "email" in (lead.get("bad_channels") or ""):
+            res["skipped"] += 1
+            continue
+        email = clean_email(lead.get("email", ""))
+        if not email or email.lower().endswith(".edu"):
+            res["skipped"] += 1
+            continue
+        if email in seen_emails or email in dnc_emails:
+            res["skipped"] += 1
+            continue
+        fup_body = (lead.get("followup_email_body") or "").strip()
+        if not fup_body:
+            res["skipped"] += 1
+            continue
+        if int(lead.get("followup_count") or 0) >= 2:
+            res["skipped"] += 1
+            continue
+        seen_emails.add(email)
+        fup_num = int(lead.get("followup_count") or 0) + 1
+        subject = f"Re: {lead.get('email_subject', 'Quick follow-up')}"
+        try:
+            mailer.send_email(email, subject, fup_body, password)
+        except Exception as e:  # noqa: BLE001
+            log(f"Lead {lid}: follow-up send failed ({safe_exc(e, 120)})")
+            res["failed"] += 1
             continue
         try:
             portal.outreach_log(lead_id=lid, channel="email", result="sent",
                                 sent_by="agent", subject=subject,
-                                summary=f"Audit {lead.get('audit_score')}/100 outreach sent",
-                                email_html=html_body)
-        except PortalError as e:
-            log(f"Lead {lid}: email sent but logging failed ({safe_exc(e, 100)})")
+                                summary=f"Follow-up #{fup_num} sent",
+                                email_html=fup_body)
+        except PortalError:
+            pass
         res["sent"] += 1
         sent_today += 1
         try:
@@ -525,7 +615,10 @@ def phase_send(cfg, portal: Portal, dl: Deadline, dnc: list) -> dict:
             pass
         time.sleep(SEND_GAP_SECS)
     if res["sent"] or res["failed"]:
-        portal.log("email_sent", f"Sent {res['sent']} outreach emails ({res['failed']} failed, {res['skipped']} skipped)")
+        try:
+            portal.log("followup_sent", f"Sent {res['sent']} follow-ups ({res['failed']} failed)")
+        except PortalError:
+            pass
     return res
 
 
@@ -675,6 +768,8 @@ def run_cycle(cfg, portal: Portal, slack: Slack, audit: AuditClient | None, gemi
     stats = portal.stats()
     r2b = guarded("Email sending", lambda: phase_send(cfg, portal, overall, dnc))
     if r2b: summary["emails"] = r2b
+    r2c = guarded("Follow-up sending", lambda: phase_send_followups(cfg, portal, overall, dnc))
+    if r2c: summary["followups_sent"] = r2c
     stats = portal.stats()
     r3 = guarded("Message writer", lambda: phase_write(cfg, portal, gemini, overall.slice(0.7)))
     if r3: summary["messages"] = r3

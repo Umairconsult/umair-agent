@@ -300,8 +300,13 @@ def build_email(lead):
                 f"and I spotted a few things worth fixing before you scale your ad spend. "
                 f"I&apos;m <strong style=\"color:#d0dcea;font-weight:500;\">Muhammad Umair</strong>, a Certified Google Partner "
                 f"and Performance Marketing Specialist. I help {biz} turn ad spend into predictable, scalable revenue.")
-    tpl = re.sub(r"I noticed you visited my website.*?predictable, scalable revenue\.",
-                 lambda m: hero_new, tpl, flags=re.S)
+    # Stable placeholder {{HERO}} (template 2026-10-06+); fall back to the old
+    # regex for templates that still carry the legacy sentence.
+    if "{{HERO}}" in tpl:
+        tpl = tpl.replace("{{HERO}}", hero_new)
+    else:
+        tpl = re.sub(r"I noticed you visited my website.*?predictable, scalable revenue\.",
+                     lambda m: hero_new, tpl, flags=re.S)
 
     why_start = tpl.find("<!-- \u2550\u2550 WHY I'M REACHING OUT \u2550\u2550 -->")
     svc_start = tpl.find("<!-- \u2550\u2550 SERVICES \u2550\u2550 -->")

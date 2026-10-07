@@ -330,12 +330,17 @@ def phase_audit(cfg, portal: Portal, queue: LeadQueue, audit: AuditClient, stats
                     use_direct = False  # broken token: don't keep hammering it this run
             if r is None:
                 try:
-                    # Fallback: the portal's own audit token (best-effort; a 429 just defers the lead).
+                    # Fallback: the portal's own audit token.
                     r = portal.audit_run(lead["website"])
                 except PortalError as e:
-                    log(f"Audit tool problem for {dom}: {safe_exc(e, 100)}")
-                    failed.add(dom); res["transient"] += 1; consecutive += 1
-                    continue
+                    # The portal is throttling/blocking audits right now (its own
+                    # retry waits already burned minutes). Stop the whole phase
+                    # instead of retry-sleeping through the run: leads stay queued
+                    # (status=new) and are retried on the next run.
+                    log(f"Portal audit unavailable ({safe_exc(e, 100)}) - stopping audit phase, will retry next run")
+                    res["transient"] += 1
+                    room = 0
+                    break
             if not r.get("ok"):
                 if r.get("unreachable"):
                     queue.mark_bad(dom, "website unreachable")

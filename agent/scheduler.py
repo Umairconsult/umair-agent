@@ -661,6 +661,16 @@ def phase_write(cfg, portal: Portal, queue: LeadQueue, gemini: Gemini | None, dl
 
 
 def phase_brief(cfg, portal: Portal, slack: Slack, target_today: int, gemini: Gemini | None = None) -> bool:
+    try:
+        return _phase_brief_inner(cfg, portal, slack, target_today, gemini)
+    except PortalError:
+        # Portal unreachable: the brief is a nice-to-have Slack summary, not the pipeline.
+        # Stay quiet instead of raising (the guarded() wrapper would spam Slack with errors).
+        log("Daily brief skipped: portal unreachable")
+        return False
+
+
+def _phase_brief_inner(cfg, portal: Portal, slack: Slack, target_today: int, gemini: Gemini | None = None) -> bool:
     now = local_now(cfg)
     today = now.strftime("%Y-%m-%d")
     if now.hour < cfg.brief_hour:

@@ -202,7 +202,7 @@ class LeadQueue:
             "found_at": utcnow_iso(),
             "status": STATUS_NEW,
             # filled later by the audit / message / email phases
-            "audit_score": None, "audit_summary": "", "lead_score": 0,
+            "audit_score": None, "audit_summary": "", "lead_score": 0, "audit_blob": "",
             "audited_at": "", "google_ads_checked_at": "", "google_ads_count": 0,
             "google_ads_advertiser": "", "google_ads_error": "",
             "email_subject": "", "email_body": "", "email_html": "",

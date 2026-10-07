@@ -1,0 +1,22 @@
+{
+ "agent_started": "2026-10-07",
+ "search_done": {
+  "ov:CA:London Ontario:hairdresser": "2026-10-07",
+  "search:CA:London Ontario:hairdresser": "2026-10-07",
+  "ov:CA:Halifax:towing": "2026-10-07",
+  "ov:GB:Edinburgh:home inspector": "2026-10-07",
+  "reg:GB:Edinburgh:home inspector": "2026-10-07",
+  "ov:AU:Wollongong:tree service": "2026-10-07",
+  "ov:CA:Vancouver:pest control": "2026-10-07",
+  "ov:US:Cleveland:towing": "2026-10-07",
+  "ov:US:Kansas City:lawyer": "2026-10-07",
+  "ov:GB:Aberdeen:solar installer": "2026-10-07",
+  "reg:GB:Aberdeen:solar installer": "2026-10-07",
+  "ov:CA:Winnipeg:architect": "2026-10-07",
+  "ov:US:Pittsburgh:painter": "2026-10-07",
+  "search:US:Pittsburgh:painter": "2026-10-07"
+ },
+ "email_sent": {
+  "2026-10-07": 12
+ }
+}

@@ -352,9 +352,14 @@ def phase_audit(cfg, portal: Portal, queue: LeadQueue, audit: AuditClient, stats
                     boost, hire_note = 0, ""
             ls = lead_score(r, min(50, int(lead.get("score") or 0)), boost)
             summary_txt = summarize_audit(r) + (f" · {hire_note}" if hire_note else "")
+            # Keep the full audit blob for the portal mirror (capped: huge blobs
+            # would bloat the git-committed queue; "TOOBIG" matches the old convention).
+            blob = r.get("blob") or "TOOBIG"
+            if isinstance(blob, str) and len(blob) > 200000:
+                blob = "TOOBIG"
             queue.update(dom, status=STATUS_AUDITED,
                          audit_score=r.get("health_score"), audit_summary=summary_txt,
-                         lead_score=ls, audited_at=utcnow_iso())
+                         lead_score=ls, audited_at=utcnow_iso(), audit_blob=blob)
             queue.save()
             if hire_note:
                 res["hiring"] += 1

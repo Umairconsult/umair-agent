@@ -14,9 +14,15 @@
   "reg:GB:Aberdeen:solar installer": "2026-10-07",
   "ov:CA:Winnipeg:architect": "2026-10-07",
   "ov:US:Pittsburgh:painter": "2026-10-07",
-  "search:US:Pittsburgh:painter": "2026-10-07"
+  "search:US:Pittsburgh:painter": "2026-10-07",
+  "ov:US:Cincinnati:veterinary": "2026-10-08",
+  "ov:GB:Bristol:plumber": "2026-10-08",
+  "reg:GB:Bristol:plumber": "2026-10-08",
+  "ov:CA:Montreal:dermatologist": "2026-10-08",
+  "ov:CA:Edmonton:towing": "2026-10-08"
  },
  "email_sent": {
-  "2026-10-07": 37
+  "2026-10-07": 37,
+  "2026-10-08": 25
  }
 }

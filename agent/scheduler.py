@@ -18,7 +18,7 @@ from .geo import run_geo_check
 from .hiring import hiring_boost
 from .leadqueue import (LeadQueue, load_agent_state, save_agent_state,
                          load_dnc_cache, save_dnc_cache, emails_sent_today,
-                         record_emails_sent, utcnow_iso,
+                         record_emails_sent, utcnow_iso, QUEUE_FILE,
                          STATUS_AUDITED, STATUS_EMAILED)
 from .logutil import log, safe_exc
 from . import mailer
@@ -856,6 +856,7 @@ def run_cycle(cfg, portal: Portal, slack: Slack, audit: AuditClient | None, gemi
     # Final save + the workflow commits state/ at the end of the run.
     queue.save()
     save_agent_state(state)
+    log(f"Lead queue saved: {QUEUE_FILE} ({len(queue)} leads)")
 
     if gemini and gemini.dead:
         summary["gemini_keys_lost"] = len(gemini.dead)

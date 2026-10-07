@@ -157,7 +157,7 @@ jobs:
           echo "DIAG cwd=$(pwd)"
           echo "DIAG state dir:"; ls -la state/ 2>&1 | head -10
           echo "DIAG git status:"; git status --short 2>&1 | head -10
-          git add portal_queue/pending.jsonl state/leads_queue.json state/agent_state.json state/dnc_cache.json
+          git add portal_queue/pending.jsonl state/leads_queue.json state/agent_state.json state/dnc_cache.json 2>&1 || echo "DIAG git add: some paths missing (first run, nothing to commit yet)"
           echo "DIAG staged:"; git diff --cached --name-only 2>&1 | head -10
           if ! git diff --cached --quiet; then
             git commit -m "Agent state: lead queue + portal queue"

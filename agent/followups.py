@@ -1,9 +1,14 @@
-"""Short, friendly follow-up drafts for leads you contacted a few days ago and who have not replied."""
-from __future__ import annotations
-import re
+"""Short, friendly follow-up drafts for leads you contacted a few days ago and who have not replied.
 
+Follow-up bodies are written to the LOCAL lead queue (state/leads_queue.json);
+the sync job mirrors them to the portal. The agent never touches the portal API
+for follow-ups (single-writer rule).
+"""
+from __future__ import annotations
+
+from .leadqueue import LeadQueue
 from .logutil import log, safe_exc
-from .portal import Portal, PortalError
+from .portal import Portal
 from .writer import Gemini, _clean, compliance_footer, domain_of
 
 
@@ -28,11 +33,14 @@ def template(lead: dict, cfg) -> dict:
     }
 
 
-def run_followups(cfg, portal: Portal, gemini: Gemini | None, deadline) -> dict:
+def run_followups(cfg, portal: Portal, queue: LeadQueue, gemini: Gemini | None, deadline) -> dict:
+    """Draft follow-ups for emailed leads due for a nudge (status=emailed,
+    followup_count<2, contacted 3+ days ago). Drafts are stored on the queue
+    lead (followup_email_body / followup_whatsapp); the sync job mirrors them
+    to the portal. 2-follow-up max, templates unchanged."""
     out = {"written": 0, "ai": 0}
-    stop = False
-    while not deadline.over() and not stop:
-        leads = portal.leads_to_followup(limit=10)
+    while not deadline.over():
+        leads = queue.candidates_for_followup_write(limit=10)
         if not leads:
             break
         for lead in leads:
@@ -50,15 +58,11 @@ def run_followups(cfg, portal: Portal, gemini: Gemini | None, deadline) -> dict:
             msgs = msgs or template(lead, cfg)
             msgs["email_body"] = msgs["email_body"].rstrip() + "\n" + compliance_footer(cfg)
             msgs["whatsapp_message"] = msgs["whatsapp_message"].rstrip() + " (Reply STOP and I won't message again.)"
-            try:
-                portal.save_followup(id=int(lead["id"]), **msgs)
-            except PortalError as e:
-                # portal/firewall hiccup: stop this phase cleanly (the same leads are offered again next run)
-                log(f"Could not save a follow-up on the portal: {safe_exc(e, 120)}")
-                stop = True
-                break
+            queue.update(lead["domain"], followup_email_body=msgs["email_body"],
+                         followup_whatsapp=msgs["whatsapp_message"])
+            queue.save()
             out["written"] += 1
             out["ai"] += 1 if ai else 0
     if out["written"]:
-        portal.log("followup", f"Prepared {out['written']} follow-up messages for leads who haven't replied")
+        log(f"Prepared {out['written']} follow-up drafts in the local queue")
     return out

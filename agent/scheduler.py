@@ -320,17 +320,22 @@ def phase_audit(cfg, portal: Portal, queue: LeadQueue, audit: AuditClient, stats
             if dl.over() or consecutive >= 5:
                 break
             dom = lead["domain"]
-            try:
-                if use_direct:
+            r = None
+            if use_direct:
+                try:
                     # Independent path: straight to audit/agent_audit.php, no portal API involved.
                     r = audit.run(lead["website"], full=True)
-                else:
+                except Exception as e:  # noqa: BLE001 - e.g. bad AUDIT_API_TOKEN in secrets
+                    log(f"Direct audit failed for {dom} ({safe_exc(e, 100)}) - falling back to the portal's audit")
+                    use_direct = False  # broken token: don't keep hammering it this run
+            if r is None:
+                try:
                     # Fallback: the portal's own audit token (best-effort; a 429 just defers the lead).
                     r = portal.audit_run(lead["website"])
-            except (PortalError, Exception) as e:  # noqa: BLE001 - AuditError etc: transient, keep going
-                log(f"Audit tool problem for {dom}: {safe_exc(e, 100)}")
-                failed.add(dom); res["transient"] += 1; consecutive += 1
-                continue
+                except PortalError as e:
+                    log(f"Audit tool problem for {dom}: {safe_exc(e, 100)}")
+                    failed.add(dom); res["transient"] += 1; consecutive += 1
+                    continue
             if not r.get("ok"):
                 if r.get("unreachable"):
                     queue.mark_bad(dom, "website unreachable")

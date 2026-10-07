@@ -154,10 +154,16 @@ jobs:
           git config user.email "agent@umairconsult.com"
           mkdir -p state portal_queue
           touch state/.gitkeep portal_queue/.gitkeep
-          git add portal_queue/pending.jsonl state/leads_queue.json state/agent_state.json state/dnc_cache.json 2>/dev/null || true
+          echo "DIAG cwd=$(pwd)"
+          echo "DIAG state dir:"; ls -la state/ 2>&1 | head -10
+          echo "DIAG git status:"; git status --short 2>&1 | head -10
+          git add portal_queue/pending.jsonl state/leads_queue.json state/agent_state.json state/dnc_cache.json
+          echo "DIAG staged:"; git diff --cached --name-only 2>&1 | head -10
           if ! git diff --cached --quiet; then
             git commit -m "Agent state: lead queue + portal queue"
             git push || echo "Push failed (non-fatal)"
+          else
+            echo "DIAG nothing staged - nothing to commit"
           fi
 
       - name: Keep the schedule alive (GitHub pauses idle repos after 60 days)

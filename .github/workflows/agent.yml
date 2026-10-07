@@ -25,98 +25,20 @@ permissions:
 
 jobs:
   # ── gate: pick which computer runs the agent this cycle ──────────────
-  # Always runs on GitHub's cloud. If the self-hosted PC looks online the
-  # `run` job takes it; otherwise `run-cloud` runs here instead. Anything
-  # uncertain resolves to "offline" so work never queues on a dead PC.
+  # TEMPORARY (2026-10-07): the self-hosted PC is OFF for several days, so the
+  # gate is forced to the cloud path. When the PC is back, revert this job to
+  # the PC-online check (see git history) so runs prefer the free PC again.
   gate:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     outputs:
       online: ${{ steps.check.outputs.online }}
     steps:
-      - name: Check if the self-hosted runner is online
+      - name: Force cloud path while the PC is offline
         id: check
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
         run: |
-          python3 - <<'PYEOF'
-          import json, os, urllib.request, urllib.error, datetime
-
-          token = os.environ["GH_TOKEN"]
-          repo = os.environ["REPO"]
-          out_path = os.environ["GITHUB_OUTPUT"]
-          RUNNER = "MUHAMMAD_UMAIR-agent"
-
-          def api(path):
-              req = urllib.request.Request(
-                  "https://api.github.com/repos/%s%s" % (repo, path),
-                  headers={
-                      "Authorization": "Bearer %s" % token,
-                      "Accept": "application/vnd.github+json",
-                      "X-GitHub-Api-Version": "2022-11-28",
-                  },
-              )
-              try:
-                  with urllib.request.urlopen(req, timeout=30) as r:
-                      return r.status, json.load(r)
-              except urllib.error.HTTPError as e:
-                  return e.code, None
-              except Exception as e:
-                  print("api error: %s" % e, flush=True)
-                  return 0, None
-
-          def fresh(dt_str, hours):
-              try:
-                  dt = datetime.datetime.fromisoformat(dt_str.replace("Z", "+00:00"))
-              except Exception:
-                  return False
-              now = datetime.datetime.now(datetime.timezone.utc)
-              return (now - dt).total_seconds() < hours * 3600
-
-          online = False
-          reason = "no-signal"
-
-          # 1) direct runner status (GITHUB_TOKEN normally cannot read this;
-          #    GitHub answers 404/403 -> we fall through to the signals below)
-          code, data = api("/actions/runners")
-          if code == 200 and data:
-              for r in data.get("runners", []):
-                  if r.get("name") == RUNNER and r.get("status") == "online":
-                      online = True
-              reason = "runners-api"
-          else:
-              # 2a) the lightweight PC probe succeeded in the last 75 minutes
-              code, data = api("/actions/workflows/pc-probe.yml/runs?per_page=3&status=completed")
-              if code == 200 and data:
-                  for run in data.get("workflow_runs", []):
-                      if run.get("conclusion") == "success" and fresh(run.get("updated_at", ""), 1.25):
-                          online = True
-                          reason = "pc-probe-fresh"
-                          break
-              # 2b) the self-hosted `run` job itself succeeded in the last 4 hours
-              #     (note: a `run-cloud` success must NOT count as the PC being up)
-              if not online:
-                  code, data = api("/actions/workflows/agent.yml/runs?per_page=5&status=completed")
-                  if code == 200 and data:
-                      for run in data.get("workflow_runs", []):
-                          c2, jobs = api("/actions/runs/%s/jobs?per_page=20" % run["id"])
-                          if c2 != 200 or not jobs:
-                              continue
-                          for j in jobs.get("jobs", []):
-                              if (j.get("name") == "run"
-                                      and j.get("conclusion") == "success"
-                                      and fresh(j.get("completed_at", ""), 4)):
-                                  online = True
-                                  reason = "selfhosted-run-fresh"
-                                  break
-                          if online:
-                              break
-
-          print("gate: online=%s reason=%s" % (online, reason), flush=True)
-          with open(out_path, "a") as f:
-              f.write("online=%s\n" % ("true" if online else "false"))
-          PYEOF
+          echo "gate: forced online=false (PC offline since 2026-10-07; revert when the PC is back)"
+          echo "online=false" >> "$GITHUB_OUTPUT"
 
   # ── run: your own PC (primary - free, no GitHub minutes used) ─────────
   run:
@@ -155,18 +77,19 @@ jobs:
       - name: Run the agent
         run: python -m agent ${{ steps.pick.outputs.mode }}
 
-      # Path B: commit queued portal writes so Muse can deliver them via its own connection
+      # Path B: commit queued portal writes + the durable lead queue so Muse can
+      # deliver them via its own connection and the next run keeps its state.
       - name: Commit portal queue (Path B)
         if: always()
         run: |
-          if [ -f portal_queue/pending.jsonl ] && [ -s portal_queue/pending.jsonl ]; then
-            git config user.name "umair-agent"
-            git config user.email "agent@umairconsult.com"
-            git add portal_queue/pending.jsonl
-            if ! git diff --cached --quiet; then
-              git commit -m "Path B: queue portal writes for Muse delivery"
-              git push || echo "Push failed (non-fatal)"
-            fi
+          git config user.name "umair-agent"
+          git config user.email "agent@umairconsult.com"
+          mkdir -p state portal_queue
+          touch state/.gitkeep portal_queue/.gitkeep
+          git add portal_queue/pending.jsonl state/leads_queue.json state/agent_state.json state/dnc_cache.json 2>/dev/null || true
+          if ! git diff --cached --quiet; then
+            git commit -m "Path B: queue portal writes + lead queue for Muse delivery"
+            git push || echo "Push failed (non-fatal)"
           fi
 
       - name: Keep the schedule alive (GitHub pauses idle repos after 60 days)
@@ -221,6 +144,21 @@ jobs:
 
       - name: Run the agent
         run: python -m agent ${{ steps.pick.outputs.mode }}
+
+      # Persist the lead queue + agent state + any queued portal writes so the
+      # next run (and Muse's sync job) see them. Committed every run.
+      - name: Commit lead queue and portal queue
+        if: always()
+        run: |
+          git config user.name "umair-agent"
+          git config user.email "agent@umairconsult.com"
+          mkdir -p state portal_queue
+          touch state/.gitkeep portal_queue/.gitkeep
+          git add portal_queue/pending.jsonl state/leads_queue.json state/agent_state.json state/dnc_cache.json 2>/dev/null || true
+          if ! git diff --cached --quiet; then
+            git commit -m "Agent state: lead queue + portal queue"
+            git push || echo "Push failed (non-fatal)"
+          fi
 
       - name: Keep the schedule alive (GitHub pauses idle repos after 60 days)
         if: github.event_name == 'schedule'

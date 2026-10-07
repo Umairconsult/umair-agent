@@ -252,13 +252,14 @@ def once(cfg, minutes: float | None = None) -> int:
     portal, slack, audit, gemini, fetcher = build(cfg)
     overture, wp = build_extras(cfg)
     try:
-        portal.wait_until_reachable()        # waits out a short firewall hiccup instead of failing the run at once
+        portal.wait_until_reachable(max_wait=60)   # a short wait for a firewall hiccup...
     except PortalError as e:
-        log(f"Portal not reachable: {safe_exc(e)}")
-        gh("error", f"The agent cannot reach your portal ({portal_down_text(e)}). Open umairconsult.com/portal/agent_doctor.php.", "Portal not reachable")
-        slack.error("The agent cannot reach your portal, so this run stopped. It will try again at the next scheduled run. "
-                    + portal_down_text(e)[:400])
-        return 1
+        # ...but the run NO LONGER STOPS here (2026-10-07): the lead pipeline now
+        # runs from the local queue in state/, so a 429 can't block finding,
+        # auditing or emailing. The sync job uploads to the portal later.
+        log(f"Portal not reachable at run start - continuing from the local lead queue ({safe_exc(e, 120)})")
+        gh("warning", "Portal not reachable at run start; the agent is working from its local lead queue. "
+                      "New leads will be uploaded by the sync job.", "Portal offline")
     try:
         summary = run_cycle(cfg, portal, slack, audit, gemini, fetcher, minutes or cfg.run_minutes, overture=overture, wp=wp)
     except PortalError as e:

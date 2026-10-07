@@ -16,6 +16,10 @@ from .cities import CITIES, COUNTRY_NAMES, COUNTRY_WEIGHT
 from .followups import run_followups
 from .geo import run_geo_check
 from .hiring import hiring_boost
+from .leadqueue import (LeadQueue, load_agent_state, save_agent_state,
+                         load_dnc_cache, save_dnc_cache, emails_sent_today,
+                         record_emails_sent, utcnow_iso,
+                         STATUS_AUDITED, STATUS_EMAILED)
 from .logutil import log, safe_exc
 from . import mailer
 from .niches import osm_filters, ov_keywords, usable_niches, word_match
@@ -125,10 +129,17 @@ class Deadline:
 
 
 # ------------------------------------------------------------------ phases
-def phase_find_leads(cfg, portal: Portal, slack: Slack, fetcher: Fetcher, stats: dict, dl: Deadline, dnc: list, overture=None) -> dict:
+def phase_find_leads(cfg, portal: Portal, queue: LeadQueue, state: dict, slack: Slack, fetcher: Fetcher,
+                   stats: dict, dl: Deadline, dnc: list, overture=None) -> dict:
+    """Lead finding writes to the LOCAL lead queue (state/leads_queue.json) - never to the
+    portal directly. The sync job mirrors new leads to the Sheet and the portal."""
     res = {"created": 0, "searches": 0, "skipped": 0, "by_country": {}, "errors": 0, "overture": 0, "osm": 0,
            "registry": 0, "association": 0}
-    ctl = portal.state_list("ctl:")
+    try:
+        ctl = portal.state_list("ctl:")
+    except PortalError:
+        ctl = {}
+        log("Portal unreachable - pause controls skipped, lead finding continues from the local queue")
     if ctl.get("ctl:pause_finding") == "1":
         log("Lead finding is PAUSED from the portal - not looking for new leads.")
         res["paused"] = 1
@@ -149,11 +160,13 @@ def phase_find_leads(cfg, portal: Portal, slack: Slack, fetcher: Fetcher, stats:
         log(f"{stats['unaudited']} leads are still waiting for an audit - auditing first, finding more later.")
         return res
     today = date.fromisoformat(local_now(cfg).strftime("%Y-%m-%d"))
-    done = {**portal.state_list("search:"), **portal.state_list("ov:"), **portal.state_list("reg:"), **portal.state_list("assoc:")}
+    done = state.get("search_done", {})
+    if not isinstance(done, dict):
+        done = {}
     dnc_domains = {i["value"] for i in dnc if i["kind"] == "domain"}
     dnc_emails = {i["value"] for i in dnc if i["kind"] == "email"}
     priority = cfg.priority_niches
-    seen_domains: set[str] = set()
+    seen_domains: set[str] = set(queue.domains())  # never re-add a domain the queue already has
     ov_failures = 0
     reg_on = cfg.use_registries and bool(cfg.companies_house_key)
     assoc_on = cfg.use_associations
@@ -260,67 +273,72 @@ def phase_find_leads(cfg, portal: Portal, slack: Slack, fetcher: Fetcher, stats:
                 lead["score"] = initial_score(lead, is_pri, restricted)
                 if restricted:
                     lead["notes"] = "Restricted ad category (needs Google/Meta approval) - low priority."
-                try:
-                    r = portal.upsert_lead(**lead)
-                except PortalError as e:
-                    log(f"Could not save a lead: {safe_exc(e, 100)}")
-                    res["errors"] += 1
-                    continue
-                if r.get("created"):
+                # Durable local queue (dedup by domain) - the sync job uploads to the portal later.
+                if queue.add_lead(lead):
                     created_here += 1
                     room -= 1
                     res["created"] += 1
                     res["by_country"][ecc] = res["by_country"].get(ecc, 0) + 1
+                else:
+                    res["skipped"] += 1
+        search_done = state.setdefault("search_done", {})
         for key in finished:
-            try:
-                portal.state_set(key, today.isoformat())
-                done[key] = today.isoformat()
-            except PortalError:
-                pass
-        log(f"  -> {created_here} new leads saved from this search")
+            search_done[key] = today.isoformat()
+            done[key] = today.isoformat()
+        queue.save(); save_agent_state(state)
+        log(f"  -> {created_here} new leads saved from this search (local queue)")
         time.sleep(2)   # be gentle with the free servers
     if res["created"]:
-        portal.log("lead_found", f"Found {res['created']} new leads (" + ", ".join(f"{COUNTRY_NAMES.get(c, c)}: {n}" for c, n in res["by_country"].items()) + ")")
+        try:
+            portal.log("lead_found", f"Found {res['created']} new leads (" + ", ".join(f"{COUNTRY_NAMES.get(c, c)}: {n}" for c, n in res["by_country"].items()) + ")")
+        except PortalError:
+            pass
     return res
 
 
-def phase_audit(cfg, portal: Portal, audit: AuditClient, stats: dict, dl: Deadline, fetcher: Fetcher | None = None) -> dict:
+def phase_audit(cfg, portal: Portal, queue: LeadQueue, audit: AuditClient, stats: dict, dl: Deadline,
+              fetcher: Fetcher | None = None) -> dict:
+    """Audits run against the LOCAL queue. The audit itself prefers the direct audit
+    endpoint (AuditClient -> audit/agent_audit.php, independent of the portal API);
+    the portal's audit_run is only a fallback. Results are saved to the queue."""
     res = {"done": 0, "bad": 0, "transient": 0, "hiring": 0}
     room = cfg.max_audits - stats.get("audits_today", 0)
     if room <= 0:
         log(f"Audit limit for today reached ({cfg.max_audits}).")
         return res
-    failed: set[int] = set()
+    failed: set[str] = set()
     consecutive = 0
+    use_direct = audit is not None
+    if use_direct:
+        log("Audits will use the direct audit endpoint (portal-independent)")
     while room > 0 and not dl.over() and consecutive < 5:
-        batch = [l for l in portal.leads_to_audit(limit=min(10, room) + len(failed)) if int(l["id"]) not in failed]
+        batch = [l for l in queue.candidates_for_audit(limit=min(10, room) + len(failed))
+                 if l["domain"] not in failed]
         if not batch:
             break
         for lead in batch[:min(10, room)]:
             if dl.over() or consecutive >= 5:
                 break
-            lid = int(lead["id"])
+            dom = lead["domain"]
             try:
-                # Audits run through the portal API (portal/api/agent_api.php action
-                # audit_run), which uses the server's own audit token - the agent's
-                # AUDIT_API_TOKEN is no longer needed and no longer checked here.
-                r = portal.audit_run(lead["website"])
-            except PortalError as e:
-                log(f"Audit tool problem: {safe_exc(e, 100)}")
-                failed.add(lid); res["transient"] += 1; consecutive += 1
+                if use_direct:
+                    # Independent path: straight to audit/agent_audit.php, no portal API involved.
+                    r = audit.run(lead["website"], full=True)
+                else:
+                    # Fallback: the portal's own audit token (best-effort; a 429 just defers the lead).
+                    r = portal.audit_run(lead["website"])
+            except (PortalError, Exception) as e:  # noqa: BLE001 - AuditError etc: transient, keep going
+                log(f"Audit tool problem for {dom}: {safe_exc(e, 100)}")
+                failed.add(dom); res["transient"] += 1; consecutive += 1
                 continue
             if not r.get("ok"):
                 if r.get("unreachable"):
-                    try:
-                        portal.mark_bad_data(lid, "website unreachable")
-                    except PortalError as e:
-                        log(f"Could not save an audit result on the portal: {safe_exc(e, 100)}")
-                        failed.add(lid); res["transient"] += 1; consecutive += 1
-                        continue
+                    queue.mark_bad(dom, "website unreachable")
+                    queue.save()
                     res["bad"] += 1
                     consecutive = 0
                 else:
-                    failed.add(lid); res["transient"] += 1; consecutive += 1
+                    failed.add(dom); res["transient"] += 1; consecutive += 1
                 continue
             consecutive = 0
             if "blob" not in r:      # an OLD audit door cannot return full reports - stop instead of doing useless work
@@ -334,14 +352,10 @@ def phase_audit(cfg, portal: Portal, audit: AuditClient, stats: dict, dl: Deadli
                     boost, hire_note = 0, ""
             ls = lead_score(r, min(50, int(lead.get("score") or 0)), boost)
             summary_txt = summarize_audit(r) + (f" · {hire_note}" if hire_note else "")
-            try:
-                portal.save_audit(id=lid, audit_score=r.get("health_score"), audit_summary=summary_txt,
-                                  lead_score=ls, audit_blob=r.get("blob") or "TOOBIG")
-            except PortalError as e:
-                # the portal hiccuped (e.g. a firewall page): keep going with the next lead instead of losing the whole phase
-                log(f"Could not save an audit result on the portal: {safe_exc(e, 100)}")
-                failed.add(lid); res["transient"] += 1; consecutive += 1
-                continue
+            queue.update(dom, status=STATUS_AUDITED,
+                         audit_score=r.get("health_score"), audit_summary=summary_txt,
+                         lead_score=ls, audited_at=utcnow_iso())
+            queue.save()
             if hire_note:
                 res["hiring"] += 1
             res["done"] += 1
@@ -349,7 +363,10 @@ def phase_audit(cfg, portal: Portal, audit: AuditClient, stats: dict, dl: Deadli
             time.sleep(cfg.audit_pause)
     if res["done"] or res["bad"]:
         extra = f", {res['hiring']} showing hiring signals" if res["hiring"] else ""
-        portal.log("audit", f"Audited {res['done']} websites with full reports ({res['bad']} unreachable and set aside{extra})")
+        try:
+            portal.log("audit", f"Audited {res['done']} websites with full reports ({res['bad']} unreachable and set aside{extra})")
+        except PortalError:
+            pass
     return res
 
 
@@ -358,27 +375,17 @@ ADS_CHECK_PER_RUN = 20      # max domains checked per run (Google rate-limits ~6
 ADS_CHECK_GAP_SECS = 4      # be gentle with the Transparency Center
 
 
-def phase_ads_check(cfg, portal: Portal, dl: Deadline) -> dict:
-    """Check Google Ads Transparency for audited leads' ad activity.
-
-    Runs after phase_audit, before phase_send. For each audited lead without
-    a recent ad check, queries the Transparency Center and saves:
-    google_ads_count, advertiser name, and check timestamp.
-    The email builder uses this to personalize outreach.
-    Stops early if Google rate-limits (to resume next run).
-    """
+def phase_ads_check(cfg, portal: Portal, queue: LeadQueue, dl: Deadline) -> dict:
+    """Check Google Ads Transparency for audited leads' ad activity. Results are
+    saved to the local queue (the sync job mirrors them to the portal)."""
     res = {"checked": 0, "with_ads": 0, "no_ads": 0, "failed": 0, "rate_limited": False}
-    try:
-        cands = portal.leads_to_ads_check(limit=ADS_CHECK_PER_RUN)
-    except PortalError as e:
-        log(f"Could not fetch leads for ads check: {safe_exc(e, 100)}")
-        return res
+    cands = [l for l in queue.data["leads"]
+             if l.get("status") == STATUS_AUDITED and not l.get("google_ads_checked_at")][:ADS_CHECK_PER_RUN]
     for lead in cands:
         if dl.over():
             break
-        lid = int(lead.get("id") or 0)
-        domain = (lead.get("domain") or "").strip()
-        if not lid or not domain:
+        domain = lead.get("domain") or ""
+        if not domain:
             res["failed"] += 1
             continue
         try:
@@ -391,17 +398,12 @@ def phase_ads_check(cfg, portal: Portal, dl: Deadline) -> dict:
             log("Google Ads Transparency rate-limited us — pausing ads checks until next run")
             res["rate_limited"] = True
             break
-        try:
-            portal.save_ads(
-                id=lid,
-                google_ads_count=r["ad_count"] if r["has_ads"] else 0,
-                google_ads_advertiser=r.get("advertiser_name") or "",
-                google_ads_error=r.get("error") or "",
-            )
-        except PortalError as e:
-            log(f"Could not save ads result for {domain}: {safe_exc(e, 80)}")
-            res["failed"] += 1
-            continue
+        queue.update(domain,
+                     google_ads_checked_at=utcnow_iso(),
+                     google_ads_count=r["ad_count"] if r["has_ads"] else 0,
+                     google_ads_advertiser=r.get("advertiser_name") or "",
+                     google_ads_error=r.get("error") or "")
+        queue.save()
         res["checked"] += 1
         if r["has_ads"]:
             res["with_ads"] += 1
@@ -409,10 +411,13 @@ def phase_ads_check(cfg, portal: Portal, dl: Deadline) -> dict:
             res["no_ads"] += 1
         time.sleep(ADS_CHECK_GAP_SECS)
     if res["checked"]:
-        portal.log("ads_check",
-                   f"Checked Google Ads Transparency for {res['checked']} domains: "
-                   f"{res['with_ads']} running ads, {res['no_ads']} none found"
-                   + (" (rate-limited, will resume)" if res["rate_limited"] else ""))
+        try:
+            portal.log("ads_check",
+                       f"Checked Google Ads Transparency for {res['checked']} domains: "
+                       f"{res['with_ads']} running ads, {res['no_ads']} none found"
+                       + (" (rate-limited, will resume)" if res["rate_limited"] else ""))
+        except PortalError:
+            pass
     return res
 
 
@@ -421,7 +426,7 @@ PER_RUN_SEND_MAX = 25       # per-run ceiling so sends pace through the day
 SEND_GAP_SECS = 5           # be gentle with Gmail SMTP
 
 
-def phase_send(cfg, portal: Portal, dl: Deadline, dnc: list) -> dict:
+def phase_send(cfg, portal: Portal, queue: LeadQueue, state: dict, dl: Deadline, dnc: list) -> dict:
     """Send personalized outreach emails through Gmail SMTP.
 
     HARD RULES (user instruction 2026-10-03):
@@ -431,7 +436,10 @@ def phase_send(cfg, portal: Portal, dl: Deadline, dnc: list) -> dict:
       building an empty/generic email.
     - Never to DNC addresses, bad-channel leads, already-contacted leads,
       or restricted niches.
-    - Max 150 emails/day across all runs (tracked in portal state).
+    - Max 150 emails/day across all runs (tracked in the LOCAL agent state,
+      not the portal - so the cap holds even when the portal is unreachable).
+    Candidates come from the local lead queue. Portal logging (outreach_log)
+    is best-effort: on failure the write is queued by Path B automatically.
     Skips gracefully when GMAIL_APP_PASSWORD is not set in SETTINGS_ENV.
     """
     res = {"sent": 0, "failed": 0, "skipped": 0}
@@ -440,11 +448,7 @@ def phase_send(cfg, portal: Portal, dl: Deadline, dnc: list) -> dict:
         log("Email sending skipped: GMAIL_APP_PASSWORD not set in SETTINGS_ENV")
         return res
     today = local_now(cfg).strftime("%Y-%m-%d")
-    state_key = f"email_sent:{today}"
-    try:
-        sent_today = int((portal.state_list("email_sent:").get(state_key) or "0"))
-    except (ValueError, TypeError, PortalError):
-        sent_today = 0
+    sent_today = emails_sent_today(state, today)
     remaining = DAILY_SEND_CAP - sent_today
     if remaining <= 0:
         log(f"Daily email cap reached ({DAILY_SEND_CAP}/day) — no more sends today")
@@ -452,20 +456,13 @@ def phase_send(cfg, portal: Portal, dl: Deadline, dnc: list) -> dict:
     budget = min(remaining, PER_RUN_SEND_MAX)
 
     dnc_emails = {i["value"] for i in dnc if i["kind"] == "email"}
-    try:
-        cands = portal.leads_to_email(limit=50)
-    except PortalError as e:
-        log(f"Could not fetch emailable leads: {safe_exc(e, 100)}")
-        return res
+    cands = queue.candidates_for_email(limit=50)
 
     seen_emails: set[str] = set()
     for lead in cands:
         if res["sent"] >= budget or dl.over():
             break
-        lid = int(lead.get("id") or 0)
-        if not lid:
-            res["skipped"] += 1
-            continue
+        dom = lead.get("domain") or ""
         email = clean_email(lead.get("email", ""))
         if email.lower().endswith(".edu"):
             res["skipped"] += 1        # .edu addresses are not ICP — never emailed
@@ -480,18 +477,22 @@ def phase_send(cfg, portal: Portal, dl: Deadline, dnc: list) -> dict:
         if "email" in (lead.get("bad_channels") or ""):
             res["skipped"] += 1
             continue
-        if int(lead.get("contact_count") or 0) > 0:
-            res["skipped"] += 1
+        if lead.get("emailed_at"):
+            res["skipped"] += 1       # already contacted
             continue
         if word_match((lead.get("niche") or "") + " " + (lead.get("business_name") or ""), cfg.restricted_niches):
             res["skipped"] += 1
             continue
         # USER RULE (2026-10-06): send to ALL emails found for this business.
         import json as _json
-        try:
-            _extra = _json.loads(lead.get("all_emails") or "[]")
-        except Exception:
-            _extra = []
+        _raw_extra = lead.get("all_emails") or []
+        if isinstance(_raw_extra, str):
+            try:
+                _extra = _json.loads(_raw_extra)
+            except Exception:
+                _extra = []
+        else:
+            _extra = list(_raw_extra)
         _send_list = [email] + [e for e in _extra if e and e != email and e not in seen_emails and e not in dnc_emails and not e.lower().endswith(".edu")]
         for _send_to in _send_list:
             if res["sent"] >= budget or dl.over():
@@ -501,49 +502,65 @@ def phase_send(cfg, portal: Portal, dl: Deadline, dnc: list) -> dict:
             try:
                 subject, html_body = mailer.build_email(_lead)
             except ValueError as e:
-                log(f"Lead {lid} ({_send_to}): not emailed ({e})")
+                log(f"Lead {dom} ({_send_to}): not emailed ({e})")
                 res["skipped"] += 1
                 continue
             except Exception as e:  # noqa: BLE001
-                log(f"Lead {lid} ({_send_to}): email build failed ({safe_exc(e, 100)})")
+                log(f"Lead {dom} ({_send_to}): email build failed ({safe_exc(e, 100)})")
                 res["skipped"] += 1
                 continue
             try:
                 mailer.send_email(_send_to, subject, html_body, password)
             except Exception as e:  # noqa: BLE001
-                log(f"Lead {lid} ({_send_to}): send failed ({safe_exc(e, 120)})")
+                log(f"Lead {dom} ({_send_to}): send failed ({safe_exc(e, 120)})")
                 res["failed"] += 1
-                try:
-                    portal.outreach_log(lead_id=lid, channel="email", result="failed",
-                                        sent_by="agent", subject=subject,
-                                        summary=f"SMTP send failed to {_send_to}: {safe_exc(e, 120)}")
-                except PortalError:
-                    pass
+                # Best-effort portal log (auto-queued by Path B on failure) - only
+                # once the sync job has given this lead a portal id.
+                if lead.get("portal_id"):
+                    try:
+                        portal.outreach_log(lead_id=lead["portal_id"], channel="email", result="failed",
+                                            sent_by="agent", subject=subject,
+                                            summary=f"SMTP send failed to {_send_to}: {safe_exc(e, 120)}")
+                    except PortalError:
+                        pass
                 continue
-            try:
-                portal.outreach_log(lead_id=lid, channel="email", result="sent",
-                                    sent_by="agent", subject=subject,
-                                    summary=f"Audit {lead.get('audit_score')}/100 outreach sent to {_send_to}",
-                                    email_html=html_body)
-            except PortalError as e:
-                log(f"Lead {lid}: email sent but logging failed ({safe_exc(e, 100)})")
+            # Best-effort portal log (auto-queued by Path B on failure) - only
+            # once the sync job has given this lead a portal id.
+            if lead.get("portal_id"):
+                try:
+                    portal.outreach_log(lead_id=lead["portal_id"], channel="email", result="sent",
+                                        sent_by="agent", subject=subject,
+                                        summary=f"Audit {lead.get('audit_score')}/100 outreach sent to {_send_to}",
+                                        email_html=html_body)
+                except PortalError as e:
+                    log(f"Lead {dom}: email sent but portal logging failed ({safe_exc(e, 100)}) - queued for later")
+            emailed_to = list(lead.get("emailed_to") or [])
+            if _send_to not in emailed_to:
+                emailed_to.append(_send_to)
+            queue.update(dom, status=STATUS_EMAILED, emailed_at=utcnow_iso(),
+                         emailed_to=emailed_to, contacted_via="email",
+                         email_subject=subject, email_html=html_body)
+            queue.save()
             res["sent"] += 1
             sent_today += 1
-            try:
-                portal.state_set(state_key, str(sent_today))
-            except PortalError:
-                pass
+            record_emails_sent(state, today, 1)
+            save_agent_state(state)
             time.sleep(SEND_GAP_SECS)
     if res["sent"] or res["failed"]:
-        portal.log("email_sent", f"Sent {res['sent']} outreach emails ({res['failed']} failed, {res['skipped']} skipped)")
+        try:
+            portal.log("email_sent", f"Sent {res['sent']} outreach emails ({res['failed']} failed, {res['skipped']} skipped)")
+        except PortalError:
+            pass
     return res
 
 
-def phase_send_followups(cfg, portal: Portal, dl: Deadline, dnc: list) -> dict:
+def phase_send_followups(cfg, portal: Portal, queue: LeadQueue, state: dict, dl: Deadline, dnc: list) -> dict:
     """Send follow-up emails to leads who haven't replied.
 
     USER RULE (2026-10-06): Only send to addresses that have NOT bounced.
     A lead is skipped if bad_channels contains 'email'.
+    Candidates and the daily cap come from the LOCAL queue/state; the portal
+    log is best-effort (only once the sync job has assigned a portal id).
     """
     res = {"sent": 0, "failed": 0, "skipped": 0}
     password = cfg.get("GMAIL_APP_PASSWORD")
@@ -551,29 +568,18 @@ def phase_send_followups(cfg, portal: Portal, dl: Deadline, dnc: list) -> dict:
         log("Follow-up sending skipped: GMAIL_APP_PASSWORD not set")
         return res
     today = local_now(cfg).strftime("%Y-%m-%d")
-    state_key = f"email_sent:{today}"
-    try:
-        sent_today = int((portal.state_list("email_sent:").get(state_key) or "0"))
-    except (ValueError, TypeError, PortalError):
-        sent_today = 0
+    sent_today = emails_sent_today(state, today)
     remaining = DAILY_SEND_CAP - sent_today
     if remaining <= 0:
         return res
     budget = min(remaining, PER_RUN_SEND_MAX)
     dnc_emails = {i["value"] for i in dnc if i["kind"] == "email"}
-    try:
-        cands = portal.leads_to_followup(limit=50)
-    except PortalError as e:
-        log(f"Could not fetch follow-up leads: {safe_exc(e, 100)}")
-        return res
+    cands = queue.candidates_for_followup_send(limit=50)
     seen_emails: set[str] = set()
     for lead in cands:
         if res["sent"] >= budget or dl.over():
             break
-        lid = int(lead.get("id") or 0)
-        if not lid:
-            res["skipped"] += 1
-            continue
+        dom = lead.get("domain") or ""
         if "email" in (lead.get("bad_channels") or ""):
             res["skipped"] += 1
             continue
@@ -597,22 +603,23 @@ def phase_send_followups(cfg, portal: Portal, dl: Deadline, dnc: list) -> dict:
         try:
             mailer.send_email(email, subject, fup_body, password)
         except Exception as e:  # noqa: BLE001
-            log(f"Lead {lid}: follow-up send failed ({safe_exc(e, 120)})")
+            log(f"Lead {dom}: follow-up send failed ({safe_exc(e, 120)})")
             res["failed"] += 1
             continue
-        try:
-            portal.outreach_log(lead_id=lid, channel="email", result="sent",
-                                sent_by="agent", subject=subject,
-                                summary=f"Follow-up #{fup_num} sent",
-                                email_html=fup_body)
-        except PortalError:
-            pass
+        if lead.get("portal_id"):
+            try:
+                portal.outreach_log(lead_id=lead["portal_id"], channel="email", result="sent",
+                                    sent_by="agent", subject=subject,
+                                    summary=f"Follow-up #{fup_num} sent",
+                                    email_html=fup_body)
+            except PortalError:
+                pass
+        queue.update(dom, followup_count=fup_num, followup_sent_at=utcnow_iso())
+        queue.save()
         res["sent"] += 1
         sent_today += 1
-        try:
-            portal.state_set(state_key, str(sent_today))
-        except PortalError:
-            pass
+        record_emails_sent(state, today, 1)
+        save_agent_state(state)
         time.sleep(SEND_GAP_SECS)
     if res["sent"] or res["failed"]:
         try:
@@ -622,38 +629,34 @@ def phase_send_followups(cfg, portal: Portal, dl: Deadline, dnc: list) -> dict:
     return res
 
 
-def phase_write(cfg, portal: Portal, gemini: Gemini | None, dl: Deadline) -> dict:
+def phase_write(cfg, portal: Portal, queue: LeadQueue, gemini: Gemini | None, dl: Deadline) -> dict:
     """Writes messages for every audited lead that doesn't have one yet, so any lead that's been
-    found - today or in the past - becomes 'ready to send' as soon as possible. This is
-    deliberately NOT throttled by today's outreach pace (target_today): that number only controls
-    how many messages phase_brief recommends you actually send today, never how many get written."""
+    found - today or in the past - becomes 'ready to send' as soon as possible. Messages are
+    stored in the LOCAL queue (the sync job mirrors them to the portal). This is deliberately
+    NOT throttled by today's outreach pace."""
     res = {"written": 0, "ai": 0, "save_failed": 0}
-    skipped: set[int] = set()       # leads whose messages could not be saved this run (tried again next run)
+    skipped: set[str] = set()       # leads whose messages could not be written this run (tried again next run)
     consecutive_fail = 0
     while not dl.over() and consecutive_fail < 3:
-        batch = [l for l in portal.leads_to_write(limit=50) if int(l["id"]) not in skipped]
+        batch = [l for l in queue.candidates_for_message_write(limit=50) if l["domain"] not in skipped]
         if not batch:
             break
         for lead in batch:
             if dl.over() or consecutive_fail >= 3:
                 break
             msgs, used_ai = write_messages(lead, cfg, gemini)
-            try:
-                portal.save_messages(id=int(lead["id"]), **msgs)
-            except PortalError as e:
-                # a temporary portal/firewall problem must not throw away the whole phase or loop forever
-                log(f"Could not save a message on the portal: {safe_exc(e, 120)}")
-                skipped.add(int(lead["id"]))
-                res["save_failed"] += 1
-                consecutive_fail += 1
-                continue
+            queue.update(lead["domain"], **{k: v for k, v in msgs.items()
+                                            if k in ("email_subject", "email_body", "whatsapp_message",
+                                                     "social_message")})
+            queue.save()
             consecutive_fail = 0
             res["written"] += 1
             res["ai"] += 1 if used_ai else 0
     if res["written"]:
-        portal.log("messages", f"Prepared {res['written']} ready-to-send messages ({res['ai']} written by AI, {res['written'] - res['ai']} from templates)")
-    if res["save_failed"]:
-        portal.log("error", f"{res['save_failed']} message(s) could not be saved because the portal did not answer properly; they will be retried on the next run")
+        try:
+            portal.log("messages", f"Prepared {res['written']} ready-to-send messages ({res['ai']} written by AI, {res['written'] - res['ai']} from templates)")
+        except PortalError:
+            pass
     return res
 
 
@@ -726,18 +729,40 @@ def flush_portal_queue(portal: Portal) -> dict:
 
 def run_cycle(cfg, portal: Portal, slack: Slack, audit: AuditClient | None, gemini: Gemini | None,
               fetcher: Fetcher, minutes: float, overture=None, wp: WordPress | None = None) -> dict:
+    """One full lead-pipeline cycle, driven by the LOCAL lead queue (state/leads_queue.json).
+
+    The portal API is treated as best-effort throughout: reads that fail fall back to
+    cached/local state, writes that fail are queued by Path B. A 429 can no longer
+    stop the run - finding, auditing and emailing continue from the queue.
+    """
     summary: dict = {"errors": []}
     overall = Deadline(minutes)
-    stats = portal.stats()
+
+    # ---- durable local state (the pipeline's source of truth) ----
+    queue = LeadQueue()
+    state = load_agent_state()
     today_dt = date.fromisoformat(local_now(cfg).strftime("%Y-%m-%d"))
-    start_s = portal.state_list("agent:started").get("agent:started")
-    if not start_s:
-        start_s = today_dt.isoformat()
-        portal.state_set("agent:started", start_s)
-        portal.log("system", "AI Agent started for the first time")
+    today_s = today_dt.isoformat()
+    if not state.get("agent_started"):
+        state["agent_started"] = today_s
+        save_agent_state(state)
+
+    def queue_stats() -> dict:
+        return queue.stats(today_s)
+
+    stats = queue_stats()
+    start_s = state.get("agent_started", today_s)
     target_today = warmup_target(cfg, date.fromisoformat(start_s), today_dt)
     log(f"Today's outreach target: {target_today} (warm-up day {(today_dt - date.fromisoformat(start_s)).days + 1})")
-    dnc = portal.get_dnc()
+    log(f"Local lead queue: {len(queue)} leads ({stats['unaudited']} waiting for audit, {stats['to_contact']} ready to contact)")
+
+    # DNC: refresh from the portal when reachable, otherwise use the cached copy.
+    try:
+        dnc = portal.get_dnc()
+        save_dnc_cache(dnc)
+    except PortalError as e:
+        dnc = load_dnc_cache()
+        log(f"Portal unreachable for DNC list - using cached copy ({len(dnc)} entries): {safe_exc(e, 100)}")
 
     def guarded(name, fn):
         try:
@@ -746,7 +771,10 @@ def run_cycle(cfg, portal: Portal, slack: Slack, audit: AuditClient | None, gemi
             msg = f"{name} failed: {safe_exc(e)}"
             log(msg)
             summary["errors"].append(msg)
-            portal.log("error", msg)
+            try:
+                portal.log("error", msg)
+            except PortalError:
+                pass
             return None
 
     # Path B: flush any queued writes from previous runs where the portal was unreachable.
@@ -754,27 +782,23 @@ def run_cycle(cfg, portal: Portal, slack: Slack, audit: AuditClient | None, gemi
     if r0 and (r0["flushed"] or r0["failed"]):
         summary["queue_flush"] = r0
 
-    r1 = guarded("Lead finder", lambda: phase_find_leads(cfg, portal, slack, fetcher, stats, overall.slice(0.25), dnc, overture))
+    r1 = guarded("Lead finder", lambda: phase_find_leads(cfg, portal, queue, state, slack, fetcher, queue_stats(), overall.slice(0.25), dnc, overture))
     if r1:
         summary["leads"] = r1
         if r1["created"]:
             slack.leads(f":sparkles: *{r1['created']} new leads* found: " + ", ".join(f"{COUNTRY_NAMES.get(c, c)} {n}" for c, n in r1["by_country"].items()))
-    stats = portal.stats()
-    r2 = guarded("Audits", lambda: phase_audit(cfg, portal, audit, stats, overall.slice(0.65), fetcher))
+    r2 = guarded("Audits", lambda: phase_audit(cfg, portal, queue, audit, queue_stats(), overall.slice(0.65), fetcher))
     if r2: summary["audits"] = r2
-    stats = portal.stats()
-    r2a = guarded("Ads check", lambda: phase_ads_check(cfg, portal, overall))
+    r2a = guarded("Ads check", lambda: phase_ads_check(cfg, portal, queue, overall))
     if r2a: summary["ads_check"] = r2a
-    stats = portal.stats()
-    r2b = guarded("Email sending", lambda: phase_send(cfg, portal, overall, dnc))
+    r2b = guarded("Email sending", lambda: phase_send(cfg, portal, queue, state, overall, dnc))
     if r2b: summary["emails"] = r2b
-    r2c = guarded("Follow-up sending", lambda: phase_send_followups(cfg, portal, overall, dnc))
+    r2c = guarded("Follow-up sending", lambda: phase_send_followups(cfg, portal, queue, state, overall, dnc))
     if r2c: summary["followups_sent"] = r2c
-    stats = portal.stats()
-    r3 = guarded("Message writer", lambda: phase_write(cfg, portal, gemini, overall.slice(0.7)))
+    r3 = guarded("Message writer", lambda: phase_write(cfg, portal, queue, gemini, overall.slice(0.7)))
     if r3: summary["messages"] = r3
     if not overall.over():
-        r5 = guarded("Follow-ups", lambda: run_followups(cfg, portal, gemini, overall.slice(0.5)))
+        r5 = guarded("Follow-ups", lambda: run_followups(cfg, portal, queue, gemini, overall.slice(0.5)))
         if r5: summary["followups"] = r5
     if not overall.over():
         r6 = guarded("Blog writer", lambda: run_blog(cfg, portal, gemini, today_dt))
@@ -788,20 +812,35 @@ def run_cycle(cfg, portal: Portal, slack: Slack, audit: AuditClient | None, gemi
             r9 = guarded("Page-by-page SEO", lambda: run_page_seo(cfg, portal, audit, gemini, wp, today_dt.isoformat()))
             if r9: summary["page_seo"] = r9
 
-    last_seo = portal.state_list("seo:last_run").get("seo:last_run", "")
+    try:
+        last_seo = portal.state_list("seo:last_run").get("seo:last_run", "")
+    except PortalError:
+        last_seo = ""
     if audit and (not last_seo or (today_dt - date.fromisoformat(last_seo)).days >= 7):
         r4 = guarded("SEO check", lambda: run_seo(cfg, portal, audit, gemini, today_dt.isoformat()))
         if r4: summary["seo"] = r4
-    last_geo = portal.state_list("geo:last_run").get("geo:last_run", "")
+    try:
+        last_geo = portal.state_list("geo:last_run").get("geo:last_run", "")
+    except PortalError:
+        last_geo = ""
     if not last_geo or (today_dt - date.fromisoformat(last_geo)).days >= 7:
         r4b = guarded("GEO check", lambda: run_geo_check(cfg, portal, gemini, fetcher, today_dt.isoformat()))
         if r4b:
             summary["geo"] = r4b
-            portal.state_set("geo:last_run", today_dt.isoformat())
+            try:
+                portal.state_set("geo:last_run", today_dt.isoformat())
+            except PortalError:
+                pass
     guarded("Daily brief", lambda: phase_brief(cfg, portal, slack, target_today, gemini))
+
+    # Final save + the workflow commits state/ at the end of the run.
+    queue.save()
+    save_agent_state(state)
 
     if gemini and gemini.dead:
         summary["gemini_keys_lost"] = len(gemini.dead)
     if summary["errors"]:
         slack.error("\n".join("- " + e for e in summary["errors"][:5]))
     return summary
+
+

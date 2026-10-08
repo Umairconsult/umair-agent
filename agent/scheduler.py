@@ -436,9 +436,18 @@ def phase_ads_check(cfg, portal: Portal, queue: LeadQueue, dl: Deadline) -> dict
     return res
 
 
-DAILY_SEND_CAP = 150          # max outreach emails per day across all runs
+DAILY_SEND_CAP = 250          # max outreach emails per day across all runs (user 2026-10-08: min 250 quality sends)
 PER_RUN_SEND_MAX = 25       # per-run ceiling so sends pace through the day
 SEND_GAP_SECS = 5           # be gentle with Gmail SMTP
+MIN_AUDIT_SCORE = 70        # 2026-10-08: only email leads scoring at/above the
+                            # quality bar (user's standing accuracy-over-volume
+                            # order). Set to 0 to disable.
+# Domains that are never a real business website (video/social/link hosts).
+# 2026-10-08: the agent emailed Pet Wow (youtu.be) and ARCCADD (anchor.fm).
+JUNK_DOMAINS = ("youtu.be", "youtube.com", "anchor.fm", "facebook.com",
+                "instagram.com", "tiktok.com", "linkedin.com", "linktr.ee",
+                "linktree.com", "podcasts.apple.com", "spotify.com",
+                "vimeo.com")
 
 
 def phase_send(cfg, portal: Portal, queue: LeadQueue, state: dict, dl: Deadline, dnc: list) -> dict:
@@ -484,6 +493,16 @@ def phase_send(cfg, portal: Portal, queue: LeadQueue, state: dict, dl: Deadline,
             continue
         # ---- HARD RULE: completed successful audit required ----
         if lead.get("audit_score") is None or not (lead.get("audit_summary") or "").strip():
+            res["skipped"] += 1
+            continue
+        # ---- QUALITY BAR (2026-10-08): audit must score at/above the bar ----
+        if int(lead.get("audit_score") or 0) < MIN_AUDIT_SCORE:
+            log(f"Lead {dom}: not emailed (audit {lead.get('audit_score')}/100 below bar {MIN_AUDIT_SCORE})")
+            res["skipped"] += 1
+            continue
+        # ---- JUNK DOMAIN (2026-10-08): never email a social/video platform ----
+        if any(dom == j or dom.endswith("." + j) for j in JUNK_DOMAINS):
+            log(f"Lead {dom}: not emailed (junk platform domain, not a business website)")
             res["skipped"] += 1
             continue
         if not email or email in seen_emails or email in dnc_emails:

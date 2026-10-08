@@ -19,10 +19,27 @@
   "ov:GB:Bristol:plumber": "2026-10-08",
   "reg:GB:Bristol:plumber": "2026-10-08",
   "ov:CA:Montreal:dermatologist": "2026-10-08",
-  "ov:CA:Edmonton:towing": "2026-10-08"
+  "ov:CA:Edmonton:towing": "2026-10-08",
+  "ov:US:Oklahoma City:moving company": "2026-10-08",
+  "ov:GB:Edinburgh:event venue": "2026-10-08",
+  "reg:GB:Edinburgh:event venue": "2026-10-08",
+  "ov:US:Dallas:gym": "2026-10-08",
+  "search:US:Dallas:gym": "2026-10-08",
+  "ov:CA:London Ontario:plastic surgeon": "2026-10-08",
+  "ov:GB:Edinburgh:locksmith": "2026-10-08",
+  "reg:GB:Edinburgh:locksmith": "2026-10-08",
+  "ov:US:Cleveland:roofing": "2026-10-08",
+  "search:US:Cleveland:roofing": "2026-10-08",
+  "ov:US:New Orleans:hvac": "2026-10-08",
+  "search:US:New Orleans:hvac": "2026-10-08",
+  "ov:US:Seattle:yoga studio": "2026-10-08",
+  "ov:US:Orlando:dermatologist": "2026-10-08",
+  "ov:US:New Orleans:solar installer": "2026-10-08",
+  "ov:US:Boston:chiropractor": "2026-10-08",
+  "search:US:Boston:chiropractor": "2026-10-08"
  },
  "email_sent": {
   "2026-10-07": 37,
-  "2026-10-08": 50
+  "2026-10-08": 75
  }
 }

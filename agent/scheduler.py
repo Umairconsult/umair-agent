@@ -734,7 +734,9 @@ def _phase_brief_inner(cfg, portal: Portal, slack: Slack, target_today: int, gem
     if gemini and len(gemini.keys) > 1:
         lines.append(f"- AI keys working: {gemini.live_count()} of {len(gemini.keys)}")
     lines.append(f"Open your portal: {cfg.portal_url}/admin_ai_agent.php")
-    if slack.agent("\n".join(lines)):
+    # 2026-10-09: daily brief goes to the LEADS channel per user request
+    # (social notifications paused; leads channel is the only Slack output now).
+    if slack.leads("\n".join(lines)):
         portal.state_set("brief:last", today)
         return True
     return False

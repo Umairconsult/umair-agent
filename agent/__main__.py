@@ -327,9 +327,10 @@ def social(cfg, quiet_if_idle: bool = False) -> int:
         lines.append(":warning: *Problems today:*")
         for f in result["failures"]:
             lines.append(f"- {f}")
-    # In the combined run this fires every few hours; don't spam Slack when there is nothing new to report.
-    if not (quiet_if_idle and not done and not result["failures"]):
-        slack.social("\n".join(lines))
+    # 2026-10-09: social Slack notifications PAUSED per user request.
+    # Only leads notifications go to Slack now. Re-enable by uncommenting.
+    # if not (quiet_if_idle and not done and not result["failures"]):
+    #     slack.social("\n".join(lines))
 
     log(f"Social run finished: {done} new, {already} already done today, target {target}"
         + (f", {len(result['failures'])} problem(s)" if result["failures"] else ""))

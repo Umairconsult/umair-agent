@@ -43,7 +43,22 @@
   "ov:CA:Edmonton:doctor": "2026-10-09",
   "search:CA:Edmonton:doctor": "2026-10-09",
   "ov:AU:Brisbane:car dealer": "2026-10-09",
-  "ov:US:Denver:yoga studio": "2026-10-09"
+  "ov:US:Denver:yoga studio": "2026-10-09",
+  "ov:AU:Newcastle AU:med spa": "2026-10-10",
+  "search:AU:Newcastle AU:med spa": "2026-10-10",
+  "ov:AU:Sydney:home inspector": "2026-10-10",
+  "ov:GB:Manchester:doctor": "2026-10-10",
+  "search:GB:Manchester:doctor": "2026-10-10",
+  "reg:GB:Manchester:doctor": "2026-10-10",
+  "ov:US:Los Angeles:insurance": "2026-10-10",
+  "search:US:Los Angeles:insurance": "2026-10-10",
+  "ov:AU:Sydney:plumber": "2026-10-10",
+  "ov:US:Columbus:auto detailing": "2026-10-10",
+  "ov:GB:Cambridge:veterinary": "2026-10-10",
+  "search:GB:Cambridge:veterinary": "2026-10-10",
+  "reg:GB:Cambridge:veterinary": "2026-10-10",
+  "ov:US:Washington DC:car repair": "2026-10-10",
+  "search:US:Washington DC:car repair": "2026-10-10"
  },
  "email_sent": {
   "2026-10-07": 37,

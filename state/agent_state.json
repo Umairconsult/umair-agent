@@ -58,12 +58,30 @@
   "search:GB:Cambridge:veterinary": "2026-10-10",
   "reg:GB:Cambridge:veterinary": "2026-10-10",
   "ov:US:Washington DC:car repair": "2026-10-10",
-  "search:US:Washington DC:car repair": "2026-10-10"
+  "search:US:Washington DC:car repair": "2026-10-10",
+  "ov:GB:Belfast:hairdresser": "2026-10-10",
+  "search:GB:Belfast:hairdresser": "2026-10-10",
+  "reg:GB:Belfast:hairdresser": "2026-10-10",
+  "ov:US:Sacramento:hairdresser": "2026-10-10",
+  "search:US:Sacramento:hairdresser": "2026-10-10",
+  "ov:US:Phoenix:tattoo shop": "2026-10-10",
+  "ov:GB:Aberdeen:gym": "2026-10-10",
+  "search:GB:Aberdeen:gym": "2026-10-10",
+  "reg:GB:Aberdeen:gym": "2026-10-10",
+  "ov:US:Sacramento:tree service": "2026-10-10",
+  "ov:US:St. Louis:optician": "2026-10-10",
+  "search:US:St. Louis:optician": "2026-10-10",
+  "ov:CA:Saskatoon:veterinary": "2026-10-10",
+  "search:CA:Saskatoon:veterinary": "2026-10-10",
+  "ov:US:Las Vegas:hvac": "2026-10-10",
+  "ov:GB:London:flooring": "2026-10-10",
+  "reg:GB:London:flooring": "2026-10-10"
  },
  "email_sent": {
   "2026-10-07": 37,
   "2026-10-08": 100,
   "2026-10-09": 13,
-  "2026-10-10": 25
+  "2026-10-10": 25,
+  "2026-10-11": 27
  }
 }

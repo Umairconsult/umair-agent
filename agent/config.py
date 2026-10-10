@@ -117,7 +117,7 @@ class Settings:
     @property
     def pitch(self):
         return self.get("BUSINESS_PITCH",
-                        "I help local businesses get more customers from Google and Meta ads, tracking and SEO")
+                        "I help local businesses get more customers from Google and Meta ads — paid performance marketing with proper tracking and ROAS-focused campaign management")
     @property
     def language(self): return self.get("MESSAGE_LANGUAGE", "English")
     @property

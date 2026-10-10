@@ -495,9 +495,14 @@ def phase_send(cfg, portal: Portal, queue: LeadQueue, state: dict, dl: Deadline,
         if lead.get("audit_score") is None or not (lead.get("audit_summary") or "").strip():
             res["skipped"] += 1
             continue
-        # ---- QUALITY BAR (2026-10-08): audit must score at/above the bar ----
-        if int(lead.get("audit_score") or 0) < MIN_AUDIT_SCORE:
-            log(f"Lead {dom}: not emailed (audit {lead.get('audit_score')}/100 below bar {MIN_AUDIT_SCORE})")
+        # ---- QUALITY BAR (2026-10-10): lead_score (opportunity + reachability)
+        # must be at/above the bar. audit_score is the site's HEALTH score
+        # (higher = healthier = fewer fixable issues = weaker audit pitch), so
+        # gating on it blocked the best prospects. lead_score blends the audit's
+        # opportunity score with reachability instead. Bar stays 70 per the
+        # user's 2026-10-08 accuracy-over-volume order.
+        if int(lead.get("lead_score") or 0) < MIN_AUDIT_SCORE:
+            log(f"Lead {dom}: not emailed (lead score {lead.get('lead_score')}/100 below bar {MIN_AUDIT_SCORE})")
             res["skipped"] += 1
             continue
         # ---- JUNK DOMAIN (2026-10-08): never email a social/video platform ----

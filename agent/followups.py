@@ -44,6 +44,13 @@ def run_followups(cfg, portal: Portal, queue: LeadQueue, gemini: Gemini | None, 
         if not leads:
             break
         for lead in leads:
+            # 2026-10-10: never follow up a junk platform domain (pre-gate sends
+            # like the Oct 8 youtu.be/anchor.fm emails must not get a 2nd touch).
+            from .scheduler import JUNK_DOMAINS  # lazy: scheduler imports this module
+            _fdom = domain_of(lead.get("website", ""))
+            if any(_fdom == j or _fdom.endswith("." + j) for j in JUNK_DOMAINS):
+                log(f"Follow-up skipped: {_fdom} is a junk platform domain, not a business website")
+                continue
             if deadline.over():
                 break
             msgs, ai = None, False

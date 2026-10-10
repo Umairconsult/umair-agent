@@ -43,6 +43,8 @@ def _prompt(cfg, platform: str, avoid: list[str] | None = None) -> str:
     return f"""You are planning one social media post for {cfg.your_name}, who runs UmairConsult. \
 Its offer: {cfg.pitch}. Platform: {spec['label']}. Audience: owners of local and small businesses.
 
+Topic rule (strict): PERFORMANCE MARKETING ONLY — Google Ads, Meta Ads, paid search/social acquisition, campaign structure, bidding, budgets, ad creative testing, tracking and attribution (GA4, GTM, server-side), ROAS and cost-per-lead optimization, lead generation, e-commerce growth, or landing-page CRO for paid traffic. NEVER: SEO, Google Maps, Google Business Profile, organic rankings, organic social media, or anything unpaid/organic — his core service is paid performance marketing and posts must position him as a performance marketing specialist.
+
 Come up with ONE fresh, specific content idea (not a generic ad, not a tired template).{avoid_txt} Then write:
 - "caption": the post text for {spec['label']}, natural and non-salesy, at most 3 relevant hashtags, no invented statistics, awards or client stories.
 - "cta": one short call to action (a few words).

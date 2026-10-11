@@ -75,13 +75,27 @@
   "search:CA:Saskatoon:veterinary": "2026-10-10",
   "ov:US:Las Vegas:hvac": "2026-10-10",
   "ov:GB:London:flooring": "2026-10-10",
-  "reg:GB:London:flooring": "2026-10-10"
+  "reg:GB:London:flooring": "2026-10-10",
+  "ov:AU:Wollongong:dermatologist": "2026-10-11",
+  "ov:US:Fort Worth:locksmith": "2026-10-11",
+  "ov:GB:Cambridge:florist": "2026-10-11",
+  "search:GB:Cambridge:florist": "2026-10-11",
+  "reg:GB:Cambridge:florist": "2026-10-11",
+  "ov:US:Detroit:chiropractor": "2026-10-11",
+  "search:US:Detroit:chiropractor": "2026-10-11",
+  "ov:US:Tampa:martial arts": "2026-10-11",
+  "ov:GB:Brighton:lawyer": "2026-10-11",
+  "reg:GB:Brighton:lawyer": "2026-10-11",
+  "ov:US:Jacksonville:pet grooming": "2026-10-11",
+  "ov:CA:London Ontario:yoga studio": "2026-10-11",
+  "ov:GB:Liverpool:dermatologist": "2026-10-11",
+  "reg:GB:Liverpool:dermatologist": "2026-10-11"
  },
  "email_sent": {
   "2026-10-07": 37,
   "2026-10-08": 100,
   "2026-10-09": 13,
   "2026-10-10": 25,
-  "2026-10-11": 86
+  "2026-10-11": 112
  }
 }

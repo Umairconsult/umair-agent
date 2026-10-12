@@ -89,7 +89,17 @@
   "ov:US:Jacksonville:pet grooming": "2026-10-11",
   "ov:CA:London Ontario:yoga studio": "2026-10-11",
   "ov:GB:Liverpool:dermatologist": "2026-10-11",
-  "reg:GB:Liverpool:dermatologist": "2026-10-11"
+  "reg:GB:Liverpool:dermatologist": "2026-10-11",
+  "ov:AU:Geelong:tattoo shop": "2026-10-12",
+  "ov:US:Miami:painter": "2026-10-12",
+  "ov:US:New York:painter": "2026-10-12",
+  "ov:GB:Sheffield:lawyer": "2026-10-12",
+  "search:GB:Sheffield:lawyer": "2026-10-12",
+  "reg:GB:Sheffield:lawyer": "2026-10-12",
+  "ov:CA:Victoria:daycare": "2026-10-12",
+  "search:CA:Victoria:daycare": "2026-10-12",
+  "ov:CA:Mississauga:garage door": "2026-10-12",
+  "ov:US:Portland:general contractor": "2026-10-12"
  },
  "email_sent": {
   "2026-10-07": 37,
@@ -97,6 +107,6 @@
   "2026-10-09": 13,
   "2026-10-10": 25,
   "2026-10-11": 112,
-  "2026-10-12": 50
+  "2026-10-12": 75
  }
 }

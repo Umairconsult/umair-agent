@@ -99,7 +99,19 @@
   "ov:CA:Victoria:daycare": "2026-10-12",
   "search:CA:Victoria:daycare": "2026-10-12",
   "ov:CA:Mississauga:garage door": "2026-10-12",
-  "ov:US:Portland:general contractor": "2026-10-12"
+  "ov:US:Portland:general contractor": "2026-10-12",
+  "ov:AU:Perth:hotel": "2026-10-13",
+  "search:AU:Perth:hotel": "2026-10-13",
+  "ov:US:New Orleans:physiotherapist": "2026-10-13",
+  "ov:GB:Cambridge:martial arts": "2026-10-13",
+  "reg:GB:Cambridge:martial arts": "2026-10-13",
+  "ov:US:Cleveland:pest control": "2026-10-13",
+  "ov:CA:Winnipeg:med spa": "2026-10-13",
+  "search:CA:Winnipeg:med spa": "2026-10-13",
+  "ov:US:Austin:carpenter": "2026-10-13",
+  "search:US:Austin:carpenter": "2026-10-13",
+  "ov:US:Miami:tutoring": "2026-10-13",
+  "ov:CA:Victoria:home inspector": "2026-10-13"
  },
  "email_sent": {
   "2026-10-07": 37,
@@ -107,6 +119,7 @@
   "2026-10-09": 13,
   "2026-10-10": 25,
   "2026-10-11": 112,
-  "2026-10-12": 100
+  "2026-10-12": 100,
+  "2026-10-13": 25
  }
 }

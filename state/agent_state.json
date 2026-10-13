@@ -111,7 +111,10 @@
   "ov:US:Austin:carpenter": "2026-10-13",
   "search:US:Austin:carpenter": "2026-10-13",
   "ov:US:Miami:tutoring": "2026-10-13",
-  "ov:CA:Victoria:home inspector": "2026-10-13"
+  "ov:CA:Victoria:home inspector": "2026-10-13",
+  "ov:CA:Calgary:daycare": "2026-10-14",
+  "ov:US:Raleigh:plastic surgeon": "2026-10-14",
+  "ov:US:Chicago:chiropractor": "2026-10-14"
  },
  "email_sent": {
   "2026-10-07": 37,
@@ -120,6 +123,7 @@
   "2026-10-10": 25,
   "2026-10-11": 112,
   "2026-10-12": 100,
-  "2026-10-13": 75
+  "2026-10-13": 75,
+  "2026-10-14": 25
  }
 }

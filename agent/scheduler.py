@@ -437,11 +437,11 @@ def phase_ads_check(cfg, portal: Portal, queue: LeadQueue, dl: Deadline) -> dict
 
 
 DAILY_SEND_CAP = 250          # max outreach emails per day across all runs (user 2026-10-08: min 250 quality sends)
-PER_RUN_SEND_MAX = 25       # per-run ceiling so sends pace through the day
+PER_RUN_SEND_MAX = 60       # per-run ceiling (2026-10-14: raised for backlog mode)
 SEND_GAP_SECS = 5           # be gentle with Gmail SMTP
-MIN_AUDIT_SCORE = 70        # 2026-10-08: only email leads scoring at/above the
-                            # quality bar (user's standing accuracy-over-volume
-                            # order). Set to 0 to disable.
+MIN_AUDIT_SCORE = 0         # 2026-10-14 BACKLOG MODE (user decision): contact ALL
+                            # uncontacted leads regardless of score. Restore to 70
+                            # once the backlog is drained.
 # Domains that are never a real business website (video/social/link hosts).
 # 2026-10-08: the agent emailed Pet Wow (youtu.be) and ARCCADD (anchor.fm).
 JUNK_DOMAINS = ("youtu.be", "youtube.com", "anchor.fm", "facebook.com",

@@ -338,8 +338,11 @@ def build_email(lead):
     n_high = sum(1 for it in issues if it.get("severity") in ("High", "Critical"))
     if score >= 80:
         subject = f"{domain}: your site scores {score}/100 \u2014 here's how we scale it"
-    else:
+    elif score >= 70:
         subject = f"{domain} audit: {score}/100 \u2014 {n_high} high-priority fixes inside"
+    else:
+        # 2026-10-14: never advertise a failing score in the subject line
+        subject = f"{domain} \u2014 I spotted {n_high} issues hurting your ads"
     return subject, tpl
 
 

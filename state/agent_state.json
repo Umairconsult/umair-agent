@@ -114,7 +114,22 @@
   "ov:CA:Victoria:home inspector": "2026-10-13",
   "ov:CA:Calgary:daycare": "2026-10-14",
   "ov:US:Raleigh:plastic surgeon": "2026-10-14",
-  "ov:US:Chicago:chiropractor": "2026-10-14"
+  "ov:US:Chicago:chiropractor": "2026-10-14",
+  "ov:GB:Glasgow:electrician": "2026-10-14",
+  "search:GB:Glasgow:electrician": "2026-10-14",
+  "reg:GB:Glasgow:electrician": "2026-10-14",
+  "ov:AU:Sydney:accountant": "2026-10-14",
+  "search:AU:Sydney:accountant": "2026-10-14",
+  "ov:US:San Diego:general contractor": "2026-10-14",
+  "ov:GB:Newcastle:tattoo shop": "2026-10-14",
+  "reg:GB:Newcastle:tattoo shop": "2026-10-14",
+  "ov:US:Seattle:cleaning": "2026-10-14",
+  "search:US:Seattle:cleaning": "2026-10-14",
+  "ov:US:Tampa:roofing": "2026-10-14",
+  "search:US:Tampa:roofing": "2026-10-14",
+  "ov:US:Kansas City:solar installer": "2026-10-14",
+  "ov:US:Chicago:restaurant": "2026-10-14",
+  "ov:CA:Quebec City:mortgage broker": "2026-10-14"
  },
  "email_sent": {
   "2026-10-07": 37,
@@ -124,6 +139,6 @@
   "2026-10-11": 112,
   "2026-10-12": 100,
   "2026-10-13": 75,
-  "2026-10-14": 25
+  "2026-10-14": 48
  }
 }

@@ -24292,7 +24292,7 @@
    "followup_whatsapp": "",
    "followup_sent_at": "",
    "contacted_via": "email",
-   "bad_channels": "",
+   "bad_channels": "email",
    "portal_id": null
   },
   {
@@ -24809,7 +24809,7 @@
    "followup_whatsapp": "",
    "followup_sent_at": "",
    "contacted_via": "email",
-   "bad_channels": "",
+   "bad_channels": "email",
    "portal_id": null
   },
   {
@@ -25326,7 +25326,7 @@
    "followup_whatsapp": "",
    "followup_sent_at": "",
    "contacted_via": "email",
-   "bad_channels": "",
+   "bad_channels": "email",
    "portal_id": null
   },
   {
@@ -26407,7 +26407,7 @@
    "followup_whatsapp": "",
    "followup_sent_at": "",
    "contacted_via": "email",
-   "bad_channels": "",
+   "bad_channels": "email",
    "portal_id": null
   },
   {
@@ -26501,7 +26501,7 @@
    "followup_whatsapp": "",
    "followup_sent_at": "",
    "contacted_via": "email",
-   "bad_channels": "",
+   "bad_channels": "email",
    "portal_id": null
   },
   {
@@ -26548,7 +26548,7 @@
    "followup_whatsapp": "",
    "followup_sent_at": "",
    "contacted_via": "email",
-   "bad_channels": "",
+   "bad_channels": "email",
    "portal_id": null
   },
   {
@@ -27204,7 +27204,7 @@
    "followup_whatsapp": "",
    "followup_sent_at": "",
    "contacted_via": "email",
-   "bad_channels": "",
+   "bad_channels": "email",
    "portal_id": null
   },
   {
@@ -27580,7 +27580,7 @@
    "followup_whatsapp": "",
    "followup_sent_at": "",
    "contacted_via": "email",
-   "bad_channels": "",
+   "bad_channels": "email",
    "portal_id": null
   },
   {

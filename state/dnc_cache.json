@@ -1,5 +1,5 @@
 {
- "updated_at": "2026-10-19T04:48:34+00:00",
+ "updated_at": "2026-10-19T13:27:08+00:00",
  "items": [
   {
    "kind": "domain",
@@ -15,11 +15,27 @@
   },
   {
    "kind": "email",
+   "value": "avarzhapetyan@farmersagent.com"
+  },
+  {
+   "kind": "email",
    "value": "contact@sunstoneyoga.com"
   },
   {
    "kind": "email",
+   "value": "drmiskus@optimalchiropractic.ca"
+  },
+  {
+   "kind": "email",
    "value": "ebsacandheat@bellsouth.net"
+  },
+  {
+   "kind": "email",
+   "value": "florist@radhikaflowers.co.uk"
+  },
+  {
+   "kind": "email",
+   "value": "holdensales@westpointautos.com.au"
   },
   {
    "kind": "email",
@@ -51,6 +67,14 @@
   },
   {
    "kind": "email",
+   "value": "info@betzystreecare.com"
+  },
+  {
+   "kind": "email",
+   "value": "info@callingwoodcrossing.com"
+  },
+  {
+   "kind": "email",
    "value": "info@clementac.com"
   },
   {
@@ -63,11 +87,23 @@
   },
   {
    "kind": "email",
+   "value": "info@jparkafterschool.com"
+  },
+  {
+   "kind": "email",
    "value": "info@ladylucktattooaz.com"
   },
   {
    "kind": "email",
    "value": "info@limberyoga.com"
+  },
+  {
+   "kind": "email",
+   "value": "info@mahasoul.com"
+  },
+  {
+   "kind": "email",
+   "value": "info@oldhallclinic.co.uk"
   },
   {
    "kind": "email",
@@ -112,6 +148,10 @@
   {
    "kind": "email",
    "value": "sales@tacoburritoking.com"
+  },
+  {
+   "kind": "email",
+   "value": "support@aldoskeyshop.com"
   },
   {
    "kind": "email",

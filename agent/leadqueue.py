@@ -35,6 +35,11 @@ STATUS_AUDITED = "audited"
 STATUS_EMAILED = "emailed"
 STATUS_BAD = "bad"
 
+# 2026-10-19 QUALITY RESET (user-approved plan, item 8): every lead found from
+# now on is tagged with this cohort so new-rule leads are measured separately
+# from the backlog batch. Older leads carry no cohort tag and count as "backlog".
+LEAD_COHORT = "quality-v2"
+
 
 def utcnow_iso() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
@@ -211,6 +216,7 @@ class LeadQueue:
             "followup_email_body": "", "followup_whatsapp": "",
             "followup_sent_at": "", "contacted_via": "", "bad_channels": "",
             "portal_id": None,
+            "cohort": lead.get("cohort") or "",
         }
         self.data["leads"].append(entry)
         self._by_domain[dom] = entry
@@ -229,6 +235,38 @@ class LeadQueue:
             lead = self.get(domain)
             lead["notes"] = ((lead.get("notes") or "") + " | bad: " + reason).strip(" |")
         return ok
+
+    def suppress_email_channel(self, domain: str, reason: str = "") -> bool:
+        """Bounce suppression that actually works (2026-10-14 lesson): the
+        send gates read bad_channels from THIS local queue, so marking it here
+        stops all future email touches for the domain. Portal marks never
+        reach the agent — this is the effective list."""
+        lead = self.get(domain)
+        if not lead:
+            return False
+        chans = [c for c in (lead.get("bad_channels") or "").split(",") if c]
+        if "email" not in chans:
+            chans.append("email")
+        lead["bad_channels"] = ",".join(chans)
+        if reason:
+            lead["notes"] = ((lead.get("notes") or "") + " | email suppressed: " + reason).strip(" |")
+        return True
+
+    def cohort_stats(self) -> dict:
+        """Per-cohort funnel for the quality-reset measurement (plan item 8).
+        Leads without a cohort tag (found before the reset) count as 'backlog'."""
+        st: dict[str, dict[str, int]] = {}
+        for l in self.data["leads"]:
+            c = l.get("cohort") or "backlog"
+            s = st.setdefault(c, {"found": 0, "audited": 0, "emailed": 0, "email_suppressed": 0})
+            s["found"] += 1
+            if l.get("status") in (STATUS_AUDITED, STATUS_EMAILED):
+                s["audited"] += 1
+            if l.get("emailed_at"):
+                s["emailed"] += 1
+            if "email" in (l.get("bad_channels") or ""):
+                s["email_suppressed"] += 1
+        return st
 
 
 def _days_since(iso_ts: str | None, min_days: int) -> bool:

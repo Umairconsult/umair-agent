@@ -25,6 +25,15 @@ from email.mime.text import MIMEText
 
 TEMPLATE_PATH = os.path.join(os.path.dirname(__file__), "email_template.html")
 CALENDLY = "https://calendly.com/umairconsult/30min"
+
+
+def clean_subject(subject: str) -> str:
+    """Strip score mentions (e.g. "72/100") and fake "Re:"/"Fwd:" prefixes from
+    a subject line. 2026-10-19 QUALITY RESET (plan items 5+7): scores never
+    appear in subjects, and follow-ups are never disguised as replies."""
+    s = re.sub(r"\b\d{1,3}\s*/\s*100\b", "", subject or "")
+    s = re.sub(r"^(re|fw|fwd)\s*:\s*", "", s, flags=re.IGNORECASE)
+    return re.sub(r"\s{2,}", " ", s).strip(" -\u2013\u2014:")
 FROM_EMAIL = os.environ.get("FROM_EMAIL", "hi@umairconsult.com")
 GMAIL_USER = os.environ.get("GMAIL_USER", "umairppcmaster@gmail.com")
 
@@ -336,14 +345,16 @@ def build_email(lead):
                       f"This is a one-time personal outreach about {domain_esc}. If you&apos;d rather not hear from me, just reply and I won&apos;t contact you again.")
 
     n_high = sum(1 for it in issues if it.get("severity") in ("High", "Critical"))
+    # 2026-10-19 QUALITY RESET (plan items 5+7): scores never appear in subject
+    # lines — a score in the subject reads as spam and advertises the audit
+    # grade before the pitch. (2026-10-14 rule for failing scores, now for all.)
     if score >= 80:
-        subject = f"{domain}: your site scores {score}/100 \u2014 here's how we scale it"
+        subject = f"{domain} \u2014 quick wins to scale what's already working"
     elif score >= 70:
-        subject = f"{domain} audit: {score}/100 \u2014 {n_high} high-priority fixes inside"
+        subject = f"{domain} \u2014 {n_high} high-priority fixes for your ads"
     else:
-        # 2026-10-14: never advertise a failing score in the subject line
         subject = f"{domain} \u2014 I spotted {n_high} issues hurting your ads"
-    return subject, tpl
+    return clean_subject(subject), tpl
 
 
 def send_email(to_email, subject, html_body, app_password, gmail_user=None, from_email=None, timeout=30):

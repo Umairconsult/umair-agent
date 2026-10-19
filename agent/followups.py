@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from .leadqueue import LeadQueue
 from .logutil import log, safe_exc
+from .mailer import CALENDLY
 from .portal import Portal
 from .writer import Gemini, _clean, compliance_footer, domain_of
 
@@ -15,20 +16,34 @@ from .writer import Gemini, _clean, compliance_footer, domain_of
 def _prompt(lead: dict, cfg) -> str:
     n = int(lead.get("followup_count") or 0) + 1
     via = lead.get("contacted_via") or "email"
-    return f"""You write brief, friendly follow-up messages for {cfg.your_name} of UmairConsult ({cfg.pitch}).
-Context: the first message went to {_clean(lead.get('business_name'), 80)} ({_clean(lead.get('niche'), 40)}, website {_clean(domain_of(lead.get('website', '')), 60)}) by {via}, a few days ago. No reply yet. This is follow-up number {n} of at most 2.
-FACTS you may use (from an automated website check): {_clean(lead.get('audit_summary'), 500)}
-RULES: Do not repeat the first message. Add ONE new, useful angle taken from the facts. Never invent numbers or claim past contact beyond "my earlier message". Be polite, no pressure, no guilt, make it easy to say no. Write in {cfg.language}. No links.
-email_body: at most 70 words, ends with "{cfg.your_name}" then "UmairConsult". whatsapp_message: at most 35 words.
-Return ONLY JSON: {{"email_body": "...", "whatsapp_message": "..."}}"""
+    # 2026-10-19 QUALITY RESET (plan item 7): every follow-up ends with the
+    # Calendly link and a concrete offer (free mini audit + free 30-min call).
+    return (
+        f"You write brief, friendly follow-up messages for {cfg.your_name} of UmairConsult ({cfg.pitch}).\n"
+        f"Context: the first message went to {_clean(lead.get('business_name'), 80)} ({_clean(lead.get('niche'), 40)}, "
+        f"website {_clean(domain_of(lead.get('website', '')), 60)}) by {via}, a few days ago. No reply yet. "
+        f"This is follow-up number {n} of at most 2.\n"
+        f"FACTS you may use (from an automated website check): {_clean(lead.get('audit_summary'), 500)}\n"
+        f"RULES: Do not repeat the first message. Add ONE new, useful angle taken from the facts. "
+        f"Never invent numbers or claim past contact beyond \"my earlier message\". Be polite, no pressure, "
+        f"no guilt, make it easy to say no. Write in {cfg.language}.\n"
+        f"End the email_body with ONE concrete offer: a free mini audit of their website/ads plus a free "
+        f"30-minute strategy call, bookable at this link (write it as plain text on its own line): {CALENDLY}\n"
+        f"email_body: at most 90 words, ends with the offer + link, then \"{cfg.your_name}\" then \"UmairConsult\". "
+        f"whatsapp_message: at most 35 words, no links.\n"
+        f'Return ONLY JSON: {{"email_body": "...", "whatsapp_message": "..."}}'
+    )
 
 
 def template(lead: dict, cfg) -> dict:
     name = _clean(lead.get("business_name"), 60) or "there"
     dom = domain_of(lead.get("website", ""))
+    # 2026-10-19 QUALITY RESET (plan item 7): every follow-up carries the
+    # Calendly link and a concrete offer.
     return {
         "email_body": (f"Hi {name} team,\n\nJust a quick follow-up on my note about {dom}. I'm happy to send the short free report "
-                       f"if it's useful, and no problem at all if the timing isn't right.\n\n{cfg.your_name}\nUmairConsult"),
+                       f"if it's useful, and no problem at all if the timing isn't right. If you'd like, I can also do a free mini audit "
+                       f"of your website and ads plus a free 30-minute strategy call to go through it — book a time here:\n{CALENDLY}\n\n{cfg.your_name}\nUmairConsult"),
         "whatsapp_message": f"Hi {name} team, quick follow-up on my earlier message about {dom}. Happy to send the short free report if useful.",
     }
 
@@ -57,8 +72,12 @@ def run_followups(cfg, portal: Portal, queue: LeadQueue, gemini: Gemini | None, 
             if gemini and not gemini.exhausted:
                 try:
                     c = gemini.generate_json(_prompt(lead, cfg), max_tokens=600)
+                    # 2026-10-19 QUALITY RESET: the Calendly booking link is required
+                    # in follow-ups now — only reject AI output carrying OTHER links.
+                    _txt = (c.get("email_body", "") + c.get("whatsapp_message", "")).lower()
+                    _bad_link = "http" in _txt and "calendly.com/umairconsult" not in _txt
                     if isinstance(c.get("email_body"), str) and isinstance(c.get("whatsapp_message"), str) \
-                            and "http" not in (c["email_body"] + c["whatsapp_message"]).lower():
+                            and not _bad_link:
                         msgs, ai = {"email_body": c["email_body"].strip(), "whatsapp_message": c["whatsapp_message"].strip()}, True
                 except Exception as e:  # noqa: BLE001
                     log(f"Follow-up AI skipped: {safe_exc(e, 100)}")

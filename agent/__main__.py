@@ -153,6 +153,17 @@ def selftest(cfg) -> int:
             model = gemini.pick_model()
             out = gemini.generate_json('Reply with exactly this JSON: {"ok": true}')
             line(bool(out), f"Gemini AI writing works (model {model}; {gemini.live_count()} key(s) in use)")
+            # 2026-10-19 AI validation gate: end-to-end check with synthetic pages.
+            from .ai_validate import validate_site
+            _parked = validate_site(gemini, "<html><body><h1>Buy this domain</h1><p>This domain is for sale. "
+                                            "Make an offer today! Premium domains for sale now.</p></body></html>",
+                                    "http://selftest-parked.test")
+            _real = validate_site(gemini, "<html><body><h1>Smith & Sons Plumbing</h1><p>Family-run plumbing "
+                                          "company in Austin since 1998. Water heaters, leak repair, drain cleaning. "
+                                          "Call (512) 555-0147 or email mike@smithsonsplumbing.com. 123 Main St, Austin TX."
+                                          "</p></body></html>", "http://selftest-real.test")
+            _ok = _parked["verdict"] in ("parked", "for_sale", "uncertain") and _real["verdict"] == "legitimate"
+            line(_ok, f"AI validation gate works (parked test -> {_parked['verdict']}, real-site test -> {_real['verdict']})")
         except Exception as e:  # noqa: BLE001
             line(None, f"Gemini writing problem ({safe_exc(e, 120)}) - templates will be used until it works")
 

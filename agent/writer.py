@@ -30,6 +30,9 @@ class Gemini:
         self.last: dict[int, float] = {}      # key index -> last call time
         self.calls = 0
         self.switches = 0
+        # 2026-10-19 AI validation gate: per-key call counts, so the daily
+        # brief can show whether the free-tier keys are coping or more are needed.
+        self.key_calls: list[int] = [0] * len(self.keys)
 
     @property
     def exhausted(self) -> bool:
@@ -37,6 +40,14 @@ class Gemini:
 
     def live_count(self) -> int:
         return len(self.keys) - len(self.dead)
+
+    def key_usage(self) -> list[tuple[int, int, str]]:
+        """(key_number, calls_made, status) for every key - feeds the daily brief."""
+        out = []
+        for i in range(len(self.keys)):
+            status = self.dead.get(i, "live")
+            out.append((i + 1, self.key_calls[i], status))
+        return out
 
     def _hdr(self, i: int):
         return {"x-goog-api-key": self.keys[i], "Content-Type": "application/json"}
@@ -123,6 +134,7 @@ class Gemini:
                 self.cool[i] = time.time() + 10
                 continue
             self.calls += 1
+            self.key_calls[i] += 1
             code = r.status_code
             if code == 200:
                 try:

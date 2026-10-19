@@ -361,12 +361,15 @@ class Fetcher:
 def enrich_from_website(fetcher: Fetcher, website: str, country: str) -> dict:
     """Visit homepage (+ contact/about/impressum page if needed). Max 4 fetches."""
     res = {"reachable": False, "email": "", "phone": "", "facebook_url": "", "instagram_url": "",
-           "linkedin_url": "", "contact_page_url": ""}
+           "linkedin_url": "", "contact_page_url": "", "html": ""}
     first = fetcher.get(website)
     if not first:
         return res
     res["reachable"] = True
     final_url, html_text = first
+    # 2026-10-19 AI validation gate: keep the homepage HTML so Gemini can judge
+    # whether this is a real operating business (no re-fetch needed).
+    res["html"] = html_text
     info = extract_contacts(html_text, final_url, country)
     for k in ("email", "phone", "facebook_url", "instagram_url", "linkedin_url", "contact_page_url"):
         res[k] = info.get(k, "")

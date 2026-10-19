@@ -32,6 +32,25 @@ JUNK_LOCAL = {"noreply", "no-reply", "donotreply", "do-not-reply", "mailer-daemo
               "filler", "test", "testing", "dummy", "sample", "fake", "example",
               "null", "none", "xxx", "123", "abc", "temp", "temporary", "placeholder",
               "user", "users", "mail", "email", "contact-us", "info-test"}
+
+# 2026-10-19 QUALITY RESET (user-approved plan): role/team inboxes are NOT
+# decision-makers. If only one of these is found for a business, the lead is
+# skipped entirely — generic inboxes never reply.
+GENERIC_LOCALS = {"info", "contact", "contacts", "hello", "hi", "sales", "support",
+                  "admin", "administrator", "office", "enquiries", "enquiry",
+                  "inquiries", "inquiry", "reception", "booking", "bookings",
+                  "reservations", "appointment", "appointments", "mail", "team",
+                  "service", "services", "help", "helpdesk", "kontakt",
+                  "customerservice", "customercare", "careers", "jobs", "hr",
+                  "press", "media", "billing", "accounts", "payments", "orders",
+                  "frontdesk", "general", "enquires"}
+
+
+def is_generic_inbox(email: str) -> bool:
+    """True if the address is a role/team inbox rather than a person's address."""
+    local = (email or "").strip().lower().split("@")[0]
+    local = re.sub(r"\d+$", "", local)  # info2, sales1, contact123 ...
+    return local in GENERIC_LOCALS
 FILE_TLDS = {"png", "jpg", "jpeg", "gif", "webp", "svg", "css", "js", "ico", "pdf", "woff", "woff2"}
 ROLE_ORDER = ["info", "contact", "hello", "office", "enquiries", "enquiry", "sales", "reception",
               "booking", "bookings", "appointments", "mail", "admin", "team", "service", "kontakt"]
@@ -110,9 +129,34 @@ def pick_best_email(emails: list[str], site_domain: str) -> str:
         local, _, dom = ce.rpartition("@")
         same = dom == site_domain or dom.endswith("." + site_domain) or site_domain.endswith("." + dom)
         role = ROLE_ORDER.index(local) if local in ROLE_ORDER else 50
-        cands.append((0 if same else 1, role, ce))
+        # 2026-10-19 QUALITY RESET: a real person's address always beats a
+        # generic role inbox, even when the role inbox is on the site's domain.
+        generic = 1 if is_generic_inbox(ce) else 0
+        cands.append((0 if same else 1, generic, role, ce))
     cands.sort()
-    return cands[0][2] if cands else ""
+    return cands[0][3] if cands else ""
+
+
+def domain_has_mx(domain: str):
+    """MX check for the discovery phase (2026-10-19 QUALITY RESET, plan item 4).
+
+    Returns True if the domain publishes MX records, False if it definitely
+    cannot receive mail (NXDOMAIN), None when the check could not run
+    (dnspython missing, DNS timeout/refused) — None must never block a lead.
+    """
+    domain = (domain or "").strip().lower().strip(".")
+    if not domain:
+        return None
+    try:
+        import dns.resolver  # dnspython, in requirements.txt
+    except ImportError:
+        return None
+    try:
+        return len(dns.resolver.resolve(domain, "MX", lifetime=8)) > 0
+    except dns.resolver.NXDOMAIN:
+        return False
+    except Exception:
+        return None
 
 
 # ------------------------------------------------------------------ html parsing

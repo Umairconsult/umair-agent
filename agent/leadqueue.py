@@ -217,6 +217,12 @@ class LeadQueue:
             "followup_sent_at": "", "contacted_via": "", "bad_channels": "",
             "portal_id": None,
             "cohort": lead.get("cohort") or "",
+            # 2026-10-19 AI validation gate: legitimacy verdict from Gemini.
+            "ai_validated": bool(lead.get("ai_validated", False)),
+            "ai_verdict": lead.get("ai_verdict", ""),
+            "ai_confidence": lead.get("ai_confidence", 0.0),
+            "ai_business_name": lead.get("ai_business_name", ""),
+            "ai_services": lead.get("ai_services") or [],
         }
         self.data["leads"].append(entry)
         self._by_domain[dom] = entry

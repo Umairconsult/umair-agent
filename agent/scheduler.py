@@ -1,6 +1,8 @@
 """The agent's daily routine: find leads -> audit -> write messages -> follow-ups -> blog -> SEO -> brief."""
 from __future__ import annotations
 import random
+import re
+import smtplib
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime
@@ -19,14 +21,15 @@ from .hiring import hiring_boost
 from .leadqueue import (LeadQueue, load_agent_state, save_agent_state,
                          load_dnc_cache, save_dnc_cache, emails_sent_today,
                          record_emails_sent, utcnow_iso, QUEUE_FILE,
-                         STATUS_AUDITED, STATUS_EMAILED)
+                         STATUS_AUDITED, STATUS_EMAILED, LEAD_COHORT)
 from .logutil import log, safe_exc
 from . import mailer
 from .niches import osm_filters, ov_keywords, usable_niches, word_match
 from .portal import Portal, PortalError
 from .seo import apply_approved_seo, run_page_seo, run_seo
 from .slack import Slack
-from .web import Fetcher, clean_email, enrich_from_website, normalize_phone
+from .web import (Fetcher, clean_email, enrich_from_website, normalize_phone,
+                   domain_has_mx, is_generic_inbox)
 from .wordpress import WordPress, publish_approved
 from .writer import Gemini, write_messages
 
@@ -128,6 +131,52 @@ class Deadline:
         return d
 
 
+# ------------------------------------------------------------------ quality reset (2026-10-19, user-approved plan)
+# Negative rules for the $1,500 affordability test (plan item 2). The positive
+# signals (running Google/Meta ads, 10+ staff) are not visible at discovery
+# time — they are covered by the audit's ad-activity check and the opportunity
+# score. These lists only filter out businesses that can never be a fit.
+SOLO_SHOP_WORDS = (
+    "yoga", "pilates", "barber", "barbershop", "hair salon", "nail salon",
+    "tattoo", "piercing", "restaurant", "pizzeria", "cafe", "coffee shop",
+    "bakery", "diner", "eatery", "food truck", "ice cream", "bubble tea",
+    "sandwich shop", "car wash", "laundromat", "dry cleaner", "pet grooming",
+    "dog walking", "house cleaning", "blog", "podcast", "fan club",
+)
+# Mega-corporations (300+ locations) that will never buy from a freelancer.
+# Matched as whole words (single-word names) or phrases — "Target Marketing"
+# must not match the retailer "target".
+MEGA_CORP_NAMES = (
+    "supercuts", "great clips", "sport clips", "fantastic sams", "mcdonald's",
+    "mcdonalds", "starbucks", "walmart", "costco", "home depot", "best buy",
+    "petco", "petsmart", "cvs", "walgreens", "7-eleven", "dunkin", "subway",
+    "domino's", "dominos", "pizza hut", "kfc", "burger king", "taco bell",
+    "chipotle",
+)
+
+
+def _is_mega_corp(name: str) -> bool:
+    t = " " + re.sub(r"[^a-z0-9 ]", " ", (name or "").lower()) + " "
+    for m in MEGA_CORP_NAMES:
+        if " " in m.strip():
+            if m.strip() in t:
+                return True
+        elif f" {m.strip()} " in t:
+            return True
+    return False
+
+
+def _is_hard_bounce(exc: Exception) -> bool:
+    """True when an SMTP send failure is a permanent 5xx recipient rejection
+    (address does not exist) rather than a transient/rate-limit problem."""
+    if isinstance(exc, smtplib.SMTPRecipientsRefused):
+        codes = [r[0] for r in exc.recipients.values()]
+        return any(int(c) // 100 == 5 for c in codes if str(c).isdigit())
+    if isinstance(exc, smtplib.SMTPResponseException):
+        return 500 <= exc.smtp_code < 600
+    return False
+
+
 # ------------------------------------------------------------------ phases
 def phase_find_leads(cfg, portal: Portal, queue: LeadQueue, state: dict, slack: Slack, fetcher: Fetcher,
                    stats: dict, dl: Deadline, dnc: list, overture=None) -> dict:
@@ -167,6 +216,7 @@ def phase_find_leads(cfg, portal: Portal, queue: LeadQueue, state: dict, slack: 
     dnc_emails = {i["value"] for i in dnc if i["kind"] == "email"}
     priority = cfg.priority_niches
     seen_domains: set[str] = set(queue.domains())  # never re-add a domain the queue already has
+    _mx_cache: dict[str, bool | None] = {}
     ov_failures = 0
     reg_on = cfg.use_registries and bool(cfg.companies_house_key)
     assoc_on = cfg.use_associations
@@ -229,6 +279,26 @@ def phase_find_leads(cfg, portal: Portal, queue: LeadQueue, state: dict, slack: 
                     or not dom or dom in seen_domains or dom in dnc_domains:
                 res["skipped"] += 1
                 continue
+            # 2026-10-19 QUALITY RESET (plan item 3): junk platform domains are
+            # blocked at DISCOVERY — they never enter the queue at all.
+            if any(dom == j or dom.endswith("." + j) for j in JUNK_DOMAINS):
+                log(f"Discovery skip {dom}: junk platform domain, not a business website")
+                seen_domains.add(dom)
+                res["skipped"] += 1
+                continue
+            # 2026-10-19 QUALITY RESET (plan item 2): the $1,500 affordability
+            # test — solo shops, hobby sites and mega-corporations are skipped.
+            _solo = word_match((el.get("business_name") or "") + " " + niche, SOLO_SHOP_WORDS)
+            if _solo:
+                log(f"Discovery skip {dom}: looks like a solo shop ({_solo}) — below the $1,500 bar")
+                seen_domains.add(dom)
+                res["skipped"] += 1
+                continue
+            if _is_mega_corp(el.get("business_name") or ""):
+                log(f"Discovery skip {dom}: mega-corporation — will not buy from a freelancer")
+                seen_domains.add(dom)
+                res["skipped"] += 1
+                continue
             seen_domains.add(dom)
             el["_cc"] = ecc
             candidates.append(el)
@@ -256,8 +326,26 @@ def phase_find_leads(cfg, portal: Portal, queue: LeadQueue, state: dict, slack: 
                 if email and email in dnc_emails:
                     res["skipped"] += 1
                     continue
+                # 2026-10-19 QUALITY RESET (plan item 1): decision-maker emails
+                # only. A lead whose only address is a generic role inbox is
+                # skipped entirely — generic inboxes never reply.
+                if email and is_generic_inbox(email):
+                    log(f"Discovery skip {dom}: only a generic inbox ({email}) — no decision-maker address")
+                    res["skipped"] += 1
+                    continue
+                # 2026-10-19 QUALITY RESET (plan item 4): the address's domain
+                # must be able to receive mail. Unknown (no MX data) never blocks.
+                if email:
+                    _edom = email.rpartition("@")[2]
+                    if _edom not in _mx_cache:
+                        _mx_cache[_edom] = domain_has_mx(_edom)
+                    if _mx_cache[_edom] is False:
+                        log(f"Discovery skip {dom}: {_edom} has no MX records — cannot receive email")
+                        res["skipped"] += 1
+                        continue
                 lead = {
                     "business_name": el["business_name"], "website": el["website"], "email": email,
+                    "cohort": LEAD_COHORT,
                     "phone": normalize_phone(el.get("phone", ""), ecc) or info["phone"],
                     "country": ecc, "region": el.get("region", city), "address": el.get("address", ""), "niche": niche,
                     "facebook_url": el.get("facebook_url") or info["facebook_url"],
@@ -439,9 +527,10 @@ def phase_ads_check(cfg, portal: Portal, queue: LeadQueue, dl: Deadline) -> dict
 DAILY_SEND_CAP = 250          # max outreach emails per day across all runs (user 2026-10-08: min 250 quality sends)
 PER_RUN_SEND_MAX = 60       # per-run ceiling (2026-10-14: raised for backlog mode)
 SEND_GAP_SECS = 5           # be gentle with Gmail SMTP
-MIN_AUDIT_SCORE = 0         # 2026-10-14 BACKLOG MODE (user decision): contact ALL
-                            # uncontacted leads regardless of score. Restore to 70
-                            # once the backlog is drained.
+MIN_AUDIT_SCORE = 70        # 2026-10-19 QUALITY RESET (user decision): the backlog is
+                            # drained, so the 70 gate is back ON — on lead_score (the
+                            # OPPORTUNITY score: real business + reachable + fixable
+                            # problems), never the site-health score.
 # Domains that are never a real business website (video/social/link hosts).
 # 2026-10-08: the agent emailed Pet Wow (youtu.be) and ARCCADD (anchor.fm).
 JUNK_DOMAINS = ("youtu.be", "youtube.com", "anchor.fm", "facebook.com",
@@ -490,6 +579,12 @@ def phase_send(cfg, portal: Portal, queue: LeadQueue, state: dict, dl: Deadline,
         email = clean_email(lead.get("email", ""))
         if email.lower().endswith(".edu"):
             res["skipped"] += 1        # .edu addresses are not ICP — never emailed
+            continue
+        # 2026-10-19 QUALITY RESET (plan item 1): never email a generic role
+        # inbox, even if one slipped into the queue before the discovery filter.
+        if email and is_generic_inbox(email):
+            log(f"Lead {dom}: not emailed (generic inbox {email} — decision-maker addresses only)")
+            res["skipped"] += 1
             continue
         # ---- HARD RULE: completed successful audit required ----
         if lead.get("audit_score") is None or not (lead.get("audit_summary") or "").strip():
@@ -553,11 +648,21 @@ def phase_send(cfg, portal: Portal, queue: LeadQueue, state: dict, dl: Deadline,
             except Exception as e:  # noqa: BLE001
                 log(f"Lead {dom} ({_send_to}): send failed ({safe_exc(e, 120)})")
                 res["failed"] += 1
+                # 2026-10-19 QUALITY RESET (plan item 6): a hard 5xx bounce
+                # suppresses the email channel in the LOCAL queue right away —
+                # portal marks never reach the agent, so the queue is where
+                # suppression actually works.
+                _bounced = _is_hard_bounce(e)
+                if _bounced:
+                    queue.suppress_email_channel(dom, f"SMTP hard bounce to {_send_to}: {safe_exc(e, 100)}")
+                    queue.save()
+                    log(f"Lead {dom}: email channel suppressed (hard bounce)")
                 # Best-effort portal log (auto-queued by Path B on failure) - only
                 # once the sync job has given this lead a portal id.
                 if lead.get("portal_id"):
                     try:
-                        portal.outreach_log(lead_id=lead["portal_id"], channel="email", result="failed",
+                        portal.outreach_log(lead_id=lead["portal_id"], channel="email",
+                                            result="bounced" if _bounced else "failed",
                                             sent_by="agent", subject=subject,
                                             summary=f"SMTP send failed to {_send_to}: {safe_exc(e, 120)}")
                     except PortalError:
@@ -638,12 +743,18 @@ def phase_send_followups(cfg, portal: Portal, queue: LeadQueue, state: dict, dl:
             continue
         seen_emails.add(email)
         fup_num = int(lead.get("followup_count") or 0) + 1
-        subject = f"Re: {lead.get('email_subject', 'Quick follow-up')}"
+        # 2026-10-19 QUALITY RESET (plan item 7): no fake "Re:" subjects — this
+        # is a follow-up, not a reply. Scores are stripped too, just in case.
+        subject = mailer.clean_subject(f"Quick follow-up: {dom}")
         try:
             mailer.send_email(email, subject, fup_body, password)
         except Exception as e:  # noqa: BLE001
             log(f"Lead {dom}: follow-up send failed ({safe_exc(e, 120)})")
             res["failed"] += 1
+            if _is_hard_bounce(e):
+                queue.suppress_email_channel(dom, f"SMTP hard bounce on follow-up to {email}: {safe_exc(e, 100)}")
+                queue.save()
+                log(f"Lead {dom}: email channel suppressed (hard bounce on follow-up)")
             continue
         if lead.get("portal_id"):
             try:
@@ -730,6 +841,18 @@ def _phase_brief_inner(cfg, portal: Portal, slack: Slack, target_today: int, gem
              f"- Contacted today: *{st['contacted_today']}* | Replies: *{st['replied']}* | Follow-ups due: *{st['followups_due']}*",
              f"- Blog drafts waiting for your review: *{drafts}*",
              f"*Suggested plan for today:* email {plan['email']}, WhatsApp {plan['whatsapp']}, LinkedIn {plan['linkedin']}, Messenger {plan['messenger']}"]
+    # 2026-10-19 QUALITY RESET (plan item 8): per-cohort funnel from the LOCAL
+    # queue, so new-rule leads are measured separately from the backlog batch.
+    # Reply rates come from the portal (it tracks replies); the cohort tag on
+    # each lead lets the two cohorts be compared there too.
+    try:
+        _q = LeadQueue()
+        _q.load()
+        for _cohort, _s in sorted(_q.cohort_stats().items()):
+            lines.append(f"- Cohort `{_cohort}`: {_s['found']} found | {_s['audited']} audited | "
+                         f"{_s['emailed']} emailed | {_s['email_suppressed']} email-suppressed")
+    except Exception as e:  # noqa: BLE001 - the brief must never break the run
+        log(f"Cohort stats skipped ({safe_exc(e, 80)})")
     try:
         social_waiting = len(portal.content_list(kind="social", status="draft", limit=50))
         if social_waiting:

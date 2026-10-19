@@ -32,6 +32,7 @@ from .web import (Fetcher, clean_email, enrich_from_website, normalize_phone,
                    domain_has_mx, is_generic_inbox)
 from .wordpress import WordPress, publish_approved
 from .writer import Gemini, write_messages
+from .ai_validate import apply_ai_gate, gate_counts_today, quarantine_count
 
 RESEARCH_DAYS = 60          # don't repeat the same city+niche search within this many days
 PER_SEARCH_MAX = 40         # max new leads taken from one city+niche search
@@ -179,11 +180,13 @@ def _is_hard_bounce(exc: Exception) -> bool:
 
 # ------------------------------------------------------------------ phases
 def phase_find_leads(cfg, portal: Portal, queue: LeadQueue, state: dict, slack: Slack, fetcher: Fetcher,
-                   stats: dict, dl: Deadline, dnc: list, overture=None) -> dict:
+                   stats: dict, dl: Deadline, dnc: list, overture=None, gemini: Gemini | None = None) -> dict:
     """Lead finding writes to the LOCAL lead queue (state/leads_queue.json) - never to the
     portal directly. The sync job mirrors new leads to the Sheet and the portal."""
     res = {"created": 0, "searches": 0, "skipped": 0, "by_country": {}, "errors": 0, "overture": 0, "osm": 0,
-           "registry": 0, "association": 0}
+           "registry": 0, "association": 0,
+           # 2026-10-19 AI validation gate outcomes.
+           "ai_validated": 0, "ai_quarantined": 0, "ai_unvalidated": 0}
     try:
         ctl = portal.state_list("ctl:")
     except PortalError:
@@ -361,6 +364,14 @@ def phase_find_leads(cfg, portal: Portal, queue: LeadQueue, state: dict, slack: 
                 lead["score"] = initial_score(lead, is_pri, restricted)
                 if restricted:
                     lead["notes"] = "Restricted ad category (needs Google/Meta approval) - low priority."
+                # 2026-10-19 AI validation gate (user-approved): after every cheap
+                # filter, Gemini judges whether the site is a real operating
+                # business. Junk sites are quarantined (never silently deleted);
+                # uncertain/throttled AI fails OPEN so no lead is lost.
+                _dom = domain_of(el["website"])
+                if not apply_ai_gate(gemini, info.get("html", ""), el["website"], _dom, lead, res):
+                    res["skipped"] += 1
+                    continue
                 # Durable local queue (dedup by domain) - the sync job uploads to the portal later.
                 if queue.add_lead(lead):
                     created_here += 1
@@ -380,6 +391,14 @@ def phase_find_leads(cfg, portal: Portal, queue: LeadQueue, state: dict, slack: 
         try:
             portal.log("lead_found", f"Found {res['created']} new leads (" + ", ".join(f"{COUNTRY_NAMES.get(c, c)}: {n}" for c, n in res["by_country"].items()) + ")")
         except PortalError:
+            pass
+    # 2026-10-19 AI validation gate: per-key usage answers "do we need more keys?"
+    if gemini is not None:
+        try:
+            usage = ", ".join(f"key#{n}: {c} calls ({s})" for n, c, s in gemini.key_usage())
+            log(f"AI validation this run: {res['ai_validated']} validated, {res['ai_quarantined']} quarantined, "
+                f"{res['ai_unvalidated']} passed unvalidated | Gemini keys: {usage}")
+        except Exception:  # noqa: BLE001 - usage logging must never break the run
             pass
     return res
 
@@ -853,6 +872,14 @@ def _phase_brief_inner(cfg, portal: Portal, slack: Slack, target_today: int, gem
                          f"{_s['emailed']} emailed | {_s['email_suppressed']} email-suppressed")
     except Exception as e:  # noqa: BLE001 - the brief must never break the run
         log(f"Cohort stats skipped ({safe_exc(e, 80)})")
+    # 2026-10-19 AI validation gate: one line on mature-vs-junk lead filtering.
+    try:
+        _g = gate_counts_today()
+        lines.append(f"- AI validation gate today: *{_g['validated']}* validated as real businesses | "
+                     f"*{_g['quarantined']}* junk sites quarantined | *{_g['unvalidated']}* passed unvalidated "
+                     f"(quarantine file total: {quarantine_count()})")
+    except Exception as e:  # noqa: BLE001 - the brief must never break the run
+        log(f"AI gate stats skipped ({safe_exc(e, 80)})")
     try:
         social_waiting = len(portal.content_list(kind="social", status="draft", limit=50))
         if social_waiting:
@@ -956,11 +983,12 @@ def run_cycle(cfg, portal: Portal, slack: Slack, audit: AuditClient | None, gemi
     if r0 and (r0["flushed"] or r0["failed"]):
         summary["queue_flush"] = r0
 
-    r1 = guarded("Lead finder", lambda: phase_find_leads(cfg, portal, queue, state, slack, fetcher, queue_stats(), overall.slice(0.25), dnc, overture))
+    r1 = guarded("Lead finder", lambda: phase_find_leads(cfg, portal, queue, state, slack, fetcher, queue_stats(), overall.slice(0.25), dnc, overture, gemini))
     if r1:
         summary["leads"] = r1
         if r1["created"]:
-            slack.leads(f":sparkles: *{r1['created']} new leads* found: " + ", ".join(f"{COUNTRY_NAMES.get(c, c)} {n}" for c, n in r1["by_country"].items()))
+            slack.leads(f":sparkles: *{r1['created']} new leads* found: " + ", ".join(f"{COUNTRY_NAMES.get(c, c)} {n}" for c, n in r1["by_country"].items()) +
+                        f" | AI gate: {r1.get('ai_validated', 0)} validated, {r1.get('ai_quarantined', 0)} quarantined, {r1.get('ai_unvalidated', 0)} unvalidated")
     r2 = guarded("Audits", lambda: phase_audit(cfg, portal, queue, audit, queue_stats(), overall.slice(0.65), fetcher))
     if r2: summary["audits"] = r2
     r2a = guarded("Ads check", lambda: phase_ads_check(cfg, portal, queue, overall))

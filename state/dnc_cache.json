@@ -1,5 +1,5 @@
 {
- "updated_at": "2026-10-21T00:39:53+00:00",
+ "updated_at": "2026-10-21T07:44:05+00:00",
  "items": [
   {
    "kind": "domain",
@@ -27,11 +27,27 @@
   },
   {
    "kind": "email",
+   "value": "confirm.appt@visioncareconsultants.com"
+  },
+  {
+   "kind": "email",
    "value": "contact@sunstoneyoga.com"
   },
   {
    "kind": "email",
+   "value": "d.wilson@sierraairconditioning.com"
+  },
+  {
+   "kind": "email",
    "value": "drmiskus@optimalchiropractic.ca"
+  },
+  {
+   "kind": "email",
+   "value": "drnick@allenparkchiropractic.com"
+  },
+  {
+   "kind": "email",
+   "value": "drpietro@tinnirellochiro.com"
   },
   {
    "kind": "email",
@@ -59,6 +75,10 @@
   },
   {
    "kind": "email",
+   "value": "indianabones@ameritech.net"
+  },
+  {
+   "kind": "email",
    "value": "info@123exteriors.com"
   },
   {
@@ -72,6 +92,10 @@
   {
    "kind": "email",
    "value": "info@astrawatt.com"
+  },
+  {
+   "kind": "email",
+   "value": "info@beefyschicago.com"
   },
   {
    "kind": "email",
@@ -100,6 +124,14 @@
   {
    "kind": "email",
    "value": "info@jparkafterschool.com"
+  },
+  {
+   "kind": "email",
+   "value": "info@kbbremodeling.com"
+  },
+  {
+   "kind": "email",
+   "value": "info@kcsolarenergy.com"
   },
   {
    "kind": "email",
@@ -132,6 +164,14 @@
   {
    "kind": "email",
    "value": "info@ubs-accounting.com.au"
+  },
+  {
+   "kind": "email",
+   "value": "jbecerra@sactreecare.com"
+  },
+  {
+   "kind": "email",
+   "value": "kefu@treeoflifehealthcenter.com"
   },
   {
    "kind": "email",

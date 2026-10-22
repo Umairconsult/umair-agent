@@ -152,7 +152,19 @@
   "ov:US:Nashville:lawyer": "2026-10-22",
   "search:US:Nashville:lawyer": "2026-10-22",
   "ov:AU:Townsville:photographer": "2026-10-22",
-  "search:AU:Townsville:photographer": "2026-10-22"
+  "search:AU:Townsville:photographer": "2026-10-22",
+  "ov:US:Detroit:med spa": "2026-10-23",
+  "search:US:Detroit:med spa": "2026-10-23",
+  "ov:US:Orlando:urgent care": "2026-10-23",
+  "ov:AU:Melbourne:flooring": "2026-10-23",
+  "ov:GB:Birmingham:carpenter": "2026-10-23",
+  "reg:GB:Birmingham:carpenter": "2026-10-23",
+  "ov:GB:Leicester:painter": "2026-10-23",
+  "search:GB:Leicester:painter": "2026-10-23",
+  "reg:GB:Leicester:painter": "2026-10-23",
+  "ov:US:Boston:auto detailing": "2026-10-23",
+  "ov:CA:Quebec City:garage door": "2026-10-23",
+  "ov:US:Portland:tutoring": "2026-10-23"
  },
  "email_sent": {
   "2026-10-07": 37,
@@ -170,6 +182,7 @@
   "2026-10-19": 134,
   "2026-10-20": 215,
   "2026-10-21": 198,
-  "2026-10-22": 181
+  "2026-10-22": 181,
+  "2026-10-23": 44
  }
 }

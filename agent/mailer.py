@@ -357,22 +357,38 @@ def build_email(lead):
     return clean_subject(subject), tpl
 
 
-def send_email(to_email, subject, html_body, app_password, gmail_user=None, from_email=None, timeout=30):
-    """Send one HTML email through Gmail SMTP. Returns True on success.
+def send_email(to_email, subject, html_body, app_password, gmail_user=None, from_email=None, timeout=30,
+               smtp_host=None, smtp_port=None, smtp_user=None, smtp_ssl=False):
+    """Send one HTML email. Returns True on success.
 
-    app_password comes from the repo's SETTINGS_ENV (GMAIL_APP_PASSWORD) via
-    the scheduler — never from chat, never logged.
+    Default transport is Gmail SMTP (smtp.gmail.com:587 STARTTLS), exactly as
+    before. When smtp_host is given (2026-10-22 Hostinger DKIM test), send
+    through that server instead: SMTP_SSL when smtp_ssl is true, otherwise
+    STARTTLS. app_password comes from the repo's SETTINGS_ENV via the
+    scheduler — never from chat, never logged.
     """
     gmail_user = gmail_user or GMAIL_USER
     from_email = from_email or FROM_EMAIL
     if not (app_password or "").strip():
-        raise RuntimeError("GMAIL_APP_PASSWORD is not set — cannot send")
+        raise RuntimeError("mail password is not set — cannot send")
     msg = MIMEMultipart("alternative")
     msg["From"] = f"UmairConsult <{from_email}>"
     msg["To"] = to_email
     msg["Reply-To"] = from_email
     msg["Subject"] = subject
     msg.attach(MIMEText(html_body, "html", "utf-8"))
+    if smtp_host:
+        login_user = smtp_user or from_email
+        if smtp_ssl:
+            with smtplib.SMTP_SSL(smtp_host, smtp_port or 465, timeout=timeout) as s:
+                s.login(login_user, app_password.strip())
+                s.sendmail(from_email, [to_email], msg.as_string())
+        else:
+            with smtplib.SMTP(smtp_host, smtp_port or 587, timeout=timeout) as s:
+                s.starttls()
+                s.login(login_user, app_password.strip())
+                s.sendmail(from_email, [to_email], msg.as_string())
+        return True
     with smtplib.SMTP("smtp.gmail.com", 587, timeout=timeout) as s:
         s.starttls()
         s.login(gmail_user, app_password.strip())

@@ -63,6 +63,7 @@ jobs:
       - name: Load your settings (kept secret)
         env:
           SETTINGS_ENV: ${{ secrets.SETTINGS_ENV }}
+          SMTP_SETTINGS_ENV: ${{ secrets.SMTP_SETTINGS_ENV }}
         run: python load_settings.py
 
       - name: Decide what to run
@@ -135,6 +136,7 @@ jobs:
       - name: Load your settings (kept secret)
         env:
           SETTINGS_ENV: ${{ secrets.SETTINGS_ENV }}
+          SMTP_SETTINGS_ENV: ${{ secrets.SMTP_SETTINGS_ENV }}
         run: python load_settings.py
 
       - name: Decide what to run

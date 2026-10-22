@@ -567,6 +567,7 @@ def _mail_send_kwargs(cfg):
     kwargs — behavior is byte-identical to before.
     """
     host = cfg.get("SMTP_HOST", "")
+    log("Mail transport: " + (("HOSTINGER " + host) if host else "GMAIL (default)"))
     if host:
         return cfg.get("SMTP_PASSWORD", ""), {
             "smtp_host": host,

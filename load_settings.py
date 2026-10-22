@@ -7,6 +7,13 @@ import re
 import sys
 
 s = os.environ.get("SETTINGS_ENV", "")
+# 2026-10-22: optional second secret with extra settings (e.g. SMTP_* for the
+# Hostinger DKIM test). Appended when present; absent = behavior unchanged.
+# Exists so new settings can be added WITHOUT editing SETTINGS_ENV itself
+# (GitHub never shows a secret's current value, so editing it blind is unsafe).
+extra = os.environ.get("SMTP_SETTINGS_ENV", "")
+if extra.strip():
+    s = s.rstrip("\n") + "\n" + extra.strip() + "\n"
 if not s.strip():
     print("PROBLEM: the secret SETTINGS_ENV is empty or missing. Add it in Settings > Secrets and variables > Actions.")
     sys.exit(1)

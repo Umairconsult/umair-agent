@@ -1,5 +1,5 @@
 {
- "updated_at": "2026-10-21T23:24:59+00:00",
+ "updated_at": "2026-10-22T11:59:58+00:00",
  "items": [
   {
    "kind": "domain",
@@ -24,6 +24,10 @@
   {
    "kind": "email",
    "value": "avarzhapetyan@farmersagent.com"
+  },
+  {
+   "kind": "email",
+   "value": "bloomington@childrensvillagekids.org"
   },
   {
    "kind": "email",
@@ -212,6 +216,10 @@
   {
    "kind": "email",
    "value": "upwork.com"
+  },
+  {
+   "kind": "email",
+   "value": "victoria@cefa.ca"
   },
   {
    "kind": "email",

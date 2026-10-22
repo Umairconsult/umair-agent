@@ -141,7 +141,12 @@
   "ov:US:Nashville:general contractor": "2026-10-22",
   "ov:US:Raleigh:flooring": "2026-10-22",
   "ov:US:Los Angeles:furniture store": "2026-10-22",
-  "search:US:Los Angeles:furniture store": "2026-10-22"
+  "search:US:Los Angeles:furniture store": "2026-10-22",
+  "ov:US:Nashville:home inspector": "2026-10-22",
+  "ov:US:Phoenix:florist": "2026-10-22",
+  "ov:US:Cleveland:tattoo shop": "2026-10-22",
+  "ov:GB:Bristol:doctor": "2026-10-22",
+  "reg:GB:Bristol:doctor": "2026-10-22"
  },
  "email_sent": {
   "2026-10-07": 37,
@@ -159,6 +164,6 @@
   "2026-10-19": 134,
   "2026-10-20": 215,
   "2026-10-21": 198,
-  "2026-10-22": 80
+  "2026-10-22": 127
  }
 }

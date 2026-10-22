@@ -129,7 +129,19 @@
   "search:US:Tampa:roofing": "2026-10-14",
   "ov:US:Kansas City:solar installer": "2026-10-14",
   "ov:US:Chicago:restaurant": "2026-10-14",
-  "ov:CA:Quebec City:mortgage broker": "2026-10-14"
+  "ov:CA:Quebec City:mortgage broker": "2026-10-14",
+  "ov:US:Detroit:general contractor": "2026-10-22",
+  "ov:GB:Cardiff:painter": "2026-10-22",
+  "search:GB:Cardiff:painter": "2026-10-22",
+  "reg:GB:Cardiff:painter": "2026-10-22",
+  "ov:AU:Geelong:veterinary": "2026-10-22",
+  "search:AU:Geelong:veterinary": "2026-10-22",
+  "ov:US:Oklahoma City:tree service": "2026-10-22",
+  "ov:US:Tampa:plumber": "2026-10-22",
+  "ov:US:Nashville:general contractor": "2026-10-22",
+  "ov:US:Raleigh:flooring": "2026-10-22",
+  "ov:US:Los Angeles:furniture store": "2026-10-22",
+  "search:US:Los Angeles:furniture store": "2026-10-22"
  },
  "email_sent": {
   "2026-10-07": 37,
@@ -147,6 +159,6 @@
   "2026-10-19": 134,
   "2026-10-20": 215,
   "2026-10-21": 198,
-  "2026-10-22": 40
+  "2026-10-22": 80
  }
 }

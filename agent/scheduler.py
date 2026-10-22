@@ -558,6 +558,25 @@ JUNK_DOMAINS = ("youtu.be", "youtube.com", "anchor.fm", "facebook.com",
                 "vimeo.com")
 
 
+def _mail_send_kwargs(cfg):
+    """2026-10-22: optional SMTP transport override from SETTINGS_ENV.
+
+    When SMTP_HOST is set (Hostinger DKIM test), returns (password, kwargs)
+    for mailer.send_email using SMTP_PASSWORD / SMTP_USER / SMTP_PORT /
+    SMTP_SSL. When SMTP_HOST is empty, returns the Gmail password and no
+    kwargs — behavior is byte-identical to before.
+    """
+    host = cfg.get("SMTP_HOST", "")
+    if host:
+        return cfg.get("SMTP_PASSWORD", ""), {
+            "smtp_host": host,
+            "smtp_port": cfg.int("SMTP_PORT", 465),
+            "smtp_user": cfg.get("SMTP_USER", ""),
+            "smtp_ssl": cfg.get("SMTP_SSL", "1").strip() not in ("", "0", "false", "False"),
+        }
+    return cfg.get("GMAIL_APP_PASSWORD", ""), {}
+
+
 def phase_send(cfg, portal: Portal, queue: LeadQueue, state: dict, dl: Deadline, dnc: list) -> dict:
     """Send personalized outreach emails through Gmail SMTP.
 
@@ -575,9 +594,9 @@ def phase_send(cfg, portal: Portal, queue: LeadQueue, state: dict, dl: Deadline,
     Skips gracefully when GMAIL_APP_PASSWORD is not set in SETTINGS_ENV.
     """
     res = {"sent": 0, "failed": 0, "skipped": 0}
-    password = cfg.get("GMAIL_APP_PASSWORD")
+    password, _mail_kw = _mail_send_kwargs(cfg)
     if not password:
-        log("Email sending skipped: GMAIL_APP_PASSWORD not set in SETTINGS_ENV")
+        log("Email sending skipped: mail password not set in SETTINGS_ENV")
         return res
     today = local_now(cfg).strftime("%Y-%m-%d")
     sent_today = emails_sent_today(state, today)
@@ -663,7 +682,7 @@ def phase_send(cfg, portal: Portal, queue: LeadQueue, state: dict, dl: Deadline,
                 res["skipped"] += 1
                 continue
             try:
-                mailer.send_email(_send_to, subject, html_body, password)
+                mailer.send_email(_send_to, subject, html_body, password, **_mail_kw)
             except Exception as e:  # noqa: BLE001
                 log(f"Lead {dom} ({_send_to}): send failed ({safe_exc(e, 120)})")
                 res["failed"] += 1
@@ -726,9 +745,9 @@ def phase_send_followups(cfg, portal: Portal, queue: LeadQueue, state: dict, dl:
     log is best-effort (only once the sync job has assigned a portal id).
     """
     res = {"sent": 0, "failed": 0, "skipped": 0}
-    password = cfg.get("GMAIL_APP_PASSWORD")
+    password, _mail_kw = _mail_send_kwargs(cfg)
     if not password:
-        log("Follow-up sending skipped: GMAIL_APP_PASSWORD not set")
+        log("Follow-up sending skipped: mail password not set")
         return res
     today = local_now(cfg).strftime("%Y-%m-%d")
     sent_today = emails_sent_today(state, today)
@@ -766,7 +785,7 @@ def phase_send_followups(cfg, portal: Portal, queue: LeadQueue, state: dict, dl:
         # is a follow-up, not a reply. Scores are stripped too, just in case.
         subject = mailer.clean_subject(f"Quick follow-up: {dom}")
         try:
-            mailer.send_email(email, subject, fup_body, password)
+            mailer.send_email(email, subject, fup_body, password, **_mail_kw)
         except Exception as e:  # noqa: BLE001
             log(f"Lead {dom}: follow-up send failed ({safe_exc(e, 120)})")
             res["failed"] += 1

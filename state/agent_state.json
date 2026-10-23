@@ -164,7 +164,17 @@
   "reg:GB:Leicester:painter": "2026-10-23",
   "ov:US:Boston:auto detailing": "2026-10-23",
   "ov:CA:Quebec City:garage door": "2026-10-23",
-  "ov:US:Portland:tutoring": "2026-10-23"
+  "ov:US:Portland:tutoring": "2026-10-23",
+  "ov:GB:Glasgow:carpenter": "2026-10-23",
+  "reg:GB:Glasgow:carpenter": "2026-10-23",
+  "ov:US:Minneapolis:urgent care": "2026-10-23",
+  "ov:GB:Birmingham:cleaning": "2026-10-23",
+  "search:GB:Birmingham:cleaning": "2026-10-23",
+  "reg:GB:Birmingham:cleaning": "2026-10-23",
+  "ov:US:Kansas City:plumber": "2026-10-23",
+  "search:US:Kansas City:plumber": "2026-10-23",
+  "ov:GB:Manchester:med spa": "2026-10-23",
+  "reg:GB:Manchester:med spa": "2026-10-23"
  },
  "email_sent": {
   "2026-10-07": 37,
@@ -183,6 +193,6 @@
   "2026-10-20": 215,
   "2026-10-21": 198,
   "2026-10-22": 181,
-  "2026-10-23": 44
+  "2026-10-23": 56
  }
 }

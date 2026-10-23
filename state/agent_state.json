@@ -198,7 +198,20 @@
   "ov:US:Kansas City:locksmith": "2026-10-23",
   "search:US:Kansas City:locksmith": "2026-10-23",
   "ov:CA:Edmonton:plumber": "2026-10-23",
-  "search:CA:Edmonton:plumber": "2026-10-23"
+  "search:CA:Edmonton:plumber": "2026-10-23",
+  "ov:AU:Newcastle AU:electrician": "2026-10-23",
+  "search:AU:Newcastle AU:electrician": "2026-10-23",
+  "search:US:San Francisco:veterinary": "2026-10-23",
+  "ov:CA:Ottawa:driving school": "2026-10-23",
+  "search:CA:Ottawa:driving school": "2026-10-23",
+  "ov:AU:Melbourne:event venue": "2026-10-23",
+  "ov:US:Seattle:hvac": "2026-10-23",
+  "search:US:Seattle:hvac": "2026-10-23",
+  "ov:US:New York:auto detailing": "2026-10-23",
+  "ov:US:Dallas:painter": "2026-10-23",
+  "search:US:Dallas:painter": "2026-10-23",
+  "ov:AU:Hobart:locksmith": "2026-10-23",
+  "search:AU:Hobart:locksmith": "2026-10-23"
  },
  "email_sent": {
   "2026-10-07": 37,

@@ -544,6 +544,15 @@ def phase_ads_check(cfg, portal: Portal, queue: LeadQueue, dl: Deadline) -> dict
 
 
 DAILY_SEND_CAP = 250          # max outreach emails per day across all runs (user 2026-10-08: min 250 quality sends)
+
+def _effective_daily_cap(cfg):
+    """Hostinger's free Starter mailbox caps at 100 sends/day (hit 2026-10-23
+    at 03:17 PKT). When sending via a single SMTP mailbox, stop at
+    MAILBOX_DAILY_LIMIT (default 95) instead of crashing into the limit and
+    logging false send failures. Gmail path keeps DAILY_SEND_CAP."""
+    if cfg.get("SMTP_HOST", ""):
+        return min(DAILY_SEND_CAP, cfg.int("MAILBOX_DAILY_LIMIT", 95))
+    return DAILY_SEND_CAP
 PER_RUN_SEND_MAX = 60       # per-run ceiling (2026-10-14: raised for backlog mode)
 SEND_GAP_SECS = 5           # be gentle with Gmail SMTP
 MIN_AUDIT_SCORE = 70        # 2026-10-19 QUALITY RESET (user decision): the backlog is
@@ -601,9 +610,10 @@ def phase_send(cfg, portal: Portal, queue: LeadQueue, state: dict, dl: Deadline,
         return res
     today = local_now(cfg).strftime("%Y-%m-%d")
     sent_today = emails_sent_today(state, today)
-    remaining = DAILY_SEND_CAP - sent_today
+    cap = _effective_daily_cap(cfg)
+    remaining = cap - sent_today
     if remaining <= 0:
-        log(f"Daily email cap reached ({DAILY_SEND_CAP}/day) — no more sends today")
+        log(f"Daily email cap reached ({cap}/day) — no more sends today")
         return res
     budget = min(remaining, PER_RUN_SEND_MAX)
 
@@ -752,7 +762,7 @@ def phase_send_followups(cfg, portal: Portal, queue: LeadQueue, state: dict, dl:
         return res
     today = local_now(cfg).strftime("%Y-%m-%d")
     sent_today = emails_sent_today(state, today)
-    remaining = DAILY_SEND_CAP - sent_today
+    remaining = _effective_daily_cap(cfg) - sent_today
     if remaining <= 0:
         return res
     budget = min(remaining, PER_RUN_SEND_MAX)

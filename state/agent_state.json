@@ -254,7 +254,20 @@
   "reg:GB:Birmingham:architect": "2026-10-24",
   "ov:GB:Liverpool:daycare": "2026-10-24",
   "search:GB:Liverpool:daycare": "2026-10-24",
-  "reg:GB:Liverpool:daycare": "2026-10-24"
+  "reg:GB:Liverpool:daycare": "2026-10-24",
+  "ov:US:San Jose:tutoring": "2026-10-24",
+  "ov:US:Jacksonville:chiropractor": "2026-10-24",
+  "search:US:Jacksonville:chiropractor": "2026-10-24",
+  "ov:CA:Ottawa:florist": "2026-10-24",
+  "search:CA:Ottawa:florist": "2026-10-24",
+  "ov:AU:Perth:pool service": "2026-10-24",
+  "ov:CA:Vancouver:yoga studio": "2026-10-24",
+  "ov:GB:Oxford:car repair": "2026-10-24",
+  "search:GB:Oxford:car repair": "2026-10-24",
+  "reg:GB:Oxford:car repair": "2026-10-24",
+  "ov:US:Pittsburgh:roofing": "2026-10-24",
+  "search:US:Pittsburgh:roofing": "2026-10-24",
+  "ov:US:New York:plumber": "2026-10-24"
  },
  "email_sent": {
   "2026-10-07": 37,
@@ -274,6 +287,6 @@
   "2026-10-21": 198,
   "2026-10-22": 181,
   "2026-10-23": 95,
-  "2026-10-24": 76
+  "2026-10-24": 95
  }
 }

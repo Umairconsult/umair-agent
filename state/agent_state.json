@@ -279,7 +279,31 @@
   "ov:CA:Victoria:pest control": "2026-10-24",
   "ov:CA:Montreal:gym": "2026-10-24",
   "ov:US:New Orleans:car repair": "2026-10-24",
-  "search:US:New Orleans:car repair": "2026-10-24"
+  "search:US:New Orleans:car repair": "2026-10-24",
+  "ov:US:Houston:cleaning": "2026-10-25",
+  "search:US:Houston:cleaning": "2026-10-25",
+  "ov:GB:Newcastle:yoga studio": "2026-10-25",
+  "reg:GB:Newcastle:yoga studio": "2026-10-25",
+  "ov:US:Atlanta:locksmith": "2026-10-25",
+  "search:US:Atlanta:locksmith": "2026-10-25",
+  "ov:US:Phoenix:tree service": "2026-10-25",
+  "ov:AU:Sydney:moving company": "2026-10-25",
+  "ov:AU:Sunshine Coast:doctor": "2026-10-25",
+  "search:AU:Sunshine Coast:doctor": "2026-10-25",
+  "ov:AU:Geelong:architect": "2026-10-25",
+  "search:AU:Geelong:architect": "2026-10-25",
+  "ov:US:New York:dermatologist": "2026-10-25",
+  "ov:GB:Oxford:veterinary": "2026-10-25",
+  "search:GB:Oxford:veterinary": "2026-10-25",
+  "reg:GB:Oxford:veterinary": "2026-10-25",
+  "ov:CA:London Ontario:hvac": "2026-10-25",
+  "search:CA:London Ontario:hvac": "2026-10-25",
+  "ov:GB:Belfast:car repair": "2026-10-25",
+  "search:GB:Belfast:car repair": "2026-10-25",
+  "reg:GB:Belfast:car repair": "2026-10-25",
+  "ov:GB:London:florist": "2026-10-25",
+  "search:GB:London:florist": "2026-10-25",
+  "reg:GB:London:florist": "2026-10-25"
  },
  "email_sent": {
   "2026-10-07": 37,
@@ -300,6 +324,6 @@
   "2026-10-22": 181,
   "2026-10-23": 95,
   "2026-10-24": 95,
-  "2026-10-25": 32
+  "2026-10-25": 58
  }
 }

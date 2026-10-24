@@ -267,7 +267,19 @@
   "reg:GB:Oxford:car repair": "2026-10-24",
   "ov:US:Pittsburgh:roofing": "2026-10-24",
   "search:US:Pittsburgh:roofing": "2026-10-24",
-  "ov:US:New York:plumber": "2026-10-24"
+  "ov:US:New York:plumber": "2026-10-24",
+  "ov:US:Dallas:hvac": "2026-10-24",
+  "search:US:Dallas:hvac": "2026-10-24",
+  "ov:US:Phoenix:chiropractor": "2026-10-24",
+  "search:US:Phoenix:chiropractor": "2026-10-24",
+  "ov:US:Las Vegas:electrician": "2026-10-24",
+  "search:US:Las Vegas:electrician": "2026-10-24",
+  "ov:GB:Glasgow:wedding planner": "2026-10-24",
+  "reg:GB:Glasgow:wedding planner": "2026-10-24",
+  "ov:CA:Victoria:pest control": "2026-10-24",
+  "ov:CA:Montreal:gym": "2026-10-24",
+  "ov:US:New Orleans:car repair": "2026-10-24",
+  "search:US:New Orleans:car repair": "2026-10-24"
  },
  "email_sent": {
   "2026-10-07": 37,

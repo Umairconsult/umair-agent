@@ -335,7 +335,10 @@
   "search:US:Philadelphia:real estate": "2026-10-25",
   "ov:CA:Hamilton:hotel": "2026-10-25",
   "search:CA:Hamilton:hotel": "2026-10-25",
-  "ov:US:Atlanta:restaurant": "2026-10-25"
+  "ov:US:Atlanta:restaurant": "2026-10-25",
+  "ov:CA:Calgary:locksmith": "2026-10-26",
+  "search:CA:Calgary:locksmith": "2026-10-26",
+  "ov:CA:Victoria:real estate": "2026-10-26"
  },
  "email_sent": {
   "2026-10-07": 37,
@@ -356,6 +359,7 @@
   "2026-10-22": 181,
   "2026-10-23": 95,
   "2026-10-24": 95,
-  "2026-10-25": 95
+  "2026-10-25": 95,
+  "2026-10-26": 25
  }
 }

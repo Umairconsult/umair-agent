@@ -360,7 +360,12 @@
   "ov:US:Charlotte:veterinary": "2026-10-26",
   "search:US:Charlotte:veterinary": "2026-10-26",
   "ov:CA:Calgary:car repair": "2026-10-26",
-  "search:CA:Calgary:car repair": "2026-10-26"
+  "search:CA:Calgary:car repair": "2026-10-26",
+  "ov:GB:Cardiff:chiropractor": "2026-10-26",
+  "search:GB:Cardiff:chiropractor": "2026-10-26",
+  "reg:GB:Cardiff:chiropractor": "2026-10-26",
+  "ov:US:Jacksonville:physiotherapist": "2026-10-26",
+  "ov:US:Raleigh:optician": "2026-10-26"
  },
  "email_sent": {
   "2026-10-07": 37,
@@ -382,6 +387,6 @@
   "2026-10-23": 95,
   "2026-10-24": 95,
   "2026-10-25": 95,
-  "2026-10-26": 64
+  "2026-10-26": 89
  }
 }

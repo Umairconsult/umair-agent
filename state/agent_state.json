@@ -354,7 +354,13 @@
   "search:US:Fort Worth:car dealer": "2026-10-26",
   "ov:CA:Halifax:general contractor": "2026-10-26",
   "ov:GB:Leeds:flooring": "2026-10-26",
-  "reg:GB:Leeds:flooring": "2026-10-26"
+  "reg:GB:Leeds:flooring": "2026-10-26",
+  "ov:AU:Townsville:optician": "2026-10-26",
+  "ov:US:Fort Worth:veterinary": "2026-10-26",
+  "ov:US:Charlotte:veterinary": "2026-10-26",
+  "search:US:Charlotte:veterinary": "2026-10-26",
+  "ov:CA:Calgary:car repair": "2026-10-26",
+  "search:CA:Calgary:car repair": "2026-10-26"
  },
  "email_sent": {
   "2026-10-07": 37,
@@ -376,6 +382,6 @@
   "2026-10-23": 95,
   "2026-10-24": 95,
   "2026-10-25": 95,
-  "2026-10-26": 47
+  "2026-10-26": 64
  }
 }

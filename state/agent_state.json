@@ -370,7 +370,21 @@
   "search:US:Las Vegas:gym": "2026-10-27",
   "ov:US:Detroit:hvac": "2026-10-27",
   "ov:AU:Adelaide:plumber": "2026-10-27",
-  "search:AU:Adelaide:plumber": "2026-10-27"
+  "search:AU:Adelaide:plumber": "2026-10-27",
+  "ov:GB:Newcastle:pool service": "2026-10-27",
+  "reg:GB:Newcastle:pool service": "2026-10-27",
+  "ov:GB:Bristol:photographer": "2026-10-27",
+  "search:GB:Bristol:photographer": "2026-10-27",
+  "reg:GB:Bristol:photographer": "2026-10-27",
+  "ov:AU:Gold Coast:real estate": "2026-10-27",
+  "search:AU:Gold Coast:real estate": "2026-10-27",
+  "ov:AU:Geelong:physiotherapist": "2026-10-27",
+  "search:AU:Geelong:physiotherapist": "2026-10-27",
+  "ov:AU:Canberra:architect": "2026-10-27",
+  "search:AU:Canberra:architect": "2026-10-27",
+  "ov:US:Cleveland:tree service": "2026-10-27",
+  "ov:GB:Sheffield:daycare": "2026-10-27",
+  "reg:GB:Sheffield:daycare": "2026-10-27"
  },
  "email_sent": {
   "2026-10-07": 37,
@@ -393,6 +407,6 @@
   "2026-10-24": 95,
   "2026-10-25": 95,
   "2026-10-26": 89,
-  "2026-10-27": 25
+  "2026-10-27": 38
  }
 }

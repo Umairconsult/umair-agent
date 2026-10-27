@@ -384,7 +384,12 @@
   "search:AU:Canberra:architect": "2026-10-27",
   "ov:US:Cleveland:tree service": "2026-10-27",
   "ov:GB:Sheffield:daycare": "2026-10-27",
-  "reg:GB:Sheffield:daycare": "2026-10-27"
+  "reg:GB:Sheffield:daycare": "2026-10-27",
+  "ov:US:Kansas City:general contractor": "2026-10-27",
+  "ov:US:Minneapolis:electrician": "2026-10-27",
+  "ov:US:Fort Worth:roofing": "2026-10-27",
+  "ov:AU:Canberra:chiropractor": "2026-10-27",
+  "search:AU:Canberra:chiropractor": "2026-10-27"
  },
  "email_sent": {
   "2026-10-07": 37,
@@ -407,6 +412,6 @@
   "2026-10-24": 95,
   "2026-10-25": 95,
   "2026-10-26": 89,
-  "2026-10-27": 38
+  "2026-10-27": 41
  }
 }

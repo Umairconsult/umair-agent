@@ -389,7 +389,15 @@
   "ov:US:Minneapolis:electrician": "2026-10-27",
   "ov:US:Fort Worth:roofing": "2026-10-27",
   "ov:AU:Canberra:chiropractor": "2026-10-27",
-  "search:AU:Canberra:chiropractor": "2026-10-27"
+  "search:AU:Canberra:chiropractor": "2026-10-27",
+  "ov:GB:Cardiff:florist": "2026-10-28",
+  "reg:GB:Cardiff:florist": "2026-10-28",
+  "ov:US:Phoenix:med spa": "2026-10-28",
+  "ov:US:New York:home inspector": "2026-10-28",
+  "ov:US:Dallas:architect": "2026-10-28",
+  "search:US:Dallas:architect": "2026-10-28",
+  "ov:US:Indianapolis:optician": "2026-10-28",
+  "search:US:Indianapolis:optician": "2026-10-28"
  },
  "email_sent": {
   "2026-10-07": 37,

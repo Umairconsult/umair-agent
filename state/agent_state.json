@@ -412,7 +412,21 @@
   "ov:US:Houston:mortgage broker": "2026-10-28",
   "ov:AU:Melbourne:daycare": "2026-10-28",
   "search:AU:Melbourne:daycare": "2026-10-28",
-  "ov:US:Austin:pest control": "2026-10-28"
+  "ov:US:Austin:pest control": "2026-10-28",
+  "ov:US:Tampa:tattoo shop": "2026-10-28",
+  "ov:CA:Quebec City:doctor": "2026-10-28",
+  "search:CA:Quebec City:doctor": "2026-10-28",
+  "ov:US:New Orleans:med spa": "2026-10-28",
+  "ov:AU:Gold Coast:veterinary": "2026-10-28",
+  "search:AU:Gold Coast:veterinary": "2026-10-28",
+  "ov:US:Jacksonville:electrician": "2026-10-28",
+  "search:US:Jacksonville:electrician": "2026-10-28",
+  "ov:GB:Liverpool:mortgage broker": "2026-10-28",
+  "reg:GB:Liverpool:mortgage broker": "2026-10-28",
+  "ov:US:Washington DC:wedding planner": "2026-10-28",
+  "ov:GB:Oxford:pest control": "2026-10-28",
+  "reg:GB:Oxford:pest control": "2026-10-28",
+  "ov:US:Houston:accountant": "2026-10-28"
  },
  "email_sent": {
   "2026-10-07": 37,

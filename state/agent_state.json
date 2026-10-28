@@ -428,7 +428,19 @@
   "reg:GB:Oxford:pest control": "2026-10-28",
   "ov:US:Houston:accountant": "2026-10-28",
   "ov:US:New York:plastic surgeon": "2026-10-28",
-  "ov:US:San Antonio:physiotherapist": "2026-10-28"
+  "ov:US:San Antonio:physiotherapist": "2026-10-28",
+  "ov:CA:Halifax:insurance": "2026-10-29",
+  "search:CA:Halifax:insurance": "2026-10-29",
+  "ov:GB:Glasgow:cleaning": "2026-10-29",
+  "reg:GB:Glasgow:cleaning": "2026-10-29",
+  "ov:GB:Cambridge:physiotherapist": "2026-10-29",
+  "search:GB:Cambridge:physiotherapist": "2026-10-29",
+  "reg:GB:Cambridge:physiotherapist": "2026-10-29",
+  "ov:US:Jacksonville:general contractor": "2026-10-29",
+  "ov:GB:Aberdeen:chiropractor": "2026-10-29",
+  "search:GB:Aberdeen:chiropractor": "2026-10-29",
+  "reg:GB:Aberdeen:chiropractor": "2026-10-29",
+  "ov:CA:Montreal:cleaning": "2026-10-29"
  },
  "email_sent": {
   "2026-10-07": 37,

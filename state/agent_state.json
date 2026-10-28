@@ -397,7 +397,22 @@
   "ov:US:Dallas:architect": "2026-10-28",
   "search:US:Dallas:architect": "2026-10-28",
   "ov:US:Indianapolis:optician": "2026-10-28",
-  "search:US:Indianapolis:optician": "2026-10-28"
+  "search:US:Indianapolis:optician": "2026-10-28",
+  "ov:GB:Brighton:wedding planner": "2026-10-28",
+  "reg:GB:Brighton:wedding planner": "2026-10-28",
+  "ov:US:Las Vegas:dermatologist": "2026-10-28",
+  "ov:AU:Melbourne:accountant": "2026-10-28",
+  "search:AU:Melbourne:accountant": "2026-10-28",
+  "ov:US:Austin:painter": "2026-10-28",
+  "search:US:Austin:painter": "2026-10-28",
+  "ov:US:San Jose:optician": "2026-10-28",
+  "search:US:San Jose:optician": "2026-10-28",
+  "ov:US:Denver:painter": "2026-10-28",
+  "ov:US:Kansas City:event venue": "2026-10-28",
+  "ov:US:Houston:mortgage broker": "2026-10-28",
+  "ov:AU:Melbourne:daycare": "2026-10-28",
+  "search:AU:Melbourne:daycare": "2026-10-28",
+  "ov:US:Austin:pest control": "2026-10-28"
  },
  "email_sent": {
   "2026-10-07": 37,

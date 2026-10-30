@@ -511,7 +511,12 @@
   "reg:GB:Edinburgh:daycare": "2026-10-30",
   "ov:US:Columbus:pest control": "2026-10-30",
   "ov:CA:Vancouver:hairdresser": "2026-10-30",
-  "search:CA:Vancouver:hairdresser": "2026-10-30"
+  "search:CA:Vancouver:hairdresser": "2026-10-30",
+  "ov:US:Jacksonville:gym": "2026-10-31",
+  "ov:US:Kansas City:pool service": "2026-10-31",
+  "ov:US:Philadelphia:event venue": "2026-10-31",
+  "ov:GB:London:towing": "2026-10-31",
+  "reg:GB:London:towing": "2026-10-31"
  },
  "email_sent": {
   "2026-10-07": 37,

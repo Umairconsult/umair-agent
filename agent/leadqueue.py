@@ -116,9 +116,12 @@ class LeadQueue:
             if not (l.get("email") or "").strip():
                 continue
             out.append(l)
-            if len(out) >= limit:
-                break
-        return out
+        # 2026-11-01 (Muse, user 'do what's best and free'): BEST-FIRST order.
+        # The daily cap (95) is precious, so spend it on the highest-opportunity
+        # leads first instead of plain queue order. Stable sort: equal scores
+        # keep their queue order. Gates are unchanged (applied in phase_send).
+        out.sort(key=lambda l: int(l.get("lead_score") or 0), reverse=True)
+        return out[:limit]
 
     def candidates_for_message_write(self, limit: int) -> list[dict]:
         return [l for l in self.data["leads"]

@@ -964,6 +964,65 @@ def flush_portal_queue(portal: Portal) -> dict:
     return res
 
 
+
+def merge_intake(queue) -> int:
+    """2026-11-01 (Muse, user 'maximum capability' push, gate decision delegated
+    to Muse): merge Muse-found portal leads into the local queue.
+
+    The agent only ever sends from this queue, and Muse's portal leads were
+    never in it — so they could never be emailed. Muse writes qualifying
+    portal leads (score >= 70, uncontacted, emailable, ICP-checked) to
+    state/intake_leads.json; this merges any new domains as STATUS_NEW leads.
+    From here they get the agent's OWN audit, its OWN lead_score and ALL of
+    its hard send rules (decision-maker inboxes only, DNC, junk, restricted
+    niches) — one rule set for every lead, no exceptions. Defensive: any
+    failure returns 0 and never breaks the run.
+    """
+    import json as _json
+    import os as _os
+    path = _os.path.join(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))),
+                         "state", "intake_leads.json")
+    try:
+        with open(path, encoding="utf-8") as f:
+            items = _json.load(f)
+    except (OSError, ValueError):
+        return 0
+    if not isinstance(items, list) or not items:
+        return 0
+    added = 0
+    for it in items:
+        if not isinstance(it, dict):
+            continue
+        website = it.get("website") or it.get("domain") or ""
+        if not website:
+            continue
+        lead = {k: it.get(k, "") for k in (
+            "business_name", "contact_name", "email", "phone", "country",
+            "region", "address", "niche", "facebook_url", "instagram_url",
+            "linkedin_url", "contact_page_url")}
+        lead["website"] = website
+        lead["source"] = "muse-intake"
+        lead["score"] = 40
+        lead["cohort"] = "quality-v2"
+        lead["notes"] = (f"Via Muse intake 2026-11-01 (portal id {it.get('portal_id')}, "
+                         f"portal score {it.get('portal_score')}). Agent audit + gates apply.")
+        try:
+            if queue.add_lead(lead):
+                added += 1
+                if it.get("portal_id"):
+                    queue.update(domain_of(website), portal_id=it.get("portal_id"))
+        except Exception:  # noqa: BLE001 - one bad intake row must not stop the merge
+            continue
+    try:
+        with open(path, "w", encoding="utf-8") as f:
+            _json.dump([], f)
+    except OSError:
+        pass
+    if added:
+        queue.save()
+    return added
+
+
 def run_cycle(cfg, portal: Portal, slack: Slack, audit: AuditClient | None, gemini: Gemini | None,
               fetcher: Fetcher, minutes: float, overture=None, wp: WordPress | None = None) -> dict:
     """One full lead-pipeline cycle, driven by the LOCAL lead queue (state/leads_queue.json).
@@ -977,6 +1036,9 @@ def run_cycle(cfg, portal: Portal, slack: Slack, audit: AuditClient | None, gemi
 
     # ---- durable local state (the pipeline's source of truth) ----
     queue = LeadQueue()
+    _intake_added = merge_intake(queue)
+    if _intake_added:
+        log(f"Muse intake: merged {_intake_added} portal leads into the local queue (agent audit + gates apply)")
     state = load_agent_state()
     today_dt = date.fromisoformat(local_now(cfg).strftime("%Y-%m-%d"))
     today_s = today_dt.isoformat()

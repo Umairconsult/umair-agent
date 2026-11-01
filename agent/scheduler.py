@@ -553,7 +553,11 @@ def _effective_daily_cap(cfg):
     if cfg.get("SMTP_HOST", ""):
         return min(DAILY_SEND_CAP, cfg.int("MAILBOX_DAILY_LIMIT", 95))
     return DAILY_SEND_CAP
-PER_RUN_SEND_MAX = 60       # per-run ceiling (2026-10-14: raised for backlog mode)
+PER_RUN_SEND_MAX = 95       # per-run ceiling (2026-11-01, user: 'make sure the daily limit is used per day'):
+                            # raised 60 -> 95 because GitHub's schedule is irregular — often only ONE
+                            # send-run lands per day, and at 60/run the 95/day mailbox cap could never be
+                            # reached. Budget stays min(remaining_today, PER_RUN_SEND_MAX), so the daily cap
+                            # itself (_effective_daily_cap) is unchanged and can never be exceeded.
 SEND_GAP_SECS = 5           # be gentle with Gmail SMTP
 MIN_AUDIT_SCORE = 70        # 2026-10-19 QUALITY RESET (user decision): the backlog is
                             # drained, so the 70 gate is back ON — on lead_score (the

@@ -618,7 +618,12 @@ def phase_send(cfg, portal: Portal, queue: LeadQueue, state: dict, dl: Deadline,
     budget = min(remaining, PER_RUN_SEND_MAX)
 
     dnc_emails = {i["value"] for i in dnc if i["kind"] == "email"}
-    cands = queue.candidates_for_email(limit=50)
+    # 2026-11-01 MAX-CAPABILITY FIX (Muse, user push): the old limit=50 window was
+    # permanently stuck — its 50 slots held 47 sub-70 leads plus a junk domain, a
+    # bad-channel lead and a .edu, none of which ever leaves the window, so the
+    # agent sent 0 emails for 5 days while 431 gate-passing leads sat behind it.
+    # Scan the full audited pool instead; PER_RUN_SEND_MAX still caps actual sends.
+    cands = queue.candidates_for_email(limit=1000)
 
     seen_emails: set[str] = set()
     for lead in cands:
@@ -767,7 +772,8 @@ def phase_send_followups(cfg, portal: Portal, queue: LeadQueue, state: dict, dl:
         return res
     budget = min(remaining, PER_RUN_SEND_MAX)
     dnc_emails = {i["value"] for i in dnc if i["kind"] == "email"}
-    cands = queue.candidates_for_followup_send(limit=50)
+    # 2026-11-01: same stuck-window fix as phase_send — scan the full follow-up pool.
+    cands = queue.candidates_for_followup_send(limit=1000)
     seen_emails: set[str] = set()
     for lead in cands:
         if res["sent"] >= budget or dl.over():

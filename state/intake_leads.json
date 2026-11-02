@@ -228,18 +228,6 @@
   "contact_name": ""
  },
  {
-  "portal_id": 2410,
-  "portal_score": 88,
-  "domain": "jolieskinco.com",
-  "website": "https://jolieskinco.com",
-  "business_name": "Jolie (Jolie Skin Co.)",
-  "email": "talktous@jolieskinco.com",
-  "phone": "",
-  "country": "US",
-  "niche": "ecommerce",
-  "contact_name": ""
- },
- {
   "portal_id": 2259,
   "portal_score": 88,
   "domain": "simplysmilesarrowhead.com",
@@ -420,6 +408,18 @@
   "contact_name": ""
  },
  {
+  "portal_id": 3684,
+  "portal_score": 86,
+  "domain": "revivalclt.com",
+  "website": "https://www.revivalclt.com",
+  "business_name": "Revival Construction",
+  "email": "hello@revivalclt.com",
+  "phone": "(704) 777-3168",
+  "country": "US",
+  "niche": "remodeling",
+  "contact_name": ""
+ },
+ {
   "portal_id": 3657,
   "portal_score": 86,
   "domain": "betterbuilders.com",
@@ -549,18 +549,6 @@
   "phone": "+18014412234",
   "country": "US",
   "niche": "med spa",
-  "contact_name": ""
- },
- {
-  "portal_id": 2821,
-  "portal_score": 86,
-  "domain": "griffithroofing.com",
-  "website": "https://www.griffithroofing.com",
-  "business_name": "Griffith Roofing",
-  "email": "mark@griffithroofing.com",
-  "phone": "+18174407663",
-  "country": "US",
-  "niche": "roofing",
   "contact_name": ""
  },
  {
@@ -876,18 +864,6 @@
   "contact_name": ""
  },
  {
-  "portal_id": 1814,
-  "portal_score": 85,
-  "domain": "miastable.com",
-  "website": "https://miastable.com",
-  "business_name": "Mia's Table",
-  "email": "upperkirby@miastable.com",
-  "phone": "713-522-6427",
-  "country": "US",
-  "niche": "restaurant",
-  "contact_name": ""
- },
- {
   "portal_id": 1795,
   "portal_score": 85,
   "domain": "genuvisbeauty.com",
@@ -972,6 +948,30 @@
   "contact_name": ""
  },
  {
+  "portal_id": 3686,
+  "portal_score": 84,
+  "domain": "myhummingbirdhome.com",
+  "website": "https://myhummingbirdhome.com",
+  "business_name": "Hummingbird Home Renovation",
+  "email": "hello@myhummingbirdhome.com",
+  "phone": "(704) 606-0640",
+  "country": "US",
+  "niche": "remodeling",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3668,
+  "portal_score": 84,
+  "domain": "domroofing.com",
+  "website": "https://www.domroofing.com",
+  "business_name": "DOM Roofing & Restoration",
+  "email": "info@domroofing.com",
+  "phone": "678-766-9646",
+  "country": "US",
+  "niche": "roofing",
+  "contact_name": ""
+ },
+ {
   "portal_id": 3656,
   "portal_score": 84,
   "domain": "blcremodeling.com",
@@ -993,18 +993,6 @@
   "phone": "(512) 835-9557",
   "country": "US",
   "niche": "dental",
-  "contact_name": ""
- },
- {
-  "portal_id": 3643,
-  "portal_score": 84,
-  "domain": "coolblew.com",
-  "website": "https://coolblew.com",
-  "business_name": "Cool Blew Inc.",
-  "email": "scott@coolblew.com",
-  "phone": "(623) 872-2900",
-  "country": "US",
-  "niche": "hvac",
   "contact_name": ""
  },
  {
@@ -1509,6 +1497,66 @@
   "phone": "01326 574337",
   "country": "UK",
   "niche": "ecommerce",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3685,
+  "portal_score": 82,
+  "domain": "buildntx.com",
+  "website": "https://www.buildntx.com",
+  "business_name": "NTX Construction",
+  "email": "contact@buildntx.com",
+  "phone": "(704) 388-0717",
+  "country": "US",
+  "niche": "remodeling",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3682,
+  "portal_score": 82,
+  "domain": "rapidfireplumbing.com",
+  "website": "https://rapidfireplumbing.com",
+  "business_name": "Rapid Fire Plumbing",
+  "email": "tom@rapidfireplumbing.com",
+  "phone": "623-810-6166",
+  "country": "US",
+  "niche": "plumbing",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3674,
+  "portal_score": 82,
+  "domain": "samedspa.com",
+  "website": "https://samedspa.com",
+  "business_name": "San Antonio Med Spa",
+  "email": "info@samedspa.com",
+  "phone": "(210) 446-6263",
+  "country": "US",
+  "niche": "medspa",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3667,
+  "portal_score": 82,
+  "domain": "wrsroof.com",
+  "website": "https://www.wrsroof.com",
+  "business_name": "Watertight Roofing Services",
+  "email": "info@wrsroof.com",
+  "phone": "(770) 868-0290",
+  "country": "US",
+  "niche": "roofing",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3663,
+  "portal_score": 82,
+  "domain": "roofwithauthority.com",
+  "website": "https://roofwithauthority.com",
+  "business_name": "Roof Authority",
+  "email": "info@roofwithauthority.com",
+  "phone": "770-400-0998",
+  "country": "US",
+  "niche": "roofing",
   "contact_name": ""
  },
  {
@@ -2340,6 +2388,90 @@
   "contact_name": ""
  },
  {
+  "portal_id": 3687,
+  "portal_score": 80,
+  "domain": "qcgeneralcontractors.com",
+  "website": "https://www.qcgeneralcontractors.com",
+  "business_name": "QC General Contractors",
+  "email": "info@qcgeneralcontractors.com",
+  "phone": "980-447-5064",
+  "country": "US",
+  "niche": "remodeling",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3681,
+  "portal_score": 80,
+  "domain": "tridentplumbingllc.com",
+  "website": "https://tridentplumbingllc.com",
+  "business_name": "Trident Plumbing & Drain",
+  "email": "support@tridentplumbingllc.com",
+  "phone": "(623) 879-2020",
+  "country": "US",
+  "niche": "plumbing",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3675,
+  "portal_score": 80,
+  "domain": "stayyoungsa.com",
+  "website": "https://www.stayyoungsa.com",
+  "business_name": "StayYoungSA Aesthetics",
+  "email": "sysa@stayyoungsa.com",
+  "phone": "(210) 316-3778",
+  "country": "US",
+  "niche": "medspa",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3673,
+  "portal_score": 80,
+  "domain": "ybellamedspa.com",
+  "website": "https://ybellamedspa.com",
+  "business_name": "Y Bella Med Spa",
+  "email": "yvette@ybellamedspa.com",
+  "phone": "210-361-6003",
+  "country": "US",
+  "niche": "medspa",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3671,
+  "portal_score": 80,
+  "domain": "822heatandair.com",
+  "website": "https://822heatandair.com",
+  "business_name": "822 Heat and Air",
+  "email": "co@822heatandair.com",
+  "phone": "817-308-9957",
+  "country": "US",
+  "niche": "hvac",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3669,
+  "portal_score": 80,
+  "domain": "improveitatl.com",
+  "website": "https://www.improveitatl.com",
+  "business_name": "ImproveIT! of Atlanta",
+  "email": "info@improveitatl.com",
+  "phone": "(770) 525-8836",
+  "country": "US",
+  "niche": "roofing",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3665,
+  "portal_score": 80,
+  "domain": "summitroofingga.com",
+  "website": "https://www.summitroofingga.com",
+  "business_name": "Summit Roofing GA",
+  "email": "info@summitroofingga.com",
+  "phone": "770-545-5244",
+  "country": "US",
+  "niche": "roofing",
+  "contact_name": ""
+ },
+ {
   "portal_id": 3660,
   "portal_score": 80,
   "domain": "wa-dnr.com",
@@ -3057,6 +3189,126 @@
   "phone": "(972) 943-5944",
   "country": "US",
   "niche": "dental",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3683,
+  "portal_score": 78,
+  "domain": "eyeanddentalclinic.com",
+  "website": "https://eyeanddentalclinic.com",
+  "business_name": "Eye & Dental Clinic",
+  "email": "bury@eyeanddentalclinic.com",
+  "phone": "01612 225 730",
+  "country": "UK",
+  "niche": "dental",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3680,
+  "portal_score": 78,
+  "domain": "1upplumbingaz.com",
+  "website": "https://1upplumbingaz.com",
+  "business_name": "1UP Plumbing",
+  "email": "info@1upplumbingaz.com",
+  "phone": "(602) 558-1363",
+  "country": "US",
+  "niche": "plumbing",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3679,
+  "portal_score": 78,
+  "domain": "marcosmedical.com",
+  "website": "https://marcosmedical.com",
+  "business_name": "Marcos Medical",
+  "email": "frontdesk@marcosmedical.com",
+  "phone": "(210) 494-4290",
+  "country": "US",
+  "niche": "medspa",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3678,
+  "portal_score": 78,
+  "domain": "iffhmedspa.com",
+  "website": "https://iffhmedspa.com",
+  "business_name": "IFFH MedSpa",
+  "email": "medspa@iffhealth.com",
+  "phone": "210-239-0903",
+  "country": "US",
+  "niche": "medspa",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3677,
+  "portal_score": 78,
+  "domain": "theonebeautybar.com",
+  "website": "https://www.theonebeautybar.com",
+  "business_name": "The One Beauty Bar",
+  "email": "info@theonebeautybar.com",
+  "phone": "(210) 985-8744",
+  "country": "US",
+  "niche": "medspa",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3676,
+  "portal_score": 78,
+  "domain": "splendidskincarespa.com",
+  "website": "https://www.splendidskincarespa.com",
+  "business_name": "Splendid Skincare & Brow Studio",
+  "email": "hello@splendidskincarespa.com",
+  "phone": "(210) 875-0672",
+  "country": "US",
+  "niche": "medspa",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3672,
+  "portal_score": 78,
+  "domain": "greentechone.com",
+  "website": "https://greentechone.com",
+  "business_name": "Greentech USA",
+  "email": "info@greentechone.com",
+  "phone": "(972) 573-6362",
+  "country": "US",
+  "niche": "hvac",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3670,
+  "portal_score": 78,
+  "domain": "ameristarpro.com",
+  "website": "https://www.ameristarpro.com",
+  "business_name": "Ameristar Roofing",
+  "email": "info@ameristarpro.com",
+  "phone": "(770) 831-1770",
+  "country": "US",
+  "niche": "roofing",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3666,
+  "portal_score": 78,
+  "domain": "appleroof.com",
+  "website": "https://appleroof.com",
+  "business_name": "Apple Roofing",
+  "email": "info@appleroof.com",
+  "phone": "(404) 836-0867",
+  "country": "US",
+  "niche": "roofing",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3664,
+  "portal_score": 78,
+  "domain": "elevatedroofingsolutions.org",
+  "website": "https://elevatedroofingsolutions.org",
+  "business_name": "Elevated Roofing Solutions",
+  "email": "travis@elevatedroofingsolutions.org",
+  "phone": "(404) 626-3919",
+  "country": "US",
+  "niche": "roofing",
   "contact_name": ""
  },
  {

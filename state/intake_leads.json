@@ -408,6 +408,18 @@
   "contact_name": ""
  },
  {
+  "portal_id": 3705,
+  "portal_score": 86,
+  "domain": "clarendondentalspa.co.uk",
+  "website": "https://clarendondentalspa.co.uk",
+  "business_name": "Clarendon Dental Spa",
+  "email": "smile@clarendondentalspa.co.uk",
+  "phone": "0113 245 9004",
+  "country": "UK",
+  "niche": "dental",
+  "contact_name": ""
+ },
+ {
   "portal_id": 3684,
   "portal_score": 86,
   "domain": "revivalclt.com",
@@ -948,6 +960,18 @@
   "contact_name": ""
  },
  {
+  "portal_id": 3702,
+  "portal_score": 84,
+  "domain": "horsforthsmileclinic.co.uk",
+  "website": "https://www.horsforthsmileclinic.co.uk",
+  "business_name": "Horsforth Smile Clinic",
+  "email": "info@horsforthsmileclinic.co.uk",
+  "phone": "0113 258 8780",
+  "country": "UK",
+  "niche": "dental",
+  "contact_name": ""
+ },
+ {
   "portal_id": 3686,
   "portal_score": 84,
   "domain": "myhummingbirdhome.com",
@@ -1077,18 +1101,6 @@
   "phone": "972-509-7570",
   "country": "US",
   "niche": "roofing",
-  "contact_name": ""
- },
- {
-  "portal_id": 3236,
-  "portal_score": 84,
-  "domain": "itreeservice.com",
-  "website": "https://itreeservice.com",
-  "business_name": "Integrity Tree Service",
-  "email": "information@itreeservice.com",
-  "phone": "602-788-0005",
-  "country": "US",
-  "niche": "tree service",
   "contact_name": ""
  },
  {
@@ -1452,18 +1464,6 @@
   "contact_name": ""
  },
  {
-  "portal_id": 1813,
-  "portal_score": 83,
-  "domain": "lomontes.com",
-  "website": "https://www.lomontes.com",
-  "business_name": "Lomonte's Italian Restaurant and Bar",
-  "email": "relax@lomontes.com",
-  "phone": "(281) 496-0030",
-  "country": "US",
-  "niche": "restaurant",
-  "contact_name": ""
- },
- {
   "portal_id": 1678,
   "portal_score": 83,
   "domain": "carnationelite.com",
@@ -1497,6 +1497,54 @@
   "phone": "01326 574337",
   "country": "UK",
   "niche": "ecommerce",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3706,
+  "portal_score": 82,
+  "domain": "vitruviandentalstudio.co.uk",
+  "website": "https://vitruviandentalstudio.co.uk",
+  "business_name": "Vitruvian Dental Studio",
+  "email": "hello@vdsleeds.co.uk",
+  "phone": "0113 322 0861",
+  "country": "UK",
+  "niche": "dental",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3701,
+  "portal_score": 82,
+  "domain": "geteco.com",
+  "website": "https://geteco.com",
+  "business_name": "Eco Plumbers, Electricians & HVAC Technicians",
+  "email": "service@geteco.com",
+  "phone": "614-665-5400",
+  "country": "US",
+  "niche": "plumbing",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3695,
+  "portal_score": 82,
+  "domain": "mightyph.com",
+  "website": "https://mightyph.com",
+  "business_name": "Mighty Plumbing, Heating, Air & Electric",
+  "email": "service@mightyph.com",
+  "phone": "720-902-9141",
+  "country": "US",
+  "niche": "hvac",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3689,
+  "portal_score": 82,
+  "domain": "nashvilleroofingco.com",
+  "website": "https://nashvilleroofingco.com",
+  "business_name": "Nashville Roofing Company",
+  "email": "info@nashvilleroofingco.com",
+  "phone": "615-800-4355",
+  "country": "US",
+  "niche": "roofing",
   "contact_name": ""
  },
  {
@@ -1752,18 +1800,6 @@
   "contact_name": ""
  },
  {
-  "portal_id": 3331,
-  "portal_score": 82,
-  "domain": "danesroofing.com",
-  "website": "https://www.danesroofing.com",
-  "business_name": "Dane Roofing",
-  "email": "kelly@danesroofing.com",
-  "phone": "469-585-3263",
-  "country": "US",
-  "niche": "roofing",
-  "contact_name": ""
- },
- {
   "portal_id": 3248,
   "portal_score": 82,
   "domain": "mrsplash.ca",
@@ -1845,18 +1881,6 @@
   "phone": "1300 742 755",
   "country": "AU",
   "niche": "landscaping",
-  "contact_name": ""
- },
- {
-  "portal_id": 3166,
-  "portal_score": 82,
-  "domain": "physiodna.com",
-  "website": "https://physiodna.com",
-  "business_name": "PhysioDNA",
-  "email": "clinic@physiodna.com",
-  "phone": "+1 416-594-6889",
-  "country": "CA",
-  "niche": "physiotherapy",
   "contact_name": ""
  },
  {
@@ -2316,18 +2340,6 @@
   "contact_name": ""
  },
  {
-  "portal_id": 2262,
-  "portal_score": 81,
-  "domain": "force5roofing.com",
-  "website": "https://force5roofing.com",
-  "business_name": "Force 5 Roofing",
-  "email": "owen@force5roofing.com",
-  "phone": "(800) 684-5850",
-  "country": "US",
-  "niche": "roofing",
-  "contact_name": ""
- },
- {
   "portal_id": 2082,
   "portal_score": 81,
   "domain": "conroybaker.com",
@@ -2352,18 +2364,6 @@
   "contact_name": ""
  },
  {
-  "portal_id": 1922,
-  "portal_score": 81,
-  "domain": "infinityairco.com",
-  "website": "https://infinityairco.com",
-  "business_name": "Infinity AC",
-  "email": "john@infinityairco.com",
-  "phone": "512-377-6755",
-  "country": "US",
-  "niche": "hvac",
-  "contact_name": ""
- },
- {
   "portal_id": 1817,
   "portal_score": 81,
   "domain": "innakogan.com",
@@ -2385,6 +2385,102 @@
   "phone": "+1 (416) 322 0100",
   "country": "CA",
   "niche": "med spa",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3707,
+  "portal_score": 80,
+  "domain": "vicidental.com",
+  "website": "https://vicidental.com",
+  "business_name": "VICI Dental Leeds",
+  "email": "enquiry@vicidental.com",
+  "phone": "01132 454 443",
+  "country": "UK",
+  "niche": "dental",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3703,
+  "portal_score": 80,
+  "domain": "aesthetique.me.uk",
+  "website": "https://aesthetique.me.uk",
+  "business_name": "Aesthetique Dental Care Leeds",
+  "email": "info@smileclinicleeds.com",
+  "phone": "0113 245 8066",
+  "country": "UK",
+  "niche": "dental",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3699,
+  "portal_score": 80,
+  "domain": "allegiantplumbing.com",
+  "website": "https://www.allegiantplumbing.com",
+  "business_name": "Allegiant Plumbing",
+  "email": "service@allegiantplumbing.com",
+  "phone": "614-824-5002",
+  "country": "US",
+  "niche": "plumbing",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3696,
+  "portal_score": 80,
+  "domain": "callwarmwelcome.com",
+  "website": "https://callwarmwelcome.com",
+  "business_name": "Warm Welcome Plumbing Air Electric",
+  "email": "office@callwarmwelcome.com",
+  "phone": "303-725-0034",
+  "country": "US",
+  "niche": "hvac",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3694,
+  "portal_score": 80,
+  "domain": "havanasolutionshvac.com",
+  "website": "https://havanasolutionshvac.com",
+  "business_name": "Havana Solutions",
+  "email": "info@havanasolutionshvac.com",
+  "phone": "720-659-2059",
+  "country": "US",
+  "niche": "hvac",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3693,
+  "portal_score": 80,
+  "domain": "musiccityroofers.com",
+  "website": "https://www.musiccityroofers.com",
+  "business_name": "Music City Roofers",
+  "email": "info@musiccityroofers.com",
+  "phone": "615-802-4999",
+  "country": "US",
+  "niche": "roofing",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3691,
+  "portal_score": 80,
+  "domain": "qualityrrc.com",
+  "website": "https://qualityrrc.com",
+  "business_name": "Quality RRC",
+  "email": "sales@qualityrrc.com",
+  "phone": "615-604-5165",
+  "country": "US",
+  "niche": "roofing",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3690,
+  "portal_score": 80,
+  "domain": "roofingbymidsouth.com",
+  "website": "https://roofingbymidsouth.com",
+  "business_name": "MidSouth Construction",
+  "email": "info@midsouthconstruction.net",
+  "phone": "615-712-8893",
+  "country": "US",
+  "niche": "roofing",
   "contact_name": ""
  },
  {
@@ -2592,18 +2688,6 @@
   "contact_name": ""
  },
  {
-  "portal_id": 3476,
-  "portal_score": 80,
-  "domain": "integrityproroofing.com",
-  "website": "https://integrityproroofing.com",
-  "business_name": "Integrity Pro Roofing",
-  "email": "request.info@iprdenver.com",
-  "phone": "303-968-9842",
-  "country": "US",
-  "niche": "roofing",
-  "contact_name": ""
- },
- {
   "portal_id": 3342,
   "portal_score": 80,
   "domain": "brushandcolor.com",
@@ -2757,18 +2841,6 @@
   "phone": "647-691-5447",
   "country": "CA",
   "niche": "physiotherapy",
-  "contact_name": ""
- },
- {
-  "portal_id": 3040,
-  "portal_score": 80,
-  "domain": "rgsls.com",
-  "website": "https://rgsls.com/",
-  "business_name": "RGS Landscape & Arbor Care",
-  "email": "rgsland@rgsls.com",
-  "phone": "714.630.5300",
-  "country": "US",
-  "niche": "landscaping",
   "contact_name": ""
  },
  {
@@ -3189,6 +3261,54 @@
   "phone": "(972) 943-5944",
   "country": "US",
   "niche": "dental",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3704,
+  "portal_score": 78,
+  "domain": "leedsdentalclinic.co.uk",
+  "website": "https://www.leedsdentalclinic.co.uk",
+  "business_name": "Leeds Dental Clinic",
+  "email": "smile@leedsdentalclinic.co.uk",
+  "phone": "0113 465 8000",
+  "country": "UK",
+  "niche": "dental",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3700,
+  "portal_score": 78,
+  "domain": "columbusplumberexpert.com",
+  "website": "https://www.columbusplumberexpert.com",
+  "business_name": "Columbus Plumber Expert",
+  "email": "info@columbusplumberexpert.com",
+  "phone": "614-412-9351",
+  "country": "US",
+  "niche": "plumbing",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3697,
+  "portal_score": 78,
+  "domain": "milehihvac.com",
+  "website": "https://milehihvac.com",
+  "business_name": "MileHi HVAC",
+  "email": "geno@milehihvac.com",
+  "phone": "720-770-0055",
+  "country": "US",
+  "niche": "hvac",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3692,
+  "portal_score": 78,
+  "domain": "heparmer.com",
+  "website": "https://heparmer.com",
+  "business_name": "H.E. Parmer Roofing",
+  "email": "roofing@heparmer.com",
+  "phone": "615-256-4687",
+  "country": "US",
+  "niche": "roofing",
   "contact_name": ""
  },
  {
@@ -4089,6 +4209,18 @@
   "phone": "",
   "country": "US",
   "niche": "roofing",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3698,
+  "portal_score": 74,
+  "domain": "rubyhillcomfort.com",
+  "website": "https://rubyhillcomfort.com",
+  "business_name": "Ruby Hill Comfort",
+  "email": "rubyhillcomfort@gmail.com",
+  "phone": "720-238-4882",
+  "country": "US",
+  "niche": "hvac",
   "contact_name": ""
  },
  {

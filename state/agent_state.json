@@ -602,7 +602,14 @@
   "search:US:Pittsburgh:insurance": "2026-11-04",
   "ov:US:Nashville:daycare": "2026-11-04",
   "search:US:Nashville:daycare": "2026-11-04",
-  "ov:CA:Toronto:optician": "2026-11-04"
+  "ov:CA:Toronto:optician": "2026-11-04",
+  "ov:US:New York:locksmith": "2026-11-04",
+  "ov:GB:Southampton:pet grooming": "2026-11-04",
+  "reg:GB:Southampton:pet grooming": "2026-11-04",
+  "search:US:San Antonio:physiotherapist": "2026-11-04",
+  "ov:US:New Orleans:roofing": "2026-11-04",
+  "ov:GB:Newcastle:general contractor": "2026-11-04",
+  "reg:GB:Newcastle:general contractor": "2026-11-04"
  },
  "email_sent": {
   "2026-10-07": 37,

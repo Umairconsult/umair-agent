@@ -960,6 +960,42 @@
   "contact_name": ""
  },
  {
+  "portal_id": 3721,
+  "portal_score": 84,
+  "domain": "tampaplumber.net",
+  "website": "https://www.tampaplumber.net",
+  "business_name": "Tampa Bay Plumbers",
+  "email": "contact@tampaplumber.net",
+  "phone": "727-626-0889",
+  "country": "US",
+  "niche": "plumbing",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3718,
+  "portal_score": 84,
+  "domain": "ljrefrigeration.com",
+  "website": "https://www.ljrefrigeration.com",
+  "business_name": "LJ Refrigeration Co.",
+  "email": "info@ljrefrigeration.com",
+  "phone": "480-948-5004",
+  "country": "US",
+  "niche": "hvac",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3717,
+  "portal_score": 84,
+  "domain": "phxairdept.com",
+  "website": "https://www.phxairdept.com",
+  "business_name": "Phoenix Air Department",
+  "email": "info@phxairdept.com",
+  "phone": "602-586-6001",
+  "country": "US",
+  "niche": "hvac",
+  "contact_name": ""
+ },
+ {
   "portal_id": 3702,
   "portal_score": 84,
   "domain": "horsforthsmileclinic.co.uk",
@@ -1497,6 +1533,54 @@
   "phone": "01326 574337",
   "country": "UK",
   "niche": "ecommerce",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3722,
+  "portal_score": 82,
+  "domain": "thecomfortauthority.com",
+  "website": "https://www.thecomfortauthority.com",
+  "business_name": "The Comfort Authority",
+  "email": "cs@thecomfortauthority.com",
+  "phone": "813-355-8898",
+  "country": "US",
+  "niche": "plumbing",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3720,
+  "portal_score": 82,
+  "domain": "everestairaz.com",
+  "website": "https://everestairaz.com",
+  "business_name": "Everest Air & Plumbing",
+  "email": "office@everestairaz.com",
+  "phone": "480-828-2705",
+  "country": "US",
+  "niche": "hvac",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3713,
+  "portal_score": 82,
+  "domain": "hytzroofing.com",
+  "website": "https://hytzroofing.com",
+  "business_name": "Hytz Roofing",
+  "email": "office@hytzroofing.com",
+  "phone": "813-436-0761",
+  "country": "US",
+  "niche": "roofing",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3712,
+  "portal_score": 82,
+  "domain": "rescueroofingoftampa.com",
+  "website": "https://www.rescueroofingoftampa.com",
+  "business_name": "Rescue Roofing of Tampa",
+  "email": "admin@rescueroofingoftampa.com",
+  "phone": "813-661-7663",
+  "country": "US",
+  "niche": "roofing",
   "contact_name": ""
  },
  {
@@ -2388,6 +2472,42 @@
   "contact_name": ""
  },
  {
+  "portal_id": 3716,
+  "portal_score": 80,
+  "domain": "trutekaz.com",
+  "website": "https://trutekaz.com",
+  "business_name": "TruTek Air Conditioning & Heating",
+  "email": "office@trutekaz.com",
+  "phone": "623-260-1973",
+  "country": "US",
+  "niche": "hvac",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3714,
+  "portal_score": 80,
+  "domain": "tampabayroofs.com",
+  "website": "https://www.tampabayroofs.com",
+  "business_name": "The Roofing Company of Tampa Bay",
+  "email": "info@tampabayroofs.com",
+  "phone": "727-916-3151",
+  "country": "US",
+  "niche": "roofing",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3711,
+  "portal_score": 80,
+  "domain": "priorityroofs.com",
+  "website": "https://priorityroofs.com",
+  "business_name": "Priority Roofing",
+  "email": "tampa@priorityroofs.com",
+  "phone": "689-305-4104",
+  "country": "US",
+  "niche": "roofing",
+  "contact_name": ""
+ },
+ {
   "portal_id": 3707,
   "portal_score": 80,
   "domain": "vicidental.com",
@@ -3036,18 +3156,6 @@
   "contact_name": ""
  },
  {
-  "portal_id": 2088,
-  "portal_score": 80,
-  "domain": "awsolicitors.co.uk",
-  "website": "https://www.awsolicitors.co.uk",
-  "business_name": "Andrew Williams Solicitors",
-  "email": "clients@awsolicitors.co.uk",
-  "phone": "0113 244 1911",
-  "country": "GB",
-  "niche": "legal",
-  "contact_name": ""
- },
- {
   "portal_id": 2081,
   "portal_score": 80,
   "domain": "batorigroup.com",
@@ -3180,18 +3288,6 @@
   "contact_name": ""
  },
  {
-  "portal_id": 2644,
-  "portal_score": 79,
-  "domain": "stonehillinn.com",
-  "website": "https://stonehillinn.com",
-  "business_name": "Stone Hill Inn",
-  "email": "stay@stonehillinn.com",
-  "phone": "802-253-6282",
-  "country": "US",
-  "niche": "hotel",
-  "contact_name": ""
- },
- {
   "portal_id": 2641,
   "portal_score": 79,
   "domain": "conquertermites.com.au",
@@ -3261,6 +3357,18 @@
   "phone": "(972) 943-5944",
   "country": "US",
   "niche": "dental",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3719,
+  "portal_score": 78,
+  "domain": "discountacr.com",
+  "website": "https://discountacr.com",
+  "business_name": "Discount AC & Refrigeration",
+  "email": "sales@discountacr.com",
+  "phone": "480-478-2616",
+  "country": "US",
+  "niche": "hvac",
   "contact_name": ""
  },
  {
@@ -3876,18 +3984,6 @@
   "contact_name": ""
  },
  {
-  "portal_id": 1664,
-  "portal_score": 78,
-  "domain": "grasshoppercharlotte.com",
-  "website": "https://www.grasshoppercharlotte.com/",
-  "business_name": "Grasshopper Lawn & Landscaping, Inc.",
-  "email": "kennye@grasshoppercharlotte.com",
-  "phone": "704-363-0849",
-  "country": "US",
-  "niche": "landscaping",
-  "contact_name": ""
- },
- {
   "portal_id": 1452,
   "portal_score": 78,
   "domain": "snodlaw.com",
@@ -4212,6 +4308,18 @@
   "contact_name": ""
  },
  {
+  "portal_id": 3715,
+  "portal_score": 74,
+  "domain": "avatarroofing.com",
+  "website": "https://avatarroofing.com",
+  "business_name": "Avatar Roofing",
+  "email": "avatarroofing@gmail.com",
+  "phone": "813-962-7663",
+  "country": "US",
+  "niche": "roofing",
+  "contact_name": ""
+ },
+ {
   "portal_id": 3698,
   "portal_score": 74,
   "domain": "rubyhillcomfort.com",
@@ -4296,18 +4404,6 @@
   "contact_name": ""
  },
  {
-  "portal_id": 1927,
-  "portal_score": 74,
-  "domain": "smithsplumbing.co.uk",
-  "website": "https://smithsplumbing.co.uk",
-  "business_name": "Smiths Heating Services",
-  "email": "richard@smithsplumbing.co.uk",
-  "phone": "01494 328382",
-  "country": "UK",
-  "niche": "plumbing-heating",
-  "contact_name": ""
- },
- {
   "portal_id": 2647,
   "portal_score": 73,
   "domain": "anytimephysio.com.au",
@@ -4365,6 +4461,18 @@
   "phone": "(512) 766-1519",
   "country": "US",
   "niche": "plumber",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3723,
+  "portal_score": 72,
+  "domain": "believeplumbing.com",
+  "website": "https://believeplumbing.com",
+  "business_name": "Believe Plumbing",
+  "email": "believeplumbing@yahoo.com",
+  "phone": "813-516-4486",
+  "country": "US",
+  "niche": "plumbing",
   "contact_name": ""
  },
  {

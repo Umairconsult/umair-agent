@@ -597,7 +597,12 @@
   "search:GB:Leeds:gym": "2026-11-01",
   "reg:GB:Leeds:gym": "2026-11-01",
   "ov:US:St. Louis:med spa": "2026-11-01",
-  "search:US:St. Louis:med spa": "2026-11-01"
+  "search:US:St. Louis:med spa": "2026-11-01",
+  "ov:US:Pittsburgh:insurance": "2026-11-04",
+  "search:US:Pittsburgh:insurance": "2026-11-04",
+  "ov:US:Nashville:daycare": "2026-11-04",
+  "search:US:Nashville:daycare": "2026-11-04",
+  "ov:CA:Toronto:optician": "2026-11-04"
  },
  "email_sent": {
   "2026-10-07": 37,
@@ -624,6 +629,6 @@
   "2026-11-01": 95,
   "2026-11-02": 95,
   "2026-11-03": 95,
-  "2026-11-04": 88
+  "2026-11-04": 95
  }
 }

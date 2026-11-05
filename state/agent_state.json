@@ -634,7 +634,16 @@
   "ov:CA:Edmonton:yoga studio": "2026-11-05",
   "ov:AU:Canberra:martial arts": "2026-11-05",
   "ov:GB:Reading:accountant": "2026-11-05",
-  "reg:GB:Reading:accountant": "2026-11-05"
+  "reg:GB:Reading:accountant": "2026-11-05",
+  "ov:GB:Leicester:landscaping": "2026-11-05",
+  "reg:GB:Leicester:landscaping": "2026-11-05",
+  "ov:US:San Diego:daycare": "2026-11-05",
+  "search:US:San Diego:daycare": "2026-11-05",
+  "ov:US:Washington DC:towing": "2026-11-05",
+  "ov:AU:Brisbane:photographer": "2026-11-05",
+  "ov:AU:Gold Coast:solar installer": "2026-11-05",
+  "ov:US:Los Angeles:photographer": "2026-11-05",
+  "search:US:Los Angeles:photographer": "2026-11-05"
  },
  "email_sent": {
   "2026-10-07": 37,

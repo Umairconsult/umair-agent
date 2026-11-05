@@ -960,6 +960,18 @@
   "contact_name": ""
  },
  {
+  "portal_id": 3762,
+  "portal_score": 84,
+  "domain": "teamenoch.com",
+  "website": "https://teamenoch.com/",
+  "business_name": "Team Enoch",
+  "email": "mail@teamenoch.com",
+  "phone": "4699603171",
+  "country": "US",
+  "niche": "hvac",
+  "contact_name": ""
+ },
+ {
   "portal_id": 3721,
   "portal_score": 84,
   "domain": "tampaplumber.net",
@@ -1641,18 +1653,6 @@
   "phone": "(704) 388-0717",
   "country": "US",
   "niche": "remodeling",
-  "contact_name": ""
- },
- {
-  "portal_id": 3682,
-  "portal_score": 82,
-  "domain": "rapidfireplumbing.com",
-  "website": "https://rapidfireplumbing.com",
-  "business_name": "Rapid Fire Plumbing",
-  "email": "tom@rapidfireplumbing.com",
-  "phone": "623-810-6166",
-  "country": "US",
-  "niche": "plumbing",
   "contact_name": ""
  },
  {
@@ -2472,6 +2472,30 @@
   "contact_name": ""
  },
  {
+  "portal_id": 3765,
+  "portal_score": 80,
+  "domain": "preciseroofingllc.com",
+  "website": "https://www.preciseroofingllc.com/",
+  "business_name": "Precise Roofing",
+  "email": "info@preciseroofingllc.com",
+  "phone": "7204489988",
+  "country": "US",
+  "niche": "roofing",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3763,
+  "portal_score": 80,
+  "domain": "baileyroofingandexteriors.com",
+  "website": "https://baileyroofingandexteriors.com/",
+  "business_name": "Bailey Roofing & Exteriors",
+  "email": "info@baileyroofingandexteriors.com",
+  "phone": "3039933739",
+  "country": "US",
+  "niche": "roofing",
+  "contact_name": ""
+ },
+ {
   "portal_id": 3716,
   "portal_score": 80,
   "domain": "trutekaz.com",
@@ -2628,18 +2652,6 @@
   "contact_name": ""
  },
  {
-  "portal_id": 3675,
-  "portal_score": 80,
-  "domain": "stayyoungsa.com",
-  "website": "https://www.stayyoungsa.com",
-  "business_name": "StayYoungSA Aesthetics",
-  "email": "sysa@stayyoungsa.com",
-  "phone": "(210) 316-3778",
-  "country": "US",
-  "niche": "medspa",
-  "contact_name": ""
- },
- {
   "portal_id": 3673,
   "portal_score": 80,
   "domain": "ybellamedspa.com",
@@ -2649,18 +2661,6 @@
   "phone": "210-361-6003",
   "country": "US",
   "niche": "medspa",
-  "contact_name": ""
- },
- {
-  "portal_id": 3671,
-  "portal_score": 80,
-  "domain": "822heatandair.com",
-  "website": "https://822heatandair.com",
-  "business_name": "822 Heat and Air",
-  "email": "co@822heatandair.com",
-  "phone": "817-308-9957",
-  "country": "US",
-  "niche": "hvac",
   "contact_name": ""
  },
  {
@@ -3360,6 +3360,30 @@
   "contact_name": ""
  },
  {
+  "portal_id": 3764,
+  "portal_score": 78,
+  "domain": "westernroofingco.com",
+  "website": "https://www.westernroofingco.com/",
+  "business_name": "Western Roofing Inc",
+  "email": "info@westernroofingco.com",
+  "phone": "3035008960",
+  "country": "US",
+  "niche": "roofing",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3761,
+  "portal_score": 78,
+  "domain": "betzac.com",
+  "website": "https://betzac.com/",
+  "business_name": "Betz Heating & Air",
+  "email": "service@betzac.com",
+  "phone": "9725565346",
+  "country": "US",
+  "niche": "hvac",
+  "contact_name": ""
+ },
+ {
   "portal_id": 3719,
   "portal_score": 78,
   "domain": "discountacr.com",
@@ -3369,18 +3393,6 @@
   "phone": "480-478-2616",
   "country": "US",
   "niche": "hvac",
-  "contact_name": ""
- },
- {
-  "portal_id": 3704,
-  "portal_score": 78,
-  "domain": "leedsdentalclinic.co.uk",
-  "website": "https://www.leedsdentalclinic.co.uk",
-  "business_name": "Leeds Dental Clinic",
-  "email": "smile@leedsdentalclinic.co.uk",
-  "phone": "0113 465 8000",
-  "country": "UK",
-  "niche": "dental",
   "contact_name": ""
  },
  {
@@ -3405,18 +3417,6 @@
   "phone": "720-770-0055",
   "country": "US",
   "niche": "hvac",
-  "contact_name": ""
- },
- {
-  "portal_id": 3692,
-  "portal_score": 78,
-  "domain": "heparmer.com",
-  "website": "https://heparmer.com",
-  "business_name": "H.E. Parmer Roofing",
-  "email": "roofing@heparmer.com",
-  "phone": "615-256-4687",
-  "country": "US",
-  "niche": "roofing",
   "contact_name": ""
  },
  {
@@ -3523,18 +3523,6 @@
   "business_name": "Apple Roofing",
   "email": "info@appleroof.com",
   "phone": "(404) 836-0867",
-  "country": "US",
-  "niche": "roofing",
-  "contact_name": ""
- },
- {
-  "portal_id": 3664,
-  "portal_score": 78,
-  "domain": "elevatedroofingsolutions.org",
-  "website": "https://elevatedroofingsolutions.org",
-  "business_name": "Elevated Roofing Solutions",
-  "email": "travis@elevatedroofingsolutions.org",
-  "phone": "(404) 626-3919",
   "country": "US",
   "niche": "roofing",
   "contact_name": ""
@@ -4068,6 +4056,18 @@
   "contact_name": ""
  },
  {
+  "portal_id": 3767,
+  "portal_score": 76,
+  "domain": "aridvalleyaz.com",
+  "website": "https://aridvalleyaz.com/",
+  "business_name": "Arid Valley Plumbing",
+  "email": "contact@aridvalleyaz.com",
+  "phone": "",
+  "country": "US",
+  "niche": "plumbing",
+  "contact_name": ""
+ },
+ {
   "portal_id": 3176,
   "portal_score": 76,
   "domain": "bathspaskincare.co.uk",
@@ -4308,6 +4308,18 @@
   "contact_name": ""
  },
  {
+  "portal_id": 3766,
+  "portal_score": 74,
+  "domain": "beaconplumbingaz.com",
+  "website": "https://beaconplumbingaz.com/",
+  "business_name": "Beacon Plumbing AZ",
+  "email": "contact@beaconplumbingaz.com",
+  "phone": "4803358147",
+  "country": "US",
+  "niche": "plumbing",
+  "contact_name": ""
+ },
+ {
   "portal_id": 3715,
   "portal_score": 74,
   "domain": "avatarroofing.com",
@@ -4425,18 +4437,6 @@
   "phone": "802-985-9060",
   "country": "US",
   "niche": "hotel",
-  "contact_name": ""
- },
- {
-  "portal_id": 1800,
-  "portal_score": 73,
-  "domain": "vosk.us",
-  "website": "https://vosk.us",
-  "business_name": "VOSK",
-  "email": "contact.us@vosk.us",
-  "phone": "",
-  "country": "US",
-  "niche": "home_goods",
   "contact_name": ""
  },
  {

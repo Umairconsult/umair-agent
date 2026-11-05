@@ -609,7 +609,10 @@
   "search:US:San Antonio:physiotherapist": "2026-11-04",
   "ov:US:New Orleans:roofing": "2026-11-04",
   "ov:GB:Newcastle:general contractor": "2026-11-04",
-  "reg:GB:Newcastle:general contractor": "2026-11-04"
+  "reg:GB:Newcastle:general contractor": "2026-11-04",
+  "ov:CA:Quebec City:locksmith": "2026-11-05",
+  "ov:CA:Victoria:carpenter": "2026-11-05",
+  "ov:US:Indianapolis:tree service": "2026-11-05"
  },
  "email_sent": {
   "2026-10-07": 37,
@@ -636,6 +639,7 @@
   "2026-11-01": 95,
   "2026-11-02": 95,
   "2026-11-03": 95,
-  "2026-11-04": 95
+  "2026-11-04": 95,
+  "2026-11-05": 12
  }
 }

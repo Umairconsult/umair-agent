@@ -960,6 +960,18 @@
   "contact_name": ""
  },
  {
+  "portal_id": 3854,
+  "portal_score": 84,
+  "domain": "callbartlett.com",
+  "website": "https://callbartlett.com",
+  "business_name": "Bartlett Heating & Cooling",
+  "email": "service@callbartlett.com",
+  "phone": "(770) 800-8951",
+  "country": "US",
+  "niche": "hvac",
+  "contact_name": ""
+ },
+ {
   "portal_id": 3762,
   "portal_score": 84,
   "domain": "teamenoch.com",
@@ -1545,6 +1557,42 @@
   "phone": "01326 574337",
   "country": "UK",
   "niche": "ecommerce",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3857,
+  "portal_score": 82,
+  "domain": "hsroofing.com",
+  "website": "https://hsroofing.com",
+  "business_name": "H&S Roofing and Gutters",
+  "email": "sales@hsroofing.com",
+  "phone": "(704) 334-9934",
+  "country": "US",
+  "niche": "roofing",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3856,
+  "portal_score": 82,
+  "domain": "roofmedic.com",
+  "website": "https://roofmedic.com",
+  "business_name": "Roof Medic",
+  "email": "contact@roofmedic.com",
+  "phone": "(704) 228-7788",
+  "country": "US",
+  "niche": "roofing",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3855,
+  "portal_score": 82,
+  "domain": "northlineroofing.com",
+  "website": "https://northlineroofing.com",
+  "business_name": "Northline Roofing LLC",
+  "email": "contact@northlineroofing.com",
+  "phone": "(704) 796-9506",
+  "country": "US",
+  "niche": "roofing",
   "contact_name": ""
  },
  {
@@ -2472,6 +2520,30 @@
   "contact_name": ""
  },
  {
+  "portal_id": 3859,
+  "portal_score": 80,
+  "domain": "toothbar.com",
+  "website": "https://toothbar.com",
+  "business_name": "Toothbar",
+  "email": "info@toothbar.com",
+  "phone": "(512) 949-8202",
+  "country": "US",
+  "niche": "dental",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3858,
+  "portal_score": 80,
+  "domain": "atxfamilydental.com",
+  "website": "https://atxfamilydental.com",
+  "business_name": "ATX Family Dental",
+  "email": "info@atxfamilydental.com",
+  "phone": "(512) 717-3147",
+  "country": "US",
+  "niche": "dental",
+  "contact_name": ""
+ },
+ {
   "portal_id": 3765,
   "portal_score": 80,
   "domain": "preciseroofingllc.com",
@@ -3360,6 +3432,18 @@
   "contact_name": ""
  },
  {
+  "portal_id": 3860,
+  "portal_score": 78,
+  "domain": "615plumbing.com",
+  "website": "https://615plumbing.com",
+  "business_name": "615 Plumbing",
+  "email": "officecsr@615plumbing.com",
+  "phone": "(615) 639-0298",
+  "country": "US",
+  "niche": "plumbing",
+  "contact_name": ""
+ },
+ {
   "portal_id": 3764,
   "portal_score": 78,
   "domain": "westernroofingco.com",
@@ -4053,6 +4137,18 @@
   "phone": "(214) 561-2744",
   "country": "US",
   "niche": "pest control",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3861,
+  "portal_score": 76,
+  "domain": "empirehvac.com",
+  "website": "https://empirehvac.com",
+  "business_name": "Empire HVAC",
+  "email": "forms@empirehvac.com",
+  "phone": "(404) 294-0900",
+  "country": "US",
+  "niche": "hvac",
   "contact_name": ""
  },
  {

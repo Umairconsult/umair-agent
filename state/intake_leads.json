@@ -408,6 +408,18 @@
   "contact_name": ""
  },
  {
+  "portal_id": 3877,
+  "portal_score": 86,
+  "domain": "southfloridafaceandbody.com",
+  "website": "https://southfloridafaceandbody.com",
+  "business_name": "South Florida Face and Body",
+  "email": "kelly@southfloridafaceandbody.com",
+  "phone": "(786) 529-1860",
+  "country": "US",
+  "niche": "medspa",
+  "contact_name": ""
+ },
+ {
   "portal_id": 3705,
   "portal_score": 86,
   "domain": "clarendondentalspa.co.uk",
@@ -756,6 +768,30 @@
   "contact_name": ""
  },
  {
+  "portal_id": 3886,
+  "portal_score": 85,
+  "domain": "proximityplumbing.com.au",
+  "website": "https://proximityplumbing.com.au",
+  "business_name": "Proximity Plumbing",
+  "email": "admin@proximityplumbing.com.au",
+  "phone": "0420 102 394",
+  "country": "AU",
+  "niche": "plumbing",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3869,
+  "portal_score": 85,
+  "domain": "azroof.com",
+  "website": "https://azroof.com",
+  "business_name": "Right Way Roofing",
+  "email": "info@azroof.com",
+  "phone": "480-232-5458",
+  "country": "US",
+  "niche": "roofing",
+  "contact_name": ""
+ },
+ {
   "portal_id": 3247,
   "portal_score": 85,
   "domain": "everestplumbing.ca",
@@ -957,6 +993,90 @@
   "phone": "(281) 587-1111",
   "country": "US",
   "niche": "legal",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3888,
+  "portal_score": 84,
+  "domain": "dialupplumbing.com.au",
+  "website": "https://dialupplumbing.com.au",
+  "business_name": "Dial Up Plumbing",
+  "email": "info@dialupplumbing.com.au",
+  "phone": "02 8999 6125",
+  "country": "AU",
+  "niche": "plumbing",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3887,
+  "portal_score": 84,
+  "domain": "readysetplumb.com.au",
+  "website": "https://readysetplumb.com.au",
+  "business_name": "Ready Set Plumb",
+  "email": "office@readysetplumb.com.au",
+  "phone": "02 9140 0104",
+  "country": "AU",
+  "niche": "plumbing",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3878,
+  "portal_score": 84,
+  "domain": "soleabrickellspa.com",
+  "website": "https://soleabrickellspa.com",
+  "business_name": "Solea Brickell Spa",
+  "email": "info@soleabrickellspa.com",
+  "phone": "(786) 400-2775",
+  "country": "US",
+  "niche": "medspa",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3875,
+  "portal_score": 84,
+  "domain": "beyondhealthmedspa.com",
+  "website": "https://beyondhealthmedspa.com",
+  "business_name": "Beyond Health Medspa",
+  "email": "info@beyondhealthmedspa.com",
+  "phone": "(786) 359-4068",
+  "country": "US",
+  "niche": "medspa",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3874,
+  "portal_score": 84,
+  "domain": "harmonyfirstmedspa.com",
+  "website": "https://harmonyfirstmedspa.com",
+  "business_name": "Harmony First Medspa",
+  "email": "info@harmonyfirstmedspa.com",
+  "phone": "786-334-4425",
+  "country": "US",
+  "niche": "medspa",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3870,
+  "portal_score": 84,
+  "domain": "thearizonaroofco.com",
+  "website": "https://thearizonaroofco.com",
+  "business_name": "The Arizona Roof Co",
+  "email": "support@thearizonaroofco.com",
+  "phone": "480-622-4893",
+  "country": "US",
+  "niche": "roofing",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3868,
+  "portal_score": 84,
+  "domain": "reimagineroofing.com",
+  "website": "https://reimagineroofing.com",
+  "business_name": "Reimagine Roofing",
+  "email": "contact@reimagineroofing.com",
+  "phone": "480-900-7663",
+  "country": "US",
+  "niche": "roofing",
   "contact_name": ""
  },
  {
@@ -1488,6 +1608,54 @@
   "contact_name": ""
  },
  {
+  "portal_id": 3876,
+  "portal_score": 83,
+  "domain": "luxmedspabrickell.com",
+  "website": "https://luxmedspabrickell.com",
+  "business_name": "LUX MedSpa Brickell",
+  "email": "info@luxmedspabrickell.com",
+  "phone": "(305) 988-9388",
+  "country": "US",
+  "niche": "medspa",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3873,
+  "portal_score": 83,
+  "domain": "shifadental.net",
+  "website": "https://shifadental.net",
+  "business_name": "Shifa Dental",
+  "email": "info@shifadental.net",
+  "phone": "(972) 891-3175",
+  "country": "US",
+  "niche": "dental",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3867,
+  "portal_score": 83,
+  "domain": "canyonstateroofs.com",
+  "website": "https://canyonstateroofs.com",
+  "business_name": "Canyon State Roofing",
+  "email": "info@canyonstateroofs.com",
+  "phone": "(602) 400-1635",
+  "country": "US",
+  "niche": "roofing",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3865,
+  "portal_score": 83,
+  "domain": "rightwaymechanicalco.com",
+  "website": "https://rightwaymechanicalco.com",
+  "business_name": "Right Way Mechanical",
+  "email": "info@rightwaymechanicalco.com",
+  "phone": "(303) 406-2717",
+  "country": "US",
+  "niche": "hvac",
+  "contact_name": ""
+ },
+ {
   "portal_id": 2406,
   "portal_score": 83,
   "domain": "floridagaragedoorpros.com",
@@ -1557,6 +1725,78 @@
   "phone": "01326 574337",
   "country": "UK",
   "niche": "ecommerce",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3889,
+  "portal_score": 82,
+  "domain": "dreamplumbing.com.au",
+  "website": "https://dreamplumbing.com.au",
+  "business_name": "Dream Plumbing & Gas",
+  "email": "admin@dreamplumbing.com.au",
+  "phone": "1300 511 936",
+  "country": "AU",
+  "niche": "plumbing",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3884,
+  "portal_score": 82,
+  "domain": "tdotdental.ca",
+  "website": "https://tdotdental.ca",
+  "business_name": "T-Dot Dental",
+  "email": "info@tdotdental.ca",
+  "phone": "647-490-8382",
+  "country": "CA",
+  "niche": "dental",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3883,
+  "portal_score": 82,
+  "domain": "papedental.ca",
+  "website": "https://papedental.ca",
+  "business_name": "Pape Dental Centre",
+  "email": "info@papedental.ca",
+  "phone": "(416) 465-3111",
+  "country": "CA",
+  "niche": "dental",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3881,
+  "portal_score": 82,
+  "domain": "downtowndentistry.com",
+  "website": "https://downtowndentistry.com",
+  "business_name": "Downtown Dentistry",
+  "email": "info@downtowndentistry.com",
+  "phone": "(647) 360-6650",
+  "country": "CA",
+  "niche": "dental",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3879,
+  "portal_score": 82,
+  "domain": "moxiedental.ca",
+  "website": "https://moxiedental.ca",
+  "business_name": "Moxie Dental",
+  "email": "info@moxiedental.ca",
+  "phone": "(647) 601-9474",
+  "country": "CA",
+  "niche": "dental",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3871,
+  "portal_score": 82,
+  "domain": "americanroofingnow.com",
+  "website": "https://americanroofingnow.com",
+  "business_name": "American Roofing & Waterproofing",
+  "email": "services@americanroofingnow.com",
+  "phone": "(602) 314-4650",
+  "country": "US",
+  "niche": "roofing",
   "contact_name": ""
  },
  {
@@ -2472,6 +2712,42 @@
   "contact_name": ""
  },
  {
+  "portal_id": 3890,
+  "portal_score": 81,
+  "domain": "heroplumbing.com.au",
+  "website": "https://heroplumbing.com.au",
+  "business_name": "Hero Plumbing",
+  "email": "info@heroplumbing.com.au",
+  "phone": "0468 070 296",
+  "country": "AU",
+  "niche": "plumbing",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3880,
+  "portal_score": 81,
+  "domain": "broadwaydentalclinic.com",
+  "website": "https://broadwaydentalclinic.com",
+  "business_name": "Broadway Dental Clinic",
+  "email": "info@broadwaydentalclinic.com",
+  "phone": "+1 (416) 322-5156",
+  "country": "CA",
+  "niche": "dental",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3866,
+  "portal_score": 81,
+  "domain": "hugheshvacdenver.com",
+  "website": "https://hugheshvacdenver.com",
+  "business_name": "Hughes Mechanical",
+  "email": "kevin.hughes@hugheshvacdenver.com",
+  "phone": "303-720-8181",
+  "country": "US",
+  "niche": "hvac",
+  "contact_name": ""
+ },
+ {
   "portal_id": 2082,
   "portal_score": 81,
   "domain": "conroybaker.com",
@@ -2517,6 +2793,30 @@
   "phone": "+1 (416) 322 0100",
   "country": "CA",
   "niche": "med spa",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3891,
+  "portal_score": 80,
+  "domain": "antonsplumbingandgas.com.au",
+  "website": "https://antonsplumbingandgas.com.au",
+  "business_name": "Antons Plumbing & Gas",
+  "email": "info@antonsplumbingandgas.com.au",
+  "phone": "0493 824 176",
+  "country": "AU",
+  "niche": "plumbing",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3882,
+  "portal_score": 80,
+  "domain": "smyldentistry.ca",
+  "website": "https://smyldentistry.ca",
+  "business_name": "Smyl Dentistry",
+  "email": "info@smyldentistry.ca",
+  "phone": "647-800-6917",
+  "country": "CA",
+  "niche": "dental",
   "contact_name": ""
  },
  {
@@ -3360,6 +3660,18 @@
   "contact_name": ""
  },
  {
+  "portal_id": 3885,
+  "portal_score": 79,
+  "domain": "goldenmiledental.ca",
+  "website": "https://goldenmiledental.ca",
+  "business_name": "Golden Mile Dental",
+  "email": "info@goldenmiledental.ca",
+  "phone": "(647) 490-6888",
+  "country": "CA",
+  "niche": "dental",
+  "contact_name": ""
+ },
+ {
   "portal_id": 2641,
   "portal_score": 79,
   "domain": "conquertermites.com.au",
@@ -3427,6 +3739,18 @@
   "business_name": "Star Ranch Dental",
   "email": "contactus@starranchdental.com",
   "phone": "(972) 943-5944",
+  "country": "US",
+  "niche": "dental",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3872,
+  "portal_score": 78,
+  "domain": "oaktreedentaltx.com",
+  "website": "https://oaktreedentaltx.com",
+  "business_name": "Oak Tree Dental",
+  "email": "info@oaktreedentaltx.com",
+  "phone": "972-414-2300",
   "country": "US",
   "niche": "dental",
   "contact_name": ""

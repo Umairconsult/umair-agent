@@ -132,6 +132,18 @@
   "contact_name": ""
  },
  {
+  "portal_id": 3931,
+  "portal_score": 88,
+  "domain": "alphaomegaair.com.au",
+  "website": "https://alphaomegaair.com.au/",
+  "business_name": "Alpha & Omega Air Conditioning Services",
+  "email": "sales@alphaomegaair.com.au",
+  "phone": "1300 156 466",
+  "country": "AU",
+  "niche": "hvac",
+  "contact_name": ""
+ },
+ {
   "portal_id": 3639,
   "portal_score": 88,
   "domain": "integrityroofingandpainting.com",
@@ -405,6 +417,30 @@
   "phone": "+61 3 9583 3876",
   "country": "AU",
   "niche": "ecommerce-pet",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3935,
+  "portal_score": 86,
+  "domain": "keysellbuilders.com.au",
+  "website": "https://www.keysellbuilders.com.au/",
+  "business_name": "Keysell Builders",
+  "email": "jeff@keysellbuilders.com.au",
+  "phone": "(07) 3283 5005",
+  "country": "AU",
+  "niche": "remodeling",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3918,
+  "portal_score": 86,
+  "domain": "citysportsphysio.com",
+  "website": "https://citysportsphysio.com/",
+  "business_name": "City Sports & Physiotherapy Clinic",
+  "email": "info@citysportsphysio.com",
+  "phone": "(604) 606-1420",
+  "country": "CA",
+  "niche": "physiotherapy",
   "contact_name": ""
  },
  {
@@ -828,6 +864,18 @@
   "contact_name": ""
  },
  {
+  "portal_id": 3932,
+  "portal_score": 85,
+  "domain": "abc-air.com.au",
+  "website": "https://abc-air.com.au/",
+  "business_name": "ABC Air Conditioning",
+  "email": "abcairnsw@gmail.com",
+  "phone": "0434 506 979",
+  "country": "AU",
+  "niche": "hvac",
+  "contact_name": ""
+ },
+ {
   "portal_id": 3886,
   "portal_score": 85,
   "domain": "proximityplumbing.com.au",
@@ -1053,6 +1101,42 @@
   "phone": "(281) 587-1111",
   "country": "US",
   "niche": "legal",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3936,
+  "portal_score": 84,
+  "domain": "acekitchens.net.au",
+  "website": "https://acekitchens.net.au/",
+  "business_name": "Ace Kitchens & Shopfitters",
+  "email": "info@acekitchens.com.au",
+  "phone": "(07) 3266 4914",
+  "country": "AU",
+  "niche": "remodeling",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3921,
+  "portal_score": 84,
+  "domain": "mostonroofing.co.uk",
+  "website": "https://www.mostonroofing.co.uk",
+  "business_name": "Moston Roofing Limited",
+  "email": "info@mostonroofing.co.uk",
+  "phone": "0161 359 5276",
+  "country": "GB",
+  "niche": "roofing",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3917,
+  "portal_score": 84,
+  "domain": "electrahealth.ca",
+  "website": "https://electrahealth.ca/",
+  "business_name": "Electra Health",
+  "email": "reception@electrahealth.ca",
+  "phone": "604-685-4325",
+  "country": "CA",
+  "niche": "physiotherapy",
   "contact_name": ""
  },
  {
@@ -1869,6 +1953,66 @@
   "phone": "01326 574337",
   "country": "UK",
   "niche": "ecommerce",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3937,
+  "portal_score": 82,
+  "domain": "decorationrenovations.com.au",
+  "website": "https://www.decorationrenovations.com.au/",
+  "business_name": "Decoration Renovations",
+  "email": "info@decorationrenovations.com.au",
+  "phone": "0466 671 719",
+  "country": "AU",
+  "niche": "remodeling",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3933,
+  "portal_score": 82,
+  "domain": "sydneyaircons.com.au",
+  "website": "https://sydneyaircons.com.au/",
+  "business_name": "Sydney Air Conditioning Experts",
+  "email": "quote@sydneyaircon.net",
+  "phone": "0421 941 317",
+  "country": "AU",
+  "niche": "hvac",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3923,
+  "portal_score": 82,
+  "domain": "hyperwear.com",
+  "website": "https://hyperwear.com",
+  "business_name": "Hyperwear",
+  "email": "sales@hyperwear.com",
+  "phone": "+1 512-996-0808",
+  "country": "US",
+  "niche": "ecommerce",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3922,
+  "portal_score": 82,
+  "domain": "dysonroofing.com",
+  "website": "https://www.dysonroofing.com",
+  "business_name": "Dyson Roofing",
+  "email": "hello@dysonroofing.com",
+  "phone": "07765 257 092",
+  "country": "GB",
+  "niche": "roofing",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3914,
+  "portal_score": 82,
+  "domain": "movementroompr.ca",
+  "website": "https://movementroompr.ca/",
+  "business_name": "Movement Room Physiotherapy",
+  "email": "info@movementroompr.ca",
+  "phone": "(604) 260-0603",
+  "country": "CA",
+  "niche": "physiotherapy",
   "contact_name": ""
  },
  {
@@ -3000,6 +3144,66 @@
   "contact_name": ""
  },
  {
+  "portal_id": 3938,
+  "portal_score": 80,
+  "domain": "maqbuilders.com.au",
+  "website": "https://www.maqbuilders.com.au/",
+  "business_name": "MAQ Builders & Co.",
+  "email": "info@maqbuilders.com.au",
+  "phone": "+61 450 566 381",
+  "country": "AU",
+  "niche": "remodeling",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3925,
+  "portal_score": 80,
+  "domain": "mosiebaby.com",
+  "website": "https://mosiebaby.com",
+  "business_name": "Mosie Baby",
+  "email": "info@mosiebaby.com",
+  "phone": "",
+  "country": "US",
+  "niche": "ecommerce",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3924,
+  "portal_score": 80,
+  "domain": "atealeroofing.co.uk",
+  "website": "https://www.atealeroofing.co.uk",
+  "business_name": "A.Teale Roofing Limited",
+  "email": "sales@atealeroofing.co.uk",
+  "phone": "0161 434 1864",
+  "country": "GB",
+  "niche": "roofing",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3919,
+  "portal_score": 80,
+  "domain": "thephysiolab.ca",
+  "website": "https://thephysiolab.ca/",
+  "business_name": "Physiolab",
+  "email": "info@thephysiolab.ca",
+  "phone": "",
+  "country": "CA",
+  "niche": "physiotherapy",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3915,
+  "portal_score": 80,
+  "domain": "formphysiotherapy.com",
+  "website": "https://www.formphysiotherapy.com/",
+  "business_name": "Form Physiotherapy",
+  "email": "info@formphysiotherapy.com",
+  "phone": "604-708-4762",
+  "country": "CA",
+  "niche": "physiotherapy",
+  "contact_name": ""
+ },
+ {
   "portal_id": 3912,
   "portal_score": 80,
   "domain": "n2designbuild.com",
@@ -3996,6 +4200,78 @@
   "contact_name": ""
  },
  {
+  "portal_id": 3934,
+  "portal_score": 78,
+  "domain": "airchillers.com.au",
+  "website": "https://www.airchillers.com.au/",
+  "business_name": "Airchillers",
+  "email": "service@airchillers.com.au",
+  "phone": "+61 450 391 491",
+  "country": "AU",
+  "niche": "hvac",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3926,
+  "portal_score": 78,
+  "domain": "beeroofing.co.uk",
+  "website": "https://beeroofing.co.uk",
+  "business_name": "Bee Commercial Roofing",
+  "email": "info@beeroofing.co.uk",
+  "phone": "+44 161 570 2547",
+  "country": "GB",
+  "niche": "roofing",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3927,
+  "portal_score": 78,
+  "domain": "alphapaw.com",
+  "website": "https://www.alphapaw.com",
+  "business_name": "Alpha Paw",
+  "email": "support@alphapaw.com",
+  "phone": "",
+  "country": "US",
+  "niche": "ecommerce",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3920,
+  "portal_score": 78,
+  "domain": "sevaphysio.ca",
+  "website": "https://sevaphysio.ca/",
+  "business_name": "Seva Physiotherapy",
+  "email": "office@sevaphysio.ca",
+  "phone": "",
+  "country": "CA",
+  "niche": "physiotherapy",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3916,
+  "portal_score": 78,
+  "domain": "revibephysio.ca",
+  "website": "https://revibephysio.ca/",
+  "business_name": "Revibe Physio & Rehab",
+  "email": "info@revibephysio.ca",
+  "phone": "(604) 336-0931",
+  "country": "CA",
+  "niche": "physiotherapy",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3913,
+  "portal_score": 78,
+  "domain": "cherryblossomdentistry.ca",
+  "website": "https://cherryblossomdentistry.ca/",
+  "business_name": "Cherry Blossom Dentistry",
+  "email": "info@cherryblossomdentistry.ca",
+  "phone": "+1 (416) 538-3384",
+  "country": "CA",
+  "niche": "dental",
+  "contact_name": ""
+ },
+ {
   "portal_id": 3872,
   "portal_score": 78,
   "domain": "oaktreedentaltx.com",
@@ -4716,6 +4992,18 @@
   "contact_name": ""
  },
  {
+  "portal_id": 3928,
+  "portal_score": 76,
+  "domain": "austinartgarage.com",
+  "website": "https://austinartgarage.com",
+  "business_name": "Austin Art Garage",
+  "email": "art@austinartgarage.com",
+  "phone": "",
+  "country": "US",
+  "niche": "ecommerce",
+  "contact_name": ""
+ },
+ {
   "portal_id": 3861,
   "portal_score": 76,
   "domain": "empirehvac.com",
@@ -4980,6 +5268,18 @@
   "contact_name": ""
  },
  {
+  "portal_id": 3929,
+  "portal_score": 74,
+  "domain": "roofers-manchester.uk",
+  "website": "https://www.roofers-manchester.uk",
+  "business_name": "Roofers Manchester",
+  "email": "hello@roofers-manchester.uk",
+  "phone": "0161 985 0674",
+  "country": "GB",
+  "niche": "roofing",
+  "contact_name": ""
+ },
+ {
   "portal_id": 3766,
   "portal_score": 74,
   "domain": "beaconplumbingaz.com",
@@ -5133,6 +5433,18 @@
   "phone": "(512) 766-1519",
   "country": "US",
   "niche": "plumber",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3930,
+  "portal_score": 72,
+  "domain": "manchesterandashton-roofing.co.uk",
+  "website": "https://www.manchesterandashton-roofing.co.uk",
+  "business_name": "Manchester & Ashton Roofing Co. Ltd",
+  "email": "manchesterroofing@freeolamail.com",
+  "phone": "0161 370 6571",
+  "country": "GB",
+  "niche": "roofing",
   "contact_name": ""
  },
  {

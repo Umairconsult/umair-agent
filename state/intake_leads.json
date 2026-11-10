@@ -1104,6 +1104,30 @@
   "contact_name": ""
  },
  {
+  "portal_id": 3957,
+  "portal_score": 84,
+  "domain": "birdieroofing.com",
+  "website": "https://www.birdieroofing.com/",
+  "business_name": "Birdie Roofing",
+  "email": "info@birdieroofing.com",
+  "phone": "(720) 254-2521",
+  "country": "US",
+  "niche": "roofing",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3956,
+  "portal_score": 84,
+  "domain": "precisiontoday.com",
+  "website": "https://www.precisiontoday.com/",
+  "business_name": "Precision Today",
+  "email": "info@precisiontoday.com",
+  "phone": "(630) 425-8995",
+  "country": "US",
+  "niche": "hvac",
+  "contact_name": ""
+ },
+ {
   "portal_id": 3936,
   "portal_score": 84,
   "domain": "acekitchens.net.au",
@@ -1953,6 +1977,42 @@
   "phone": "01326 574337",
   "country": "UK",
   "niche": "ecommerce",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3961,
+  "portal_score": 82,
+  "domain": "thebiomechanics.com.au",
+  "website": "https://www.thebiomechanics.com.au/",
+  "business_name": "The Biomechanics",
+  "email": "info@thebiomechanics.com.au",
+  "phone": "1300 920 520",
+  "country": "AU",
+  "niche": "physio",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3960,
+  "portal_score": 82,
+  "domain": "thephysiocrew.com.au",
+  "website": "https://www.thephysiocrew.com.au/",
+  "business_name": "The Physio Crew",
+  "email": "admin@thephysiocrew.com.au",
+  "phone": "03 9116 8691",
+  "country": "AU",
+  "niche": "physio",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3955,
+  "portal_score": 82,
+  "domain": "globalheatingcooling.us",
+  "website": "https://www.globalheatingcooling.us/",
+  "business_name": "Global Heating and Cooling",
+  "email": "info@globalheatingcooling.us",
+  "phone": "(773) 801-3734",
+  "country": "US",
+  "niche": "hvac",
   "contact_name": ""
  },
  {
@@ -3144,6 +3204,42 @@
   "contact_name": ""
  },
  {
+  "portal_id": 3963,
+  "portal_score": 80,
+  "domain": "keepinmotionphysio.com.au",
+  "website": "https://www.keepinmotionphysio.com.au/",
+  "business_name": "Keep In Motion Physio",
+  "email": "contact@keepinmotionphysio.com.au",
+  "phone": "1300 479 001",
+  "country": "AU",
+  "niche": "physio",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3959,
+  "portal_score": 80,
+  "domain": "nationalhomeimprovement.com",
+  "website": "https://nationalhomeimprovement.com/",
+  "business_name": "National Home Improvement",
+  "email": "nhi@nationalhomeimprovement.com",
+  "phone": "(303) 979-4444",
+  "country": "US",
+  "niche": "roofing",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3953,
+  "portal_score": 80,
+  "domain": "northstarhvacr.net",
+  "website": "https://northstarhvacr.net/",
+  "business_name": "Northstar HVAC & Refrigeration",
+  "email": "info@northstarhvacr.net",
+  "phone": "+1 224-398-9199",
+  "country": "US",
+  "niche": "hvac",
+  "contact_name": ""
+ },
+ {
   "portal_id": 3938,
   "portal_score": 80,
   "domain": "maqbuilders.com.au",
@@ -4200,6 +4296,30 @@
   "contact_name": ""
  },
  {
+  "portal_id": 3962,
+  "portal_score": 78,
+  "domain": "melbournephysiogroup.com.au",
+  "website": "https://melbournephysiogroup.com.au/",
+  "business_name": "Melbourne Physiotherapy Pilates + Fitness Group",
+  "email": "reception@mppfg.com.au",
+  "phone": "03 9534 0611",
+  "country": "AU",
+  "niche": "physio",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3954,
+  "portal_score": 78,
+  "domain": "airtechp.com",
+  "website": "https://www.airtechp.com/",
+  "business_name": "AirTech Pro",
+  "email": "info@airtechp.com",
+  "phone": "(708) 737-0854",
+  "country": "US",
+  "niche": "hvac",
+  "contact_name": ""
+ },
+ {
   "portal_id": 3934,
   "portal_score": 78,
   "domain": "airchillers.com.au",
@@ -4989,6 +5109,42 @@
   "phone": "(214) 561-2744",
   "country": "US",
   "niche": "pest control",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3965,
+  "portal_score": 76,
+  "domain": "denverroofersco.com",
+  "website": "https://www.denverroofersco.com/",
+  "business_name": "Denver Roofers Co",
+  "email": "contact@denverroofersco.com",
+  "phone": "720 943 7872",
+  "country": "US",
+  "niche": "roofing",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3964,
+  "portal_score": 76,
+  "domain": "evolvephysio.au",
+  "website": "https://www.evolvephysio.au/",
+  "business_name": "Evolve Physiotherapy Centre",
+  "email": "info@evolvephysio.au",
+  "phone": "(03) 9013 0065",
+  "country": "AU",
+  "niche": "physio",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3958,
+  "portal_score": 76,
+  "domain": "bestroofandgutter.com",
+  "website": "https://bestroofandgutter.com/",
+  "business_name": "Best Roof And Gutter",
+  "email": "info@bestroofandgutter.com",
+  "phone": "(303) 529-7095",
+  "country": "US",
+  "niche": "roofing",
   "contact_name": ""
  },
  {

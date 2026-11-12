@@ -1992,6 +1992,42 @@
   "contact_name": ""
  },
  {
+  "portal_id": 3993,
+  "portal_score": 82,
+  "domain": "pioneerplumbing.com",
+  "website": "https://www.pioneerplumbing.com/",
+  "business_name": "Pioneer Plumbing & Heating",
+  "email": "info@pioneerplumbing.com",
+  "phone": "604-872-4946",
+  "country": "CA",
+  "niche": "plumbing",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3990,
+  "portal_score": 82,
+  "domain": "activatephysio.com.au",
+  "website": "https://www.activatephysio.com.au/",
+  "business_name": "Activate Physio",
+  "email": "admin@activatephysio.com.au",
+  "phone": "+61 8 9384 0544",
+  "country": "AU",
+  "niche": "physio",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3989,
+  "portal_score": 82,
+  "domain": "lodgecausewaydentalcentre.com",
+  "website": "https://lodgecausewaydentalcentre.com/",
+  "business_name": "Lodge Causeway Dental Centre",
+  "email": "info@lodgecausewaydentalcentre.com",
+  "phone": "0117 958 6878",
+  "country": "GB",
+  "niche": "dental",
+  "contact_name": ""
+ },
+ {
   "portal_id": 3985,
   "portal_score": 82,
   "domain": "advancedairconditioningandheating.com",
@@ -3288,6 +3324,66 @@
   "contact_name": ""
  },
  {
+  "portal_id": 3995,
+  "portal_score": 80,
+  "domain": "goldsteinplumbing.com",
+  "website": "https://goldsteinplumbing.com/",
+  "business_name": "Goldstein Plumbing & Gas",
+  "email": "info@goldsteinplumbing.com",
+  "phone": "(604) 217-8992",
+  "country": "CA",
+  "niche": "plumbing",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3994,
+  "portal_score": 80,
+  "domain": "plumbhartt.com",
+  "website": "https://plumbhartt.com/",
+  "business_name": "Plumbhartt Plumbing",
+  "email": "contact@plumbhartt.com",
+  "phone": "+1 604-330-0067",
+  "country": "CA",
+  "niche": "plumbing",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3991,
+  "portal_score": 80,
+  "domain": "tweak.health",
+  "website": "https://tweak.health/",
+  "business_name": "Tweak Health",
+  "email": "reception@tweak.health",
+  "phone": "+61 8 6555 2989",
+  "country": "AU",
+  "niche": "physio",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3988,
+  "portal_score": 80,
+  "domain": "houstonroofingexperts.com",
+  "website": "https://houstonroofingexperts.com/",
+  "business_name": "Houston Roofing Experts",
+  "email": "sales@houstonroofingexperts.com",
+  "phone": "(713) 291-3866",
+  "country": "US",
+  "niche": "roofing",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3986,
+  "portal_score": 80,
+  "domain": "metroacs.com",
+  "website": "https://metroacs.com/",
+  "business_name": "Metro Air Conditioning Heating & Services",
+  "email": "info@metroacs.com",
+  "phone": "(214) 304-7658",
+  "country": "US",
+  "niche": "hvac",
+  "contact_name": ""
+ },
+ {
   "portal_id": 3984,
   "portal_score": 80,
   "domain": "austinalpine.com",
@@ -4476,6 +4572,18 @@
   "contact_name": ""
  },
  {
+  "portal_id": 3992,
+  "portal_score": 78,
+  "domain": "jumpliftrun.com.au",
+  "website": "https://www.jumpliftrun.com.au/",
+  "business_name": "Jump Lift Run",
+  "email": "admin@jumpliftrun.com.au",
+  "phone": "+61 421 052 878",
+  "country": "AU",
+  "niche": "physio",
+  "contact_name": ""
+ },
+ {
   "portal_id": 3982,
   "portal_score": 78,
   "domain": "xtechacservice.com",
@@ -5349,6 +5457,18 @@
   "phone": "(214) 561-2744",
   "country": "US",
   "niche": "pest control",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 3987,
+  "portal_score": 76,
+  "domain": "industrialroofingrepair.com",
+  "website": "https://industrialroofingrepair.com/",
+  "business_name": "Industrial Roofing & Repair",
+  "email": "industrialroofingrepair@gmail.com",
+  "phone": "",
+  "country": "US",
+  "niche": "roofing",
   "contact_name": ""
  },
  {

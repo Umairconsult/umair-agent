@@ -1992,6 +1992,18 @@
   "contact_name": ""
  },
  {
+  "portal_id": 4021,
+  "portal_score": 82,
+  "domain": "outdoorreno.com",
+  "website": "https://www.outdoorreno.com",
+  "business_name": "Outdoor Renovations",
+  "email": "kyle@outdoorreno.com",
+  "phone": "(512) 743-0570",
+  "country": "US",
+  "niche": "landscaping",
+  "contact_name": ""
+ },
+ {
   "portal_id": 3998,
   "portal_score": 82,
   "domain": "atomicroofs.com",
@@ -3252,6 +3264,18 @@
   "contact_name": ""
  },
  {
+  "portal_id": 4025,
+  "portal_score": 81,
+  "domain": "katoelectrical.com",
+  "website": "https://www.katoelectrical.com",
+  "business_name": "Kato Electrical",
+  "email": "info@katoelectrical.com",
+  "phone": "604-330-9097",
+  "country": "CA",
+  "niche": "electrician",
+  "contact_name": ""
+ },
+ {
   "portal_id": 3890,
   "portal_score": 81,
   "domain": "heroplumbing.com.au",
@@ -3333,6 +3357,54 @@
   "phone": "+1 (416) 322 0100",
   "country": "CA",
   "niche": "med spa",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 4032,
+  "portal_score": 80,
+  "domain": "elitesportsphysio.com.au",
+  "website": "https://elitesportsphysio.com.au",
+  "business_name": "Elite Sports Physiotherapy",
+  "email": "info@elitesportsphysio.com.au",
+  "phone": "(03) 8640 0328",
+  "country": "AU",
+  "niche": "physiotherapy",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 4027,
+  "portal_score": 80,
+  "domain": "raincityelectric.com",
+  "website": "https://raincityelectric.com",
+  "business_name": "Raincity Electric",
+  "email": "hello@raincityelectric.ca",
+  "phone": "(604) 337-2205",
+  "country": "CA",
+  "niche": "electrician",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 4024,
+  "portal_score": 80,
+  "domain": "thewireguys.ca",
+  "website": "https://www.thewireguys.ca",
+  "business_name": "The Wire Guys",
+  "email": "jasjot@thewireguys.ca",
+  "phone": "778-708-0451",
+  "country": "CA",
+  "niche": "electrician",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 4019,
+  "portal_score": 80,
+  "domain": "gardengoat.com",
+  "website": "https://gardengoat.com",
+  "business_name": "GardenGOAT",
+  "email": "nicolas@gardengoat.com",
+  "phone": "(512) 240-2287",
+  "country": "US",
+  "niche": "landscaping",
   "contact_name": ""
  },
  {
@@ -4560,6 +4632,42 @@
   "contact_name": ""
  },
  {
+  "portal_id": 4033,
+  "portal_score": 79,
+  "domain": "preworn.ltd",
+  "website": "https://preworn.ltd",
+  "business_name": "PreWorn Ltd",
+  "email": "sales@preworn.co.uk",
+  "phone": "",
+  "country": "UK",
+  "niche": "ecommerce",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 4026,
+  "portal_score": 79,
+  "domain": "eaglepower.ca",
+  "website": "https://www.eaglepower.ca",
+  "business_name": "Eagle Power",
+  "email": "info@eaglepower.ca",
+  "phone": "(778) 680-3535",
+  "country": "CA",
+  "niche": "electrician",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 4022,
+  "portal_score": 79,
+  "domain": "bladerunneratx.com",
+  "website": "https://bladerunneratx.com",
+  "business_name": "Blade Runner Landscapes",
+  "email": "mike@bladerunneratx.com",
+  "phone": "(512) 222-2200",
+  "country": "US",
+  "niche": "landscaping",
+  "contact_name": ""
+ },
+ {
   "portal_id": 3885,
   "portal_score": 79,
   "domain": "goldenmiledental.ca",
@@ -4641,6 +4749,66 @@
   "phone": "(972) 943-5944",
   "country": "US",
   "niche": "dental",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 4031,
+  "portal_score": 78,
+  "domain": "adaptsports.physio",
+  "website": "https://adaptsports.physio",
+  "business_name": "Adapt Sports Physiotherapy",
+  "email": "admin@adaptsports.physio",
+  "phone": "03 4063 3520",
+  "country": "AU",
+  "niche": "physiotherapy",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 4030,
+  "portal_score": 78,
+  "domain": "hollyhousedental.co.uk",
+  "website": "https://www.hollyhousedental.co.uk",
+  "business_name": "Holly House Dental Practice",
+  "email": "info@hollyhousedental.co.uk",
+  "phone": "0161 494 8621",
+  "country": "UK",
+  "niche": "dental",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 4029,
+  "portal_score": 78,
+  "domain": "parksidedentalcare.co.uk",
+  "website": "https://www.parksidedentalcare.co.uk",
+  "business_name": "Parkside Dental Care",
+  "email": "info@parksidedentalcare.co.uk",
+  "phone": "0161 777 8606",
+  "country": "UK",
+  "niche": "dental",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 4028,
+  "portal_score": 78,
+  "domain": "loveteethdp.co.uk",
+  "website": "https://loveteethdp.co.uk",
+  "business_name": "Love-Teeth Dental Practice",
+  "email": "ilana@loveteethdp.co.uk",
+  "phone": "0161 773 7080",
+  "country": "UK",
+  "niche": "dental",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 4023,
+  "portal_score": 78,
+  "domain": "innovationgrounds.com",
+  "website": "https://www.innovationgrounds.com",
+  "business_name": "Innovation Grounds",
+  "email": "help@innovationgrounds.com",
+  "phone": "(512) 885-8839",
+  "country": "US",
+  "niche": "landscaping",
   "contact_name": ""
  },
  {
@@ -5673,6 +5841,18 @@
   "phone": "(214) 561-2744",
   "country": "US",
   "niche": "pest control",
+  "contact_name": ""
+ },
+ {
+  "portal_id": 4020,
+  "portal_score": 76,
+  "domain": "steelbloom.co",
+  "website": "https://www.steelbloom.co",
+  "business_name": "Steelbloom",
+  "email": "hello@steelbloom.co",
+  "phone": "+1-737-426-7048",
+  "country": "US",
+  "niche": "landscaping",
   "contact_name": ""
  },
  {
